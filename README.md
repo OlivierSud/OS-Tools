@@ -10,15 +10,15 @@ La boîte à outils permet d'accéder facilement à tous les outils disponibles,
 ## 📁 Outils disponibles
 
 ### 🎨 2D
-- **[2D - GIF creator](Outils/2D%20-%20GIF%20creator.html)** - Créateur de GIF animés
-- **[2D - Sprite sheet cutter](Outils/2D%20-%20Sprite%20sheet%20cutter.html)** - Découpeur de sprite sheets
-- **[2D - SVG remove color](Outils/2D%20-%20svg%20remove%20color.html)** - Suppression de couleurs dans les SVG
+- **[2D - GIF creator](https://olivierdev.github.io/OS-Tools/Outils/2D%20-%20GIF%20creator.html)** - Créateur de GIF animés
+- **[2D - Sprite sheet cutter](https://olivierdev.github.io/OS-Tools/Outils/2D%20-%20Sprite%20sheet%20cutter.html)** - Découpeur de sprite sheets
+- **[2D - SVG remove color](https://olivierdev.github.io/OS-Tools/Outils/2D%20-%20svg%20remove%20color.html)** - Suppression de couleurs dans les SVG
 
 ### 🎮 3D
-- **[3D - JSON to GLTF](Outils/3D%20-%20Json%20to%20GLTF.html)** - Convertisseur JSON vers GLTF
+- **[3D - JSON to GLTF](https://olivierdev.github.io/OS-Tools/Outils/3D%20-%20Json%20to%20GLTF.html)** - Convertisseur JSON vers GLTF
 
 ### 🎬 Vidéo
-- **[Video - Timelaps to MP4](Outils/Video%20-%20Timelaps%20to%20MP4.html)** - Convertisseur de timelapses vers MP4
+- **[Video - Timelaps to MP4](https://olivierdev.github.io/OS-Tools/Outils/Video%20-%20Timelaps%20to%20MP4.html)** - Convertisseur de timelapses vers MP4
 
 ## 🚀 Utilisation
 
