@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Découpe et superposition d'images</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    :root{ --bg:#061c30; --panel:#082137; --panel-2:#061c30; --border:#051727; --text:#d7dde7; --muted:#9aa5b1; --accent1:#4f8cff; --accent2:#7a5cff; --accent3:#4fff95; --accent4:#5cff85; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); }
+
+    .container { display: flex; height: 100vh; }
+
+    .left, .right { flex: 1; border-right: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; background: var(--panel); }
+    .right { border-right: none; }
+
+    input, select, button { background: #0f162b; border: 1px solid rgba(255,255,255,.15); color: var(--text); padding: 8px 10px; border-radius: 10px; margin-right: 6px; }
+    input[type="number"] { width: 80px; }
+
+    button { cursor: pointer; background: linear-gradient(135deg, var(--accent1), var(--accent2)); transition: transform .12s ease; border:0; color:#fff; font-weight:700; }
+    button:hover { background: linear-gradient(135deg, var(--accent3), var(--accent4)); transform: translateY(-1px); color:#011b0a; }
+
+    #image-upload, .fixed-size-inputs { margin-bottom: 15px; }
+    .fixed-size-inputs label { margin-right: 15px; }
+
+    .canvas-container { position: relative; flex: 1; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: #0e1426; }
+    #main-image { max-width: 100%; height: auto; display: block; }
+    #overlay { position: absolute; top: 0; left: 0; cursor: crosshair; }
+
+    .output-list { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; padding: 10px 0; max-height: 120px; }
+    .output-list img { height: 90px; object-fit: contain; flex-shrink: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; background: #0f1a31; padding: 2px; }
+
+    .preview-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .selectors { margin: 10px 0; flex-shrink: 0; }
+
+    .preview-container { position: relative; flex: 1; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: #0e1426; }
+    .preview-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Zone de gauche -->
+    <div class="left">
+      <input type="file" id="image-upload" accept="image/*" />
+
+      <!-- Dimensions fixes -->
+      <div class="fixed-size-inputs">
+        <label>Largeur :
+          <input type="number" id="fixed-width" value="200" min="1" />
+        </label>
+        <label>Hauteur :
+          <input type="number" id="fixed-height" value="100" min="1" />
+        </label>
+      </div>
+
+      <div class="canvas-container">
+        <img id="main-image" src="" alt="Image principale" />
+        <canvas id="overlay"></canvas>
+      </div>
+      <button id="generate">♻️ Générer les découpes</button>
+    </div>
+
+    <!-- Zone de droite -->
+    <div class="right">
+      <div class="output-list" id="output"></div>
+
+      <div class="preview-section">
+        <div class="selectors">
+          <label>Image de base :</label>
+          <select id="base-select"></select>
+
+          <label>Superposée :</label>
+          <select id="overlay-select"></select>
+        </div>
+        <div class="preview-container">
+          <img id="preview-base" />
+          <img id="preview-overlay" style="opacity: 0.7;" />
+        </div>
+      </div>
+
+      <button id="export">💾 Exporter les découpes</button>
+    </div>
+  </div>
+
+  <script>
+    // 🔥 Code original intact (aucune fonctionnalité changée)
+    const uploadInput = document.getElementById('image-upload');
+    const mainImage = document.getElementById('main-image');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+    const generateBtn = document.getElementById('generate');
+    const output = document.getElementById('output');
+    const baseSelect = document.getElementById('base-select');
+    const overlaySelect = document.getElementById('overlay-select');
+    const previewBase = document.getElementById('preview-base');
+    const previewOverlay = document.getElementById('preview-overlay');
+    const exportBtn = document.getElementById('export');
+
+    const fixedWidthInput = document.getElementById('fixed-width');
+    const fixedHeightInput = document.getElementById('fixed-height');
+
+    let rectangles = [];
+    let images = [];
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let selectedRectIndex = -1;
+    let offsetX = 0, offsetY = 0;
+
+    uploadInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          mainImage.src = e.target.result;
+          rectangles = [];
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    mainImage.onload = function() {
+      canvas.width = mainImage.width;
+      canvas.height = mainImage.height;
+      canvas.style.width = mainImage.offsetWidth + 'px';
+      canvas.style.height = mainImage.offsetHeight + 'px';
+      drawAllRectangles();
+    };
+
+    function getMousePos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    function drawAllRectangles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < rectangles.length; i++) {
+        const r = rectangles[i];
+        ctx.strokeStyle = i === selectedRectIndex ? 'cyan' : 'red';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(r.x, r.y, r.width, r.height);
+      }
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const { x, y } = getMousePos(e);
+      selectedRectIndex = -1;
+      for (let i = rectangles.length - 1; i >= 0; i--) {
+        const r = rectangles[i];
+        if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) {
+          selectedRectIndex = i;
+          offsetX = x - r.x;
+          offsetY = y - r.y;
+          isDragging = true;
+          drawAllRectangles();
+          return;
+        }
+      }
+      const width = parseInt(fixedWidthInput.value);
+      const height = parseInt(fixedHeightInput.value);
+      rectangles.push({ x, y, width, height });
+      drawAllRectangles();
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (isDragging && selectedRectIndex >= 0) {
+        const { x, y } = getMousePos(e);
+        const r = rectangles[selectedRectIndex];
+        r.x = x - offsetX;
+        r.y = y - offsetY;
+        drawAllRectangles();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => { isDragging = false; });
+
+    generateBtn.addEventListener('click', () => {
+      const previousBaseIndex = baseSelect.selectedIndex;
+      const previousOverlayIndex = overlaySelect.selectedIndex;
+      output.innerHTML = '';
+      baseSelect.innerHTML = '';
+      overlaySelect.innerHTML = '';
+      images = [];
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      const img = new Image();
+      img.onload = function () {
+        const scaleX = img.width / canvas.offsetWidth;
+        const scaleY = img.height / canvas.offsetHeight;
+        rectangles.forEach((r, index) => {
+          const cropX = r.x * scaleX;
+          const cropY = r.y * scaleY;
+          const cropW = r.width * scaleX;
+          const cropH = r.height * scaleY;
+          tempCanvas.width = cropW;
+          tempCanvas.height = cropH;
+          tempCtx.clearRect(0, 0, cropW, cropH);
+          tempCtx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+          const croppedImg = new Image();
+          croppedImg.src = tempCanvas.toDataURL();
+          croppedImg.dataset.index = index;
+          output.appendChild(croppedImg);
+          images.push(croppedImg.src);
+          const option = document.createElement('option');
+          option.value = index;
+          option.textContent = `Découpe ${index + 1}`;
+          baseSelect.appendChild(option.cloneNode(true));
+          overlaySelect.appendChild(option);
+        });
+        if (previousBaseIndex >= 0) baseSelect.selectedIndex = previousBaseIndex;
+        if (previousOverlayIndex >= 0) overlaySelect.selectedIndex = previousOverlayIndex;
+        updateOverlay();
+      };
+      img.src = mainImage.src;
+    });
+
+    function updateOverlay() {
+      const baseIdx = baseSelect.value;
+      const overlayIdx = overlaySelect.value;
+      previewBase.src = images[baseIdx] || '';
+      previewOverlay.src = images[overlayIdx] || '';
+    }
+    baseSelect.onchange = updateOverlay;
+    overlaySelect.onchange = updateOverlay;
+
+    exportBtn.addEventListener('click', () => {
+      if (images.length === 0) return alert("Aucune image à exporter.");
+      const zip = new JSZip();
+      images.forEach((src, i) => {
+        const data = src.split(',')[1];
+        zip.file(`decoupe_${i + 1}.png`, data, { base64: true });
+      });
+      zip.generateAsync({ type: "blob" }).then(content => { saveAs(content, "decoupes.zip"); });
+    });
+  </script>
+</body>
+</html>

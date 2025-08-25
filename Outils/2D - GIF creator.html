@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Générateur de GIF </title>
+  <style>
+    :root{ --bg:#061c30; --panel:#082137; --panel-2:#051727; --border:#051727; --text:#d7dde7; --muted:#9aa5b1; --accent1:#4f8cff; --accent2:#7a5cff; --accent3:#4fff95; --accent4:#5cff85; }
+    html,body{ height:100%; margin:0; }
+    body{ display:flex; flex-direction:column; min-height:100vh; background:var(--bg); color:var(--text); font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding:0; }
+    #topbar{ display:flex; gap:10px; align-items:center; padding:12px; background:linear-gradient(90deg,#242c3b,#1c1f25); border-bottom:1px solid var(--border); }
+    .btn{ border:0; padding:10px 16px; border-radius:10px; color:#fff; font-weight:700; cursor:pointer; background:linear-gradient(135deg,var(--accent1),var(--accent2)); box-shadow:0 6px 16px rgba(79,140,255,.18); transition:transform .12s ease, filter .15s ease; display:inline-block; }
+    .btn:hover{ transform:translateY(-2px); background:linear-gradient(135deg,var(--accent3),var(--accent4)); color:#011b0a; }
+    .btn:active{ transform:translateY(2px); }
+    .wrap{ flex:1; display:flex; flex-direction:column; padding:12px; gap:12px; }
+    .card{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px; }
+    h2{ margin:0 0 8px 0; font-size:18px; }
+    label{ display:block; margin:6px 0; }
+    input[type="file"], input[type="number"], select{ padding:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); background:#0f162b; color:var(--text); }
+    input:disabled, select:disabled{ opacity:.6; }
+    img.preview{ max-height:100px; margin:5px; border-radius:8px; box-shadow:0 0 6px rgba(0,0,0,0.5); }
+    #gif-container img{ max-width:600px; width:100%; height:auto; margin-top:10px; border-radius:10px; box-shadow:0 0 12px rgba(0,0,0,0.6); }
+    #loading{ font-style:italic; color:var(--muted); margin-top:10px; text-align:center; }
+    .options{ margin:10px 0; padding:12px; border-radius:10px; background:#0e1426; border:1px solid rgba(255,255,255,.08); }
+    .size-group{ margin-top:8px; }
+    .size-disabled{ opacity:.5; pointer-events:none; }
+    #preview{ display:flex; flex-wrap:wrap; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <input type="file" id="images" accept="image/*" multiple hidden>
+    <label for="images" class="btn">⬇️ Importer images</label>
+    <a id="download-btn" class="btn" href="#" download="mon-gif.gif" style="display:none;">💾 Exporter</a>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h2>🎞️ Générateur de GIF animé</h2>
+      Durée par image (ms): <input type="number" id="duration" value="200" min="10">
+      <div class="options">
+        <label><input type="checkbox" id="loop" checked> Lire en boucle</label>
+        <label><input type="checkbox" id="reverse"> Inverser l’ordre des images</label>
+        <label>
+          <input type="checkbox" id="use-original-size" checked onchange="toggleSizeInputs()"> Utiliser la taille originale
+        </label>
+        <div class="size-group" id="size-group">
+          Largeur:
+          <input type="number" id="width" value="500" disabled>
+          Hauteur:
+          <input type="number" id="height" value="500" disabled>
+          Unité:
+          <select id="size-unit" disabled>
+            <option value="px">px</option>
+            <option value="%">%</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" onclick="generateGIF()">⚡ Générer le GIF</button>
+      <div id="preview"></div>
+      <div id="loading" style="display:none;">⏳ Génération du GIF...</div>
+      <div id="gif-container"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+  <script>
+    fetch("https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.worker.js")
+      .then(r => r.text())
+      .then(code => {
+        const workerBlob = new Blob([code], { type: "application/javascript" });
+        const workerURL = URL.createObjectURL(workerBlob);
+        window.startGIFApp(workerURL);
+      });
+
+    function toggleSizeInputs() {
+      const checked = document.getElementById('use-original-size').checked;
+      const group = document.getElementById('size-group');
+      const inputs = group.querySelectorAll('input, select');
+
+      inputs.forEach(input => {
+        input.disabled = checked;
+      });
+
+      if (checked) {
+        group.classList.add('size-disabled');
+      } else {
+        group.classList.remove('size-disabled');
+      }
+    }
+
+    function startGIFApp(workerURL) {
+      const imagesInput = document.getElementById('images');
+      const previewDiv = document.getElementById('preview');
+      const gifContainer = document.getElementById('gif-container');
+      const loadingText = document.getElementById('loading');
+      const downloadBtn = document.getElementById('download-btn');
+
+      const loopCheckbox = document.getElementById('loop');
+      const reverseCheckbox = document.getElementById('reverse');
+      const originalSizeCheckbox = document.getElementById('use-original-size');
+
+      const widthInput = document.getElementById('width');
+      const heightInput = document.getElementById('height');
+      const sizeUnit = document.getElementById('size-unit');
+
+      let imageFiles = [];
+
+      imagesInput.addEventListener('change', (event) => {
+        imageFiles = Array.from(event.target.files);
+        previewDiv.innerHTML = '';
+        gifContainer.innerHTML = '';
+        downloadBtn.style.display = 'none';
+
+        imageFiles.forEach(file => {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.className = "preview";
+          previewDiv.appendChild(img);
+        });
+      });
+
+      window.generateGIF = function () {
+        const duration = parseInt(document.getElementById('duration').value) || 200;
+        const shouldLoop = loopCheckbox.checked;
+        const shouldReverse = reverseCheckbox.checked;
+        const useOriginalSize = originalSizeCheckbox.checked;
+
+        gifContainer.innerHTML = '';
+        downloadBtn.style.display = 'none';
+        loadingText.style.display = 'block';
+
+        const gif = new GIF({
+          workers: 2,
+          quality: 10,
+          workerScript: workerURL,
+          repeat: shouldLoop ? 0 : -1
+        });
+
+        const loadImages = imageFiles.map(file => {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject("Erreur de chargement : " + file.name);
+            img.src = URL.createObjectURL(file);
+          });
+        });
+
+        Promise.all(loadImages).then(images => {
+          if (shouldReverse) images.reverse();
+
+          let width = images[0].width;
+          let height = images[0].height;
+
+          if (!useOriginalSize) {
+            const wVal = parseFloat(widthInput.value);
+            const hVal = parseFloat(heightInput.value);
+            const unit = sizeUnit.value;
+
+            if (unit === '%') {
+              width = Math.round(images[0].width * (wVal / 100));
+              height = Math.round(images[0].height * (hVal / 100));
+            } else {
+              width = wVal;
+              height = hVal;
+            }
+          }
+
+          gif.setOptions({ width, height });
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+          images.forEach(img => {
+            ctx.clearRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            gif.addFrame(ctx, { delay: duration, copy: true });
+          });
+
+          gif.on('finished', function(blob) {
+            const result = document.createElement('img');
+            result.src = URL.createObjectURL(blob);
+            gifContainer.innerHTML = '';
+            gifContainer.appendChild(result);
+
+            downloadBtn.href = result.src;
+            downloadBtn.style.display = 'inline-block';
+
+            loadingText.style.display = 'none';
+          });
+
+          gif.render();
+        }).catch(err => {
+          alert("Erreur : " + err);
+          loadingText.style.display = 'none';
+        });
+      };
+    }
+  </script>
+</body>
+</html

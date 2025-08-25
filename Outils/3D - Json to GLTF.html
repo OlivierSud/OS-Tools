@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Convert JSON → Export OBJ/STL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#061c30; --panel:#082137; --panel-2:#051727; --border:#051727;
+    --text:#d7dde7; --muted:#9aa5b1; --accent1:#4f8cff; --accent2:#7a5cff;
+    --accent3:#4fff95; --accent4:#5cff85;
+  }
+  html,body{height:100%}
+  body{margin:0; display:flex; height:100vh; background:var(--bg); color:var(--text); font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+  #left{width:320px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column;}
+  #left header{padding:14px 14px 10px; border-bottom:1px solid var(--border); font-weight:700;}
+  #meshList{flex:1; overflow:auto; padding:10px;}
+  .row{display:flex; flex-direction:column; gap:4px; padding:8px 10px; border-radius:10px; background:transparent; transition:background .2s, transform .08s;}
+  .row:hover{background:var(--panel-2);}
+  .row input{accent-color:var(--accent1);}
+  .row.active{background:var(--accent1); color:#fff;} /* surbrillance sélection */
+  .pivot-pos{font-size:10px; opacity:0.5; margin-left:30px;}
+  .pivot-warning .pivot-pos{color:#ff5a5a; font-weight:600;} /* rouge si pivot != 0 */
+  #right{flex:1; display:flex; flex-direction:column;}
+  #topbar{display:flex; gap:10px; align-items:center; padding:12px; background:linear-gradient(90deg, #242c3b, #1c1f25); border-bottom:1px solid var(--border);}
+  #exportOBJ {margin-left: 40px;} /* espace entre import et export */
+  .btn{
+    border:0; padding:10px 16px; border-radius:10px; color:#fff; font-weight:700; cursor:pointer;
+    background:linear-gradient(135deg, var(--accent1), var(--accent2));
+    box-shadow:0 6px 16px rgba(79,140,255,.18);
+    transition:transform .12s ease, filter .15s ease;
+    display:inline-block;
+  }
+  .btn:hover{transform:translateY(-2px); background:linear-gradient(135deg, var(--accent3), var(--accent4));color:#011b0a;}
+  .btn:active{transform:translateY(2px);}
+  canvas{flex:1; display:block; background:#2a2c40;}
+  .muted{color:var(--muted); margin:0 0 15px 0;}
+</style>
+</head>
+<body>
+  <aside id="left">
+    <header id="meshHeader">Meshes</header>
+    <div id="meshList">
+      <p class="muted">Aucun modèle chargé.</p>
+    </div>
+  </aside>
+
+  <main id="right">
+   <div id="topbar">
+    <input type="file" id="fileInput" accept=".json,.babylon" hidden />
+    <label for="fileInput" class="btn">⬇️ Choisir un fichier</label>
+    <button class="btn" id="exportOBJ">💾 Exporter OBJ</button>
+    <button class="btn" id="exportSTL">💾 Exporter STL</button>
+   </div>
+   <canvas id="renderCanvas"></canvas>
+  </main>
+
+  <!-- BabylonJS -->
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.babylonjs.com/serializers/babylon.objSerializer.min.js"></script>
+
+  <script>
+  const canvas = document.getElementById("renderCanvas");
+  const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer:true, stencil:true });
+  const scene  = new BABYLON.Scene(engine);
+  const camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2.4, 6, BABYLON.Vector3.Zero(), scene);
+  camera.lowerRadiusLimit = 0.01;
+  camera.attachControl(canvas, true);
+  new BABYLON.HemisphericLight("Hemi", new BABYLON.Vector3(0,1,0), scene);
+
+  const meshList   = document.getElementById("meshList");
+  const meshHeader = document.getElementById("meshHeader");
+  let lastFileName = "export";
+  let selectedRow  = null;
+
+  function refreshMeshList(){
+    meshList.innerHTML = "";
+    const meshes = scene.meshes.filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
+    if(meshes.length === 0){
+      meshList.innerHTML = '<p class="muted">Aucun mesh exportable.</p>';
+      return;
+    }
+    meshes.forEach(m=>{
+      const row = document.createElement("div");
+      row.className = "row";
+      row.dataset.meshId = m.id;
+
+      const top = document.createElement("div");
+      top.style.display = "flex";
+      top.style.alignItems = "center";
+      top.style.gap = "10px";
+
+      const cb = document.createElement("input");
+      cb.type="checkbox"; cb.checked = m.isEnabled(true);
+      cb.addEventListener("change", ()=> m.setEnabled(cb.checked));
+
+      const label = document.createElement("label");
+      label.textContent = m.name || m.id || "(mesh)";
+
+      top.appendChild(cb);
+      top.appendChild(label);
+
+      const p = m.getPivotPoint ? m.getPivotPoint() : BABYLON.Vector3.Zero();
+      const pivotLine = document.createElement("div");
+      pivotLine.className = "pivot-pos";
+      pivotLine.textContent = `pivot: ${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}`;
+
+      if(Math.abs(p.x)>1e-6 || Math.abs(p.y)>1e-6 || Math.abs(p.z)>1e-6){
+        row.classList.add("pivot-warning");
+      }
+
+      row.appendChild(top);
+      row.appendChild(pivotLine);
+
+      row.addEventListener("click", ()=>{
+        if(selectedRow) selectedRow.classList.remove("active");
+        row.classList.add("active");
+        selectedRow = row;
+        highlightMesh(m);
+      });
+
+      meshList.appendChild(row);
+    });
+  }
+
+  function highlightMesh(mesh){
+    scene.meshes.forEach(m=>{ m.renderOutline = false; });
+    mesh.renderOutline = true;
+    mesh.outlineWidth = 0.05;
+    mesh.outlineColor = BABYLON.Color3.Yellow();
+  }
+
+  function frameAll(){
+    const meshes = scene.meshes.filter(m => m.getTotalVertices && m.getTotalVertices() > 0 && m.isEnabled(true));
+    if(meshes.length === 0) return;
+    const minMax = BABYLON.Mesh.MinMax(meshes);
+    const center = minMax.min.add(minMax.max).scale(0.5);
+    const diag   = minMax.max.subtract(minMax.min).length();
+    camera.setTarget(center);
+    camera.radius = Math.max(0.5, diag * 0.7);
+  }
+
+  // --- Bake sur CLONE uniquement pour l'export ---
+  function bakeMeshClone(mesh){
+    if(!mesh.getTotalVertices || mesh.getTotalVertices() === 0) return null;
+
+    // Clone sans parent pour éviter double transform
+    const clone = mesh.clone((mesh.name||mesh.id) + "_bake", null);
+    if(!clone) return null;
+
+    // Géométrie unique pour que la modif des vertices n'affecte pas l'original
+    if (clone.makeGeometryUnique) clone.makeGeometryUnique();
+
+    const positions = clone.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+    const indices   = clone.getIndices();
+    if(!positions || !indices) return clone;
+
+    // Matrice MONDE de l'original (inclut pivot, pos, rot, scale, parent)
+    const world = mesh.computeWorldMatrix(true);
+
+    const v = BABYLON.Vector3.Zero();
+    for(let i=0; i<positions.length; i+=3){
+      v.set(positions[i], positions[i+1], positions[i+2]);
+      const p = BABYLON.Vector3.TransformCoordinates(v, world);
+      positions[i]   = p.x;
+      positions[i+1] = p.y;
+      positions[i+2] = p.z;
+    }
+
+    // Recalcule des normales
+    const normals = [];
+    BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+    const vd = new BABYLON.VertexData();
+    vd.positions = positions;
+    vd.indices   = indices;
+    vd.normals   = normals;
+    vd.applyToMesh(clone, true);
+
+    // Reset transforms du clone (pivot/pos/rot/scale)
+    clone.setPivotPoint(BABYLON.Vector3.Zero(), false);
+    clone.position.set(0,0,0);
+    clone.rotation.set(0,0,0);
+    clone.scaling.set(1,1,1);
+    if(clone.parent) clone.setParent(null);
+
+    return clone;
+  }
+
+  // --- IMPORT (robuste, inchangé de l’esprit d’origine) ---
+  document.getElementById("fileInput").addEventListener("change", async (evt)=>{
+    const file = evt.target.files && evt.target.files[0];
+    if(!file) return;
+
+    lastFileName = file.name.replace(/\.[^/.]+$/, "");
+    meshHeader.textContent = "Meshes – " + file.name;
+
+    // Nettoyage scène
+    scene.meshes.slice().forEach(m => { try{ m.dispose(false, true); }catch(e){} });
+
+    try{
+      // Utilise FilesInputStore pour préserver le nom & l'extension
+      BABYLON.FilesInputStore.FilesToLoad = BABYLON.FilesInputStore.FilesToLoad || {};
+      BABYLON.FilesInputStore.FilesToLoad[file.name] = file;
+
+      // Force le plugin .babylon pour .json/.babylon
+      await BABYLON.SceneLoader.AppendAsync("file:", file.name, scene, undefined, ".babylon");
+
+      // Visibilité et UI
+      scene.meshes.forEach(m => { if (m.getTotalVertices && m.getTotalVertices()>0) m.isVisible = true; });
+      refreshMeshList();
+      frameAll();
+    }catch(err){
+      console.error(err);
+      alert("Erreur lors de l'import : " + (err && err.message ? err.message : err));
+    }finally{
+      evt.target.value = "";
+    }
+  });
+
+  // --- EXPORT OBJ (avec clones bakeés) ---
+  document.getElementById("exportOBJ").addEventListener("click", ()=>{
+    const meshes = scene.meshes.filter(m => m.getTotalVertices && m.getTotalVertices() > 0 && m.isEnabled(true));
+    if(meshes.length === 0){ alert("Aucun mesh exportable."); return; }
+    try{
+      const baked = meshes.map(m => bakeMeshClone(m)).filter(m=>m);
+      const obj = BABYLON.OBJExport.OBJ(baked, true, "");
+      baked.forEach(m => { try{ m.dispose(false, true); }catch(e){} }); // nettoyage
+      const blob = new Blob([obj], {type:"text/plain"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = lastFileName + ".obj";
+      link.click();
+    }catch(e){
+      console.error(e);
+      alert("Erreur export OBJ : " + (e && e.message ? e.message : e));
+    }
+  });
+
+  // --- EXPORT STL (ASCII) sur clones bakeés ---
+  function exportSTL(meshes){
+    let stlText = "";
+    meshes.forEach(mesh=>{
+      let stl = `solid ${mesh.name}\n`;
+      const pos = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+      const ind = mesh.getIndices();
+      if(!pos||!ind) return;
+      for(let i=0;i<ind.length;i+=3){
+        const v0 = BABYLON.Vector3.FromArray(pos, ind[i]*3);
+        const v1 = BABYLON.Vector3.FromArray(pos, ind[i+1]*3);
+        const v2 = BABYLON.Vector3.FromArray(pos, ind[i+2]*3);
+        const normal = BABYLON.Vector3.Cross(v1.subtract(v0), v2.subtract(v0)).normalize();
+        stl += `  facet normal ${normal.x} ${normal.y} ${normal.z}\n`;
+        stl += `    outer loop\n`;
+        stl += `      vertex ${v0.x} ${v0.y} ${v0.z}\n`;
+        stl += `      vertex ${v1.x} ${v1.y} ${v1.z}\n`;
+        stl += `      vertex ${v2.x} ${v2.y} ${v2.z}\n`;
+        stl += `    endloop\n  endfacet\n`;
+      }
+      stl += `endsolid ${mesh.name}\n`;
+      stlText += stl;
+    });
+    return stlText;
+  }
+
+  document.getElementById("exportSTL").addEventListener("click", ()=>{
+    const meshes = scene.meshes.filter(m => m.getTotalVertices && m.getTotalVertices()>0 && m.isEnabled(true));
+    if(meshes.length===0){ alert("Aucun mesh exportable."); return; }
+    try{
+      const baked = meshes.map(m => bakeMeshClone(m)).filter(m=>m);
+      const stl = exportSTL(baked);
+      baked.forEach(m => { try{ m.dispose(false, true); }catch(e){} }); // nettoyage
+      const blob = new Blob([stl], { type: "text/plain" });
+      const url  = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = lastFileName + ".stl"; a.click();
+      URL.revokeObjectURL(url);
+    }catch(err){
+      console.error(err);
+      alert("Erreur export STL: " + (err && err.message ? err.message : err));
+    }
+  });
+
+  // Pick dans le viewer → surbrillance dans la liste
+  scene.onPointerObservable.add((pointerInfo)=>{
+    if(pointerInfo.type === BABYLON.PointerEventTypes.POINTERPICK){
+      const mesh = pointerInfo.pickInfo.pickedMesh;
+      if(mesh){
+        const row = [...meshList.querySelectorAll(".row")].find(r=>r.dataset.meshId === mesh.id);
+        if(row){
+          if(selectedRow) selectedRow.classList.remove("active");
+          row.classList.add("active");
+          selectedRow = row;
+          highlightMesh(mesh);
+        }
+      }
+    }
+  });
+
+  engine.runRenderLoop(()=> scene.render());
+  window.addEventListener("resize", ()=> engine.resize());
+  </script>
+</body>
+</html>
