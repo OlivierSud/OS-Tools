@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages (resolve symlinks)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare site folder (dereference symlinks)
+        run: |
+          set -e
+          mkdir -p _site
+          # Copy all files while resolving symlinks (-L)
+          rsync -aL --delete \
+            --exclude ".git/" \
+            --exclude ".github/workflows/*.yml" \
+            --exclude "README.md" \
+            ./ _site/
+          # Ensure .nojekyll exists for safety
+          touch _site/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+
