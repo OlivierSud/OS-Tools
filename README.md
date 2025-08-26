@@ -3,7 +3,7 @@ A list of small tools for simple small tasks
 
 ## 🛠️ Boîte à outils
 
-**[🎯 Ouvrir la boîte à outils](https://olivierdev.github.io/OS-Tools/boite%20à%20outils.html)**
+**[🎯 Ouvrir la boîte à outils](https://oliviersud.github.io/OS-Tools/boite%20à%20outils.html)**
 
 > La boîte à outils regroupe tous les outils dans une même interface, avec une navigation par catégories et un accès rapide. C'est le point d'entrée recommandé.
 
