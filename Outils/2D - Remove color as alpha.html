@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transforme une image en PNG avec alpha</title>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    :root{ 
+      --bg:#061c30; --panel:#082137; --panel-2:#051727; --border:#051727; 
+      --text:#d7dde7; --muted:#9aa5b1; 
+      --accent1:#4f8cff; --accent2:#7a5cff; --accent3:#4fff95; --accent4:#5cff85; 
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial; background: var(--bg); color: var(--text);}    
+    header{padding:20px; text-align:center;}
+    header h1{margin:0 0 6px; font-size: clamp(20px, 2.6vw, 28px)}
+    header p{margin:0; color:var(--muted)}
+
+    .toolbar{display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:center; padding:16px; background:linear-gradient(90deg,#242c3b,#1c1f25); border-radius: var(--radius); width:min(1100px, 96%); margin: 8px auto 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); border:1px solid var(--border)}
+    .control{display:flex; align-items:center; gap:8px;}
+    .control-file{flex-basis:100%; justify-content:center;}
+    .control-row{flex-basis:100%; display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:center;}
+    .control-2col{flex-basis:100%; display:grid; grid-template-columns: 1fr 1fr; gap:14px; align-items:flex-start;}
+    .col{ display:flex; flex-direction:column; gap:12px; }
+    .control label{font-size:14px; color:var(--muted)}
+    input[type="file"], input[type="number"], select{ padding:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); background:#0f162b; color:var(--text); }
+    input[type="range"]{width:220px}
+    input[type="color"]{width:36px; height:36px; padding:0; border:1px solid rgba(255,255,255,0.2); background:#0f162b; border-radius:8px}
+    button, .btn{background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:#fff; border:none; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer; box-shadow:0 6px 16px rgba(79,140,255,.18); transition:transform .12s ease, filter .15s ease; display:inline-block}
+    button:hover, .btn:hover{ transform:translateY(-2px); background:linear-gradient(135deg,var(--accent3),var(--accent4)); color:#011b0a; }
+    button:active, .btn:active{ transform:translateY(2px); }
+    button:disabled{opacity:.5; cursor:not-allowed}
+    #file{ display:none; }
+    .hint{font-size:12px; color:var(--muted)}
+
+    .icon-btn{ padding:8px 10px; border-radius:10px; font-weight:700; min-width:36px; }
+    .swatches{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .swatch{ width:24px; height:24px; border-radius:6px; border:1px solid rgba(255,255,255,.2); cursor:pointer; position:relative; }
+    .swatch.active{ outline:2px solid #6aa3ff; }
+
+    .split{
+      width:min(1200px, 96%);
+      margin: 0 auto 28px;
+      display:grid; gap:16px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .panel{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative; box-shadow: 0 10px 30px rgba(0,0,0,.25)}
+    .panel header{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0)); border-bottom:1px solid rgba(255,255,255,.08)}
+    .panel header h3{margin:0; font-size:14px; color:var(--muted)}
+    .canvas-wrap{position:relative; width:100%; height:auto; padding:8px;}
+    canvas{max-width:100%; height:auto; display:block; border-radius: 12px}
+
+    /* Damier de transparence */
+    .checker{
+      --s: 16px; /* taille carreaux */
+      background:
+        conic-gradient(#0000 90deg, #1b2438 0 180deg, #0000 0 270deg, #2a3552 0) 0 0/var(--s) var(--s);
+    }
+
+    .legend{position:absolute; bottom:8px; left:12px; padding:6px 10px; background:rgba(0,0,0,.45); border-radius:10px; font-size:12px; color:#d5dfeb}
+
+    @media (max-width: 880px){
+      .split{grid-template-columns: 1fr}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Effacer une couleur → PNG avec transparence</h1>
+    <p>Ouvrez une image (JPEG / PNG sans alpha), choisissez la couleur à supprimer puis ajustez la tolérance. Cliquez sur l'image d'origine pour pipetter une couleur.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="control control-file">
+      <span>Images :</span>
+      <label for="file" class="btn">⬇️ Importer images</label>
+      <input id="file" type="file" accept="image/*" multiple />
+    </div>
+    <div class="control-2col">
+      <div class="col">
+        <div class="control">
+          <label for="color">Couleur à supprimer :</label>
+          <input id="color" type="color" value="#ffffff" />
+          <button id="addColor" class="icon-btn" title="Ajouter la couleur à la sélection">+</button>
+          <button id="removeColor" class="icon-btn" title="Retirer la dernière couleur">-</button>
+        </div>
+        <div class="control">
+          <label>Sélection :</label>
+          <div id="swatches" class="swatches" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="control">
+          <label for="tol">Tolérance :</label>
+          <input id="tol" type="range" min="0" max="255" step="1" value="40" />
+          <span id="tolVal" aria-live="polite">40</span>
+        </div>
+        <div class="control">
+          <label for="feather">Contour progressif :</label>
+          <input id="feather" type="range" min="0" max="20" step="1" value="0" />
+          <span id="featherVal" aria-live="polite">0 px</span>
+        </div>
+        <div class="control">
+          <label for="featherOffset">Décalage :</label>
+          <input id="featherOffset" type="range" min="-30" max="30" step="1" value="0" />
+          <input id="featherOffsetNum" type="number" min="-30" max="30" step="1" value="0" style="width:70px; background:#0f1730; color:#9fb3c8; border:1px solid #335; border-radius:8px; padding:6px 8px;" />
+          <span id="featherOffsetVal" aria-live="polite">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="control">
+      <button id="download" disabled>Télécharger le PNG</button>
+    </div>
+    <span class="hint">Astuce : cliquez sur l'image de gauche pour sélectionner une couleur exacte.</span>
+  </div>
+
+  <div class="control" style="width:min(1200px, 96%); margin: 0 auto 12px; justify-content:flex-start;">
+    <label for="imageSelect">Aperçu :</label>
+    <select id="imageSelect"></select>
+  </div>
+
+  <section class="split">
+    <div class="panel">
+      <header><h3>Original</h3><span class="hint">Cliquez pour pipetter</span></header>
+      <div class="canvas-wrap">
+        <canvas id="srcCanvas"></canvas>
+        <div class="legend">Source</div>
+      </div>
+    </div>
+    <div class="panel">
+      <header><h3>Prévisualisation (PNG avec alpha)</h3></header>
+      <div id="outList" class="canvas-wrap checker"></div>
+    </div>
+  </section>
+
+  <script>
+    const fileInput = document.getElementById('file');
+    const colorInput = document.getElementById('color');
+    const addColorBtn = document.getElementById('addColor');
+    const removeColorBtn = document.getElementById('removeColor');
+    const swatchesEl = document.getElementById('swatches');
+    const tolInput = document.getElementById('tol');
+    const tolVal = document.getElementById('tolVal');
+    const featherInput = document.getElementById('feather');
+    const featherVal = document.getElementById('featherVal');
+    const featherOffset = document.getElementById('featherOffset');
+    const featherOffsetNum = document.getElementById('featherOffsetNum');
+    const featherOffsetVal = document.getElementById('featherOffsetVal');
+    const imageSelect = document.getElementById('imageSelect');
+    const dlBtn = document.getElementById('download');
+
+    const srcCanvas = document.getElementById('srcCanvas');
+    const sctx = srcCanvas.getContext('2d');
+    const outList = document.getElementById('outList');
+
+    let images = []; // [{img:Image, name:string}]
+    let scaleX = 1, scaleY = 1; // pour convertir les clics CSS → pixels
+    let selectedColors = []; // tableau de hex strings '#rrggbb'
+
+    function hexToRgb(hex){
+      const m = hex.match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
+      if(!m) return {r:255,g:255,b:255};
+      return { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) };
+    }
+
+    function rgbToHex(r,g,b){
+      return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+    }
+
+    function drawBoth(){
+      if(images.length === 0) return;
+      const idx = Math.max(0, Math.min(images.length - 1, parseInt(imageSelect.value || '0', 10) || 0));
+      const img = images[idx].img;
+      // Canvas source à la taille de la première image
+      srcCanvas.width = img.naturalWidth;
+      srcCanvas.height = img.naturalHeight;
+
+      // Dessin source
+      sctx.clearRect(0,0,srcCanvas.width,srcCanvas.height);
+      sctx.drawImage(img, 0, 0);
+
+      // Ajuste les ratios pour la pipette selon l'affichage CSS
+      requestAnimationFrame(() => {
+        const rect = srcCanvas.getBoundingClientRect();
+        scaleX = srcCanvas.width / rect.width;
+        scaleY = srcCanvas.height / rect.height;
+      });
+
+      // Mise à jour du rendu avec paramètres actuels
+      updateOutput();
+    }
+
+    function updateOutput(){
+      if(images.length === 0 || srcCanvas.width === 0) return;
+      // Efface la liste des sorties
+      outList.innerHTML = '';
+
+      const activeHexColors = (selectedColors && selectedColors.length > 0) ? selectedColors : [colorInput.value];
+      const activeColors = activeHexColors.map(h => hexToRgb(h));
+      const tolerance = Number(tolInput.value);
+
+      const idx = Math.max(0, Math.min(images.length - 1, parseInt(imageSelect.value || '0', 10) || 0));
+      const sel = images[idx];
+      const outCanvas = document.createElement('canvas');
+      const octx = outCanvas.getContext('2d');
+      outCanvas.width = sel.img.naturalWidth;
+      outCanvas.height = sel.img.naturalHeight;
+      octx.clearRect(0,0,outCanvas.width,outCanvas.height);
+      octx.drawImage(sel.img, 0, 0);
+      const imgData = octx.getImageData(0,0,outCanvas.width,outCanvas.height);
+      const data = imgData.data;
+
+      const tolSq = tolerance * tolerance; // compare distances au carré (plus rapide)
+
+      // 1) Construire un masque binaire (255 = à effacer, 0 = conserver)
+      const mask = new Uint8ClampedArray(outCanvas.width * outCanvas.height);
+      for(let i=0, p=0; i<data.length; i+=4, p++){
+        const r = data[i], g = data[i+1], b = data[i+2];
+        let match = 0;
+        for (let c = 0; c < activeColors.length; c++){
+          const R = activeColors[c].r, G = activeColors[c].g, B = activeColors[c].b;
+          const dr = r - R, dg = g - G, db = b - B;
+          if((dr*dr + dg*dg + db*db) <= tolSq){ match = 1; break; }
+        }
+        mask[p] = match ? 255 : 0;
+      }
+
+      // 2) Appliquer le décalage morphologique pour respecter la silhouette
+      const offset = Number(featherOffset.value);
+      if (offset !== 0){
+        morphologicalOffset(mask, outCanvas.width, outCanvas.height, offset);
+      }
+
+      // 3) Appliquer le contour progressif (flou) sur le masque
+      const radius = Number(featherInput.value);
+      if (radius > 0){
+        boxBlur1D(mask, outCanvas.width, outCanvas.height, radius, true);
+        boxBlur1D(mask, outCanvas.width, outCanvas.height, radius, false);
+      }
+
+      // 4) Écrire l'alpha depuis le masque (255 masque => alpha 0)
+      for(let p=0, j=3; p<mask.length; p++, j+=4){
+        const m = mask[p];
+        data[j] = 255 - m;
+      }
+      octx.putImageData(imgData, 0, 0);
+      const wrap = document.createElement('div');
+      wrap.style.marginBottom = '12px';
+      const caption = document.createElement('div');
+      caption.className = 'hint';
+      caption.textContent = sel.name || 'Image sélectionnée';
+      wrap.appendChild(caption);
+      wrap.appendChild(outCanvas);
+      outList.appendChild(wrap);
+      dlBtn.disabled = false;
+    }
+
+    // Applique un décalage morphologique sur un masque binaire (Uint8ClampedArray 0/255)
+    function morphologicalOffset(mask, width, height, offset){
+      const iterations = Math.min(100, Math.abs(Math.round(offset)));
+      if(iterations === 0) return;
+      const dilate = offset > 0;
+      const src = mask;
+      let dst = new Uint8ClampedArray(src.length);
+      const neighbors = [-width-1, -width, -width+1, -1, 0, 1, width-1, width, width+1];
+      for(let it=0; it<iterations; it++){
+        for(let y=0; y<height; y++){
+          for(let x=0; x<width; x++){
+            const idx = y*width + x;
+            let v = dilate ? 0 : 255;
+            // parcourir le voisinage 3x3 en respectant les bords
+            for(let ny=-1; ny<=1; ny++){
+              const yy = y + ny;
+              if(yy < 0 || yy >= height) continue;
+              for(let nx=-1; nx<=1; nx++){
+                const xx = x + nx;
+                if(xx < 0 || xx >= width) continue;
+                const ii = yy*width + xx;
+                if(dilate){ if(src[ii] > v) v = src[ii]; }
+                else { if(src[ii] < v) v = src[ii]; }
+              }
+            }
+            dst[idx] = v;
+          }
+        }
+        // swap
+        for(let i=0;i<src.length;i++){ src[i] = dst[i]; }
+      }
+    }
+
+    function boxBlur1D(arr, width, height, radius, horizontal){
+      const out = new Uint8ClampedArray(arr.length);
+      const kernel = (radius * 2 + 1);
+      if(horizontal){
+        for(let y=0; y<height; y++){
+          let sum = 0;
+          let start = y*width;
+          for(let x=-radius; x<=radius; x++){
+            const idx = start + clamp(x, 0, width-1);
+            sum += arr[idx];
+          }
+          for(let x=0; x<width; x++){
+            const leftIdx = start + clamp(x - radius - 1, 0, width-1);
+            const rightIdx = start + clamp(x + radius, 0, width-1);
+            if(x===0){
+              out[start] = Math.round(sum / kernel);
+            } else {
+              sum += arr[rightIdx] - arr[leftIdx];
+              out[start + x] = Math.round(sum / kernel);
+            }
+          }
+        }
+      } else {
+        for(let x=0; x<width; x++){
+          let sum = 0;
+          for(let y=-radius; y<=radius; y++){
+            const idx = clamp(y, 0, height-1) * width + x;
+            sum += arr[idx];
+          }
+          for(let y=0; y<height; y++){
+            const topIdx = clamp(y - radius - 1, 0, height-1) * width + x;
+            const botIdx = clamp(y + radius, 0, height-1) * width + x;
+            if(y===0){
+              out[y*width + x] = Math.round(sum / kernel);
+            } else {
+              sum += arr[botIdx] - arr[topIdx];
+              out[y*width + x] = Math.round(sum / kernel);
+            }
+          }
+        }
+      }
+      // copie out -> arr
+      for(let i=0; i<arr.length; i++){ arr[i] = out[i]; }
+    }
+
+    function clamp(v, min, max){ return v < min ? min : (v > max ? max : v); }
+
+    // Pipette en cliquant sur le canvas source
+    srcCanvas.addEventListener('click', (e) => {
+      if(srcCanvas.width === 0) return;
+      const rect = srcCanvas.getBoundingClientRect();
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top) * scaleY);
+      const pix = sctx.getImageData(x,y,1,1).data;
+      colorInput.value = rgbToHex(pix[0], pix[1], pix[2]);
+      updateOutput();
+    });
+
+    function renderSwatches(){
+      swatchesEl.innerHTML = '';
+      const current = colorInput.value.toLowerCase();
+      selectedColors.forEach((hex, idx) => {
+        const el = document.createElement('div');
+        el.className = 'swatch' + (hex.toLowerCase() === current ? ' active' : '');
+        el.style.background = hex;
+        el.title = hex;
+        el.addEventListener('click', () => {
+          colorInput.value = hex;
+          updateOutput();
+          renderSwatches();
+        });
+        swatchesEl.appendChild(el);
+      });
+    }
+
+    addColorBtn.addEventListener('click', () => {
+      const hex = colorInput.value.toLowerCase();
+      if(!/^#([\da-f]{6})$/i.test(hex)) return;
+      if(!selectedColors.includes(hex)){
+        selectedColors.push(hex);
+        renderSwatches();
+        updateOutput();
+      }
+    });
+
+    removeColorBtn.addEventListener('click', () => {
+      if(selectedColors.length > 0){
+        selectedColors.pop();
+        renderSwatches();
+        updateOutput();
+      }
+    });
+
+    // Handlers UI
+    tolInput.addEventListener('input', () => { tolVal.textContent = tolInput.value; updateOutput(); });
+    featherInput.addEventListener('input', () => { featherVal.textContent = featherInput.value + ' px'; updateOutput(); });
+    featherOffset.addEventListener('input', () => { featherOffsetNum.value = featherOffset.value; featherOffsetVal.textContent = featherOffset.value; updateOutput(); });
+    featherOffsetNum.addEventListener('input', () => {
+      let v = parseInt(featherOffsetNum.value || '0', 10);
+      if(Number.isNaN(v)) v = 0;
+      if(v < parseInt(featherOffset.min,10)) v = parseInt(featherOffset.min,10);
+      if(v > parseInt(featherOffset.max,10)) v = parseInt(featherOffset.max,10);
+      featherOffset.value = String(v);
+      featherOffsetVal.textContent = String(v);
+      updateOutput();
+    });
+    colorInput.addEventListener('input', updateOutput);
+
+    fileInput.addEventListener('change', () => {
+      images = [];
+      imageSelect.innerHTML = '';
+      const files = fileInput.files;
+      if(!files || files.length === 0) return;
+      let loaded = 0, total = 0;
+      for(const file of files){ if(file.type.startsWith('image/')) total++; }
+      let index = 0;
+      for(const file of files){
+        if(!file.type.startsWith('image/')) continue;
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+        const name = file.name;
+        const option = document.createElement('option');
+        option.value = String(index++);
+        option.textContent = name;
+        imageSelect.appendChild(option);
+        image.onload = () => {
+          loaded++;
+          images.push({img: image, name});
+          URL.revokeObjectURL(url);
+          if(loaded === total){ imageSelect.value = '0'; drawBoth(); }
+        };
+        image.onerror = () => { URL.revokeObjectURL(url); };
+        image.src = url;
+      }
+    });
+
+    // Télécharger le résultat en PNG
+    dlBtn.addEventListener('click', async () => {
+      if(images.length === 0) return;
+      // S'il y a une seule image: comportement simple
+      if(images.length === 1){
+        const canvas = outList.querySelector('canvas');
+        if(!canvas) return;
+        const srcName = images[0].name || 'image.png';
+        const base = srcName.replace(/\.[^.]+$/, '') || 'resultat';
+        const link = document.createElement('a');
+        link.download = base + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        return;
+      }
+
+      // Sinon, exporter toutes les images traitées dans une archive ZIP
+      const zip = new JSZip();
+      const addCanvasPng = async (index) => {
+        return new Promise((resolve) => {
+          const imgInfo = images[index];
+          // Re-calculer l'image sélectionnée en mémoire pour garantir cohérence
+          const tmpCanvas = document.createElement('canvas');
+          const tmpCtx = tmpCanvas.getContext('2d');
+          tmpCanvas.width = imgInfo.img.naturalWidth;
+          tmpCanvas.height = imgInfo.img.naturalHeight;
+          tmpCtx.drawImage(imgInfo.img, 0, 0);
+
+          // Appliquer le pipeline sur tmpCanvas
+          const imgData = tmpCtx.getImageData(0,0,tmpCanvas.width,tmpCanvas.height);
+          const data = imgData.data;
+          const activeHexColors = (selectedColors && selectedColors.length > 0) ? selectedColors : [colorInput.value];
+          const activeColors = activeHexColors.map(h => hexToRgb(h));
+          const tolSq = Number(tolInput.value) ** 2;
+
+          const mask = new Uint8ClampedArray(tmpCanvas.width * tmpCanvas.height);
+          for(let i=0, p=0; i<data.length; i+=4, p++){
+            const r = data[i], g = data[i+1], b = data[i+2];
+            let match = 0;
+            for (let c = 0; c < activeColors.length; c++){
+              const R = activeColors[c].r, G = activeColors[c].g, B = activeColors[c].b;
+              const dr = r - R, dg = g - G, db = b - B;
+              if((dr*dr + dg*dg + db*db) <= tolSq){ match = 1; break; }
+            }
+            mask[p] = match ? 255 : 0;
+          }
+          const offset = Number(featherOffset.value);
+          if (offset !== 0){
+            morphologicalOffset(mask, tmpCanvas.width, tmpCanvas.height, offset);
+          }
+          const radius = Number(featherInput.value);
+          if (radius > 0){
+            boxBlur1D(mask, tmpCanvas.width, tmpCanvas.height, radius, true);
+            boxBlur1D(mask, tmpCanvas.width, tmpCanvas.height, radius, false);
+          }
+          for(let p=0, j=3; p<mask.length; p++, j+=4){
+            const m = mask[p];
+            data[j] = 255 - m;
+          }
+          tmpCtx.putImageData(imgData, 0, 0);
+
+          tmpCanvas.toBlob((blob) => {
+            const base = (imgInfo.name || `image_${index+1}.png`).replace(/\.[^.]+$/, '') || `image_${index+1}`;
+            zip.file(base + '.png', blob);
+            resolve();
+          }, 'image/png');
+        });
+      };
+
+      for(let i=0; i<images.length; i++){
+        // eslint-disable-next-line no-await-in-loop
+        await addCanvasPng(i);
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = 'resultats.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+
+    // Démonstration : si on glisse-dépose une image sur la page
+    document.addEventListener('dragover', e => { e.preventDefault(); });
+    document.addEventListener('drop', e => {
+      e.preventDefault();
+      const files = e.dataTransfer.files;
+      if(files && files.length){
+        images = [];
+        imageSelect.innerHTML = '';
+        let loaded = 0, total = 0, index = 0;
+        for(const file of files){ if(file.type.startsWith('image/')) total++; }
+        for(const file of files){
+          if(!file.type.startsWith('image/')) continue;
+          const url = URL.createObjectURL(file);
+          const image = new Image();
+          const name = file.name;
+          const option = document.createElement('option');
+          option.value = String(index++);
+          option.textContent = name;
+          imageSelect.appendChild(option);
+          image.onload = () => { loaded++; images.push({img:image, name}); URL.revokeObjectURL(url); if(loaded===total){ imageSelect.value = '0'; drawBoth(); } };
+          image.src = url;
+        }
+      }
+    });
+
+    imageSelect.addEventListener('change', () => { drawBoth(); });
+  </script>
+</body>
+</html>
