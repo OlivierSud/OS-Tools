@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Éditeur de couleur complet</title>
+<style>
+:root{--panel-width:320px}
+body{font-family:Inter, Roboto, system-ui, Arial; margin:16px; display:flex; gap:18px; align-items:flex-start}
+.zone{display:flex;flex-direction:column;gap:8px;align-items:center}
+.canvas-wrap{background:#fafafa;border:1px solid #ddd;padding:8px}
+canvas{display:block;max-width:560px;max-height:560px;border:1px solid #ccc}
+#controls{width:var(--panel-width);display:flex;flex-direction:column;gap:10px}
+label{font-size:13px;font-weight:600}
+.row{display:flex;gap:8px;align-items:center}
+input[type=range]{width:100%}
+.swatch-title{width:16px;height:16px;border-radius:50%;border:1px solid #222;display:inline-block;margin-right:6px;vertical-align:middle;position:relative}
+.swatch-title.active{border:2px dashed #00f; animation: pulse 1s infinite alternate;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,0,255,0.5);}100%{box-shadow:0 0 0 4px rgba(0,0,255,0.5);}}
+.swatch-title .pipette-icon{position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23000" viewBox="0 0 24 24"><path d="M19.7 4.3l-3-3a1 1 0 0 0-1.4 0l-1.8 1.8 4.4 4.4 1.8-1.8a1 1 0 0 0 0-1.4zM3 21v-3l10-10 3 3-10 10H3z"/></svg>') no-repeat center center;background-size:contain; display:none;}
+.colorReplace{margin-top:4px;}
+.colorReplace.disabled{opacity:0.5;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div class="zone">
+<h3>Origine (clique pour choisir la couleur)</h3>
+<input id="fileInput" type="file" accept="image/*">
+<div class="canvas-wrap">
+<canvas id="canvasOriginal"></canvas>
+</div>
+<div class="hint">Clique sur l'image pour définir la couleur cible (pipette)</div>
+</div>
+
+<div id="controls">
+<div class="accordion" id="targets"></div>
+<button id="addTarget">+ Ajouter une couleur cible</button>
+</div>
+
+<div class="zone">
+<h3>Prévisualisation</h3>
+<div class="canvas-wrap">
+<canvas id="canvasPreview"></canvas>
+</div>
+<div class="hint">L'export sauvegarde la prévisualisation (même nom que l'original)</div>
+<button id="export">Exporter PNG</button>
+</div>
+
+<script>
+function rgbToHsv(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h,s,v=max,d=max-min;s=max===0?0:d/max;if(d===0)h=0;else{switch(max){case r:h=(g-b)/d + (g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}return [Math.round(h*360),Math.round(s*100),Math.round(v*100)];}
+function hsvToRgb(h,s,v){h=(h%360+360)%360;s/=100;v/=100;const i=Math.floor(h/60),f=h/60-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);let r,g,b;switch(i){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;default:r=v;g=p;b=q;break;}return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];}
+function toHex(r,g,b){const h=x=>x.toString(16).padStart(2,'0');return '#'+h(r)+h(g)+h(b);}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+const fileInput=document.getElementById('fileInput');
+const canvasOriginal=document.getElementById('canvasOriginal');
+const ctxO=canvasOriginal.getContext('2d');
+const canvasPreview=document.getElementById('canvasPreview');
+const ctxP=canvasPreview.getContext('2d');
+const targetsDiv=document.getElementById('targets');
+const addTargetBtn=document.getElementById('addTarget');
+const exportBtn=document.getElementById('export');
+
+let image=new Image();
+let filename='image.png';
+let targetCounter=0;
+let targets=[];
+let activeTargetId=null;
+let selectionMode=false;
+
+
+
+fileInput.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    filename = f.name.replace(/\.[^/.]+$/,'')+'.png';
+    const reader = new FileReader();
+    reader.onload = ev => {
+        image.onload = () => {
+            canvasOriginal.width = image.naturalWidth;
+            canvasOriginal.height = image.naturalHeight;
+            canvasPreview.width = image.naturalWidth;
+            canvasPreview.height = image.naturalHeight;
+            ctxO.drawImage(image,0,0);
+            ctxP.drawImage(image,0,0);
+            if(targets.length>0 && !activeTargetId) activeTargetId = targets[0].id;
+            applyEdits();
+        };
+        image.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
+});
+
+function addTargetPanel(){
+  targetCounter++;
+  const id=targetCounter;
+  const panel=document.createElement('div');
+  panel.classList.add('target-panel');
+  panel.dataset.id=id;
+  panel.innerHTML=`
+    <div class="panel-title"><span class="swatch-title" style="background:#ff0000"><span class="pipette-icon"></span></span> Couleur cible ${id}</div>
+    <div class="panel-content">
+      <div class="row"><input type="checkbox" class="useColorReplace"> Remplacer par couleur</div>
+      <input type="color" class="colorReplace disabled" value="#ff0000">
+      <label>Tolérance</label><input type="range" min="0" max="100" value="30" class="tolerance">
+      <label>Bords flous</label><input type="range" min="0" max="80" value="6" class="feather">
+      <label>Agrandir/Réduire</label><input type="range" min="-40" max="40" value="0" class="expand">
+      <label>Teinte</label><input type="range" min="-180" max="180" value="0" class="hue">
+      <label>Saturation</label><input type="range" min="-100" max="100" value="0" class="saturation">
+      <label>Value</label><input type="range" min="-100" max="100" value="0" class="value">
+      <button class="removeTarget">- Supprimer</button>
+    </div>`;
+  targetsDiv.appendChild(panel);
+  targets.push({id:id,element:panel,targetColor:{r:255,g:0,b:0}});
+
+  const title=panel.querySelector('.panel-title');
+  const content=panel.querySelector('.panel-content');
+  content.style.display='block';
+  title.addEventListener('click',()=>{content.style.display=content.style.display==='block'?'none':'block';});
+
+  const swatch=panel.querySelector('.swatch-title');
+  swatch.addEventListener('click',()=>{
+    activeTargetId=id;
+    selectionMode=true;
+    swatch.classList.add('active');
+    canvasOriginal.style.cursor='crosshair';
+    swatch.querySelector('.pipette-icon').style.display='block';
+  });
+
+  const checkbox=panel.querySelector('.useColorReplace');
+  const colorInput=panel.querySelector('.colorReplace');
+  checkbox.addEventListener('change',()=>{
+    colorInput.classList.toggle('disabled',!checkbox.checked);
+    applyEdits();
+  });
+
+  panel.querySelector('.removeTarget').addEventListener('click',()=>{ targetsDiv.removeChild(panel); targets=targets.filter(t=>t.id!==id); applyEdits(); });
+  panel.querySelectorAll('input[type=range]').forEach(inp=>inp.addEventListener('input', applyEdits));
+
+}
+
+addTargetBtn.addEventListener('click', addTargetPanel);
+document.addEventListener('DOMContentLoaded',()=>{
+  addTargetPanel();
+  if(targets.length>0) activeTargetId = targets[0].id;
+});
+
+canvasOriginal.addEventListener('click', ev => {
+  if(!selectionMode || activeTargetId === null) return;
+  const rect = canvasOriginal.getBoundingClientRect();
+  const x = Math.floor((ev.clientX - rect.left) * (canvasOriginal.width / rect.width));
+  const y = Math.floor((ev.clientY - rect.top) * (canvasOriginal.height / rect.height));
+  const data = ctxO.getImageData(x, y, 1, 1).data;
+  const t = targets.find(t => t.id === activeTargetId);
+  if(!t) return;
+  t.targetColor = {r: data[0], g: data[1], b: data[2]};
+  const swatch = t.element.querySelector('.swatch-title');
+  swatch.style.background = toHex(data[0], data[1], data[2]);
+  swatch.classList.remove('active');
+  swatch.querySelector('.pipette-icon').style.display = 'none';
+  selectionMode = false;
+  canvasOriginal.style.cursor = 'default';
+  applyEdits();
+});
+
+function applyEdits(){
+    if(!image.width) return;
+    ctxP.clearRect(0,0,canvasPreview.width,canvasPreview.height);
+    ctxP.drawImage(image,0,0);
+    let imgData = ctxP.getImageData(0,0,canvasPreview.width,canvasPreview.height);
+    let data = imgData.data;
+ 
+    targets.forEach(t=>{
+        const tol = parseInt(t.element.querySelector('.tolerance').value);
+        const feather = parseInt(t.element.querySelector('.feather').value);
+        const expand = parseInt(t.element.querySelector('.expand').value);
+        const hue = parseInt(t.element.querySelector('.hue').value);
+        const sat = parseInt(t.element.querySelector('.saturation').value);
+        const val = parseInt(t.element.querySelector('.value').value);
+        const useReplace = t.element.querySelector('.useColorReplace').checked;
+        const replaceColor = useReplace ? hexToRgb(t.element.querySelector('.colorReplace').value) : null;
+
+        for(let i=0;i<data.length;i+=4){
+            const dr = Math.abs(data[i]-t.targetColor.r);
+            const dg = Math.abs(data[i+1]-t.targetColor.g);
+            const db = Math.abs(data[i+2]-t.targetColor.b);
+            const dist = (dr+dg+db)/3;
+            if(dist<=tol){
+                // HSV
+                let [h,s,v] = rgbToHsv(data[i],data[i+1],data[i+2]);
+                h = (h+hue+360)%360;
+                s = clamp(s+sat,0,100);
+                v = clamp(v+val,0,100);
+                let [r,g,b] = hsvToRgb(h,s,v);
+
+                // Remplacement couleur
+                if(useReplace && replaceColor){
+                    r = replaceColor.r;
+                    g = replaceColor.g;
+                    b = replaceColor.b;
+                }
+
+                data[i] = r;
+                data[i+1] = g;
+                data[i+2] = b;
+            }
+        }
+    });
+
+    ctxP.putImageData(imgData,0,0);
+}
+</script>
+</body>
+</html>
