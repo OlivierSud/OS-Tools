@@ -5,21 +5,174 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Éditeur de couleur complet</title>
 <style>
-:root{--panel-width:320px}
-body{font-family:Inter, Roboto, system-ui, Arial; margin:16px; display:flex; gap:18px; align-items:flex-start}
-.zone{display:flex;flex-direction:column;gap:8px;align-items:center}
-.canvas-wrap{background:#fafafa;border:1px solid #ddd;padding:8px}
-canvas{display:block;max-width:560px;max-height:560px;border:1px solid #ccc}
-#controls{width:var(--panel-width);display:flex;flex-direction:column;gap:10px}
-label{font-size:13px;font-weight:600}
-.row{display:flex;gap:8px;align-items:center}
-input[type=range]{width:100%}
-.swatch-title{width:16px;height:16px;border-radius:50%;border:1px solid #222;display:inline-block;margin-right:6px;vertical-align:middle;position:relative}
-.swatch-title.active{border:2px dashed #00f; animation: pulse 1s infinite alternate;}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,0,255,0.5);}100%{box-shadow:0 0 0 4px rgba(0,0,255,0.5);}}
-.swatch-title .pipette-icon{position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23000" viewBox="0 0 24 24"><path d="M19.7 4.3l-3-3a1 1 0 0 0-1.4 0l-1.8 1.8 4.4 4.4 1.8-1.8a1 1 0 0 0 0-1.4zM3 21v-3l10-10 3 3-10 10H3z"/></svg>') no-repeat center center;background-size:contain; display:none;}
-.colorReplace{margin-top:4px;}
-.colorReplace.disabled{opacity:0.5;pointer-events:none;}
+:root {
+    --panel-width: 320px;
+    --bg-color: #021d2f;
+    --panel-bg-color: #073347;
+    --border-color: #0b283a;
+    --text-color: #f0f0f0;
+    --label-color: #ccc;
+    --accent-color: #007acc;
+    --accent-hover-color: #0095ff;
+    --danger-color: #c0392b;
+    --danger-hover-color: #e74c3c;
+    --input-bg: #0b283a;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 16px;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+h3 {
+    font-weight: 400;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    width: 100%;
+    text-align: center;
+    margin-top: 0;
+}
+.zone {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    background-color: var(--panel-bg-color);
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+.canvas-wrap {
+    background-image: linear-gradient(45deg, #404040 25%, transparent 25%), linear-gradient(-45deg, #404040 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #404040 75%), linear-gradient(-45deg, transparent 75%, #404040 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    border: 1px solid var(--border-color);
+    padding: 8px;
+    border-radius: 4px;
+}
+canvas {
+    display: block;
+    max-width: 560px;
+    max-height: 560px;
+}
+#controls {
+    width: var(--panel-width);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--label-color);
+}
+.row { display: flex; gap: 8px; align-items: center; }
+.hint { font-size: 12px; color: #888; font-style: italic; }
+
+/* --- Form Elements --- */
+button, input[type="file"]::file-selector-button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s ease-out;
+    font-size: 14px;
+}
+button:hover, input[type="file"]::file-selector-button:hover {
+    background-color: var(--accent-hover-color);
+    transform: scale(1.02);
+}
+button:active, input[type="file"]::file-selector-button:active {
+    transform: scale(0.98);
+    transition-duration: 0.05s;
+}
+input[type="file"] {
+    font-size: 13px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px;
+}
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%; height: 6px; cursor: pointer; background: #c1c1c1; border-radius: 3px;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--accent-color); cursor: pointer; margin-top: -5px;
+    transition: transform 0.1s ease-out;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+input[type=color] {
+    -webkit-appearance: none;
+    border: none;
+    width: 100%;
+    height: 28px;
+    background: none;
+    cursor: pointer;
+}
+input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type=color]::-webkit-color-swatch { border: 1px solid var(--border-color); border-radius: 4px; }
+
+/* --- Target Panel --- */
+.target-panel {
+    background-color: var(--panel-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.panel-title {
+    padding: 8px 12px;
+    background-color: #062838;
+    cursor: pointer;
+}
+.panel-content {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+}
+.swatch-title {
+    width: 16px; height: 16px; border-radius: 50%; border: 1px solid #888; display: inline-block; margin-right: 6px; vertical-align: middle; position: relative; cursor: pointer;
+}
+.swatch-title.active {
+    border: 2px solid var(--accent-hover-color);
+    animation: pulse 1s infinite alternate;
+}
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 149, 255, 0.5); }
+    100% { box-shadow: 0 0 0 4px rgba(0, 149, 255, 0); }
+}
+.swatch-title .pipette-icon {
+    position: absolute; top: -4px; right: -4px; width: 12px; height: 12px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23FFF" viewBox="0 0 24 24"><path d="M19.7 4.3l-3-3a1 1 0 0 0-1.4 0l-1.8 1.8 4.4 4.4 1.8-1.8a1 1 0 0 0 0-1.4zM3 21v-3l10-10 3 3-10 10H3z"/></svg>') no-repeat center center;
+    background-size: contain; display: none;
+}
+.colorReplace { margin-top: 4px; }
+.colorReplace.disabled { opacity: 0.5; pointer-events: none; }
+.removeTarget { background-color: var(--danger-color); }
+.removeTarget:hover { background-color: var(--danger-hover-color); }
+.resetTarget {
+    font-size: 16px;
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 2px;
+}
+.resetTarget:hover {
+    background-color: rgba(255,255,255,0.1);
+}
 </style>
 </head>
 <body>
@@ -203,7 +356,10 @@ function addTargetPanel(){
       <span style="display:flex;align-items:center;gap:6px;">
         <span class="swatch-title" style="background:#ff0000"><span class="pipette-icon"></span></span> Couleur cible ${id}
       </span>
-      <span class="arrow" style="display:inline-block;cursor:pointer;user-select:none;transition:transform 0.2s;">▼</span>
+      <span style="display:flex;align-items:center;gap:4px;">
+        <button class="resetTarget" title="Réinitialiser les réglages">🔄</button>
+        <span class="arrow" style="display:inline-block;cursor:pointer;user-select:none;transition:transform 0.2s;">▼</span>
+      </span>
     </div>
     <div class="panel-content">
       <div class="row"><input type="checkbox" class="useColorReplace"> Remplacer par couleur</div>
@@ -231,6 +387,19 @@ function addTargetPanel(){
       content.style.display='block';
       arrow.style.transform='';
     }
+  });
+
+  panel.querySelector('.resetTarget').addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.querySelector('.useColorReplace').checked = false;
+    panel.querySelector('.colorReplace').classList.add('disabled');
+    panel.querySelector('.tolerance').value = 30;
+    panel.querySelector('.feather').value = 6;
+    panel.querySelector('.expand').value = 0;
+    panel.querySelector('.hue').value = 0;
+    panel.querySelector('.saturation').value = 0;
+    panel.querySelector('.value').value = 0;
+    applyEdits();
   });
 
   const swatch=panel.querySelector('.swatch-title');
