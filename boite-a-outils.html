@@ -73,25 +73,13 @@
 
     // Fonction pour extraire la catégorie d'un nom d'outil
     function extractCategory(toolName) {
-      // Patterns pour identifier les catégories
-      if (toolName.startsWith('2D -')) return '2D';
-      if (toolName.startsWith('3D -')) return '3D';
-      if (toolName.startsWith('Video -')) return 'Vidéo';
-      if (toolName.startsWith('Audio -')) return 'Audio';
-      if (toolName.startsWith('Image -')) return 'Image';
-      if (toolName.startsWith('Text -')) return 'Texte';
-      if (toolName.startsWith('Data -')) return 'Données';
-      if (toolName.startsWith('Web -')) return 'Web';
-      if (toolName.startsWith('Dev -')) return 'Développement';
-      if (toolName.startsWith('Utils -')) return 'Utilitaires';
-      
-      // Si aucun pattern ne correspond, essayer d'extraire le premier mot
-      const firstWord = toolName.split(' ')[0];
-      if (firstWord && firstWord.length <= 10) {
-        return firstWord;
+      // Nouveau format : on prend le préfixe avant le premier tiret
+      const match = toolName.match(/^([^-]+)-/);
+      if (match) {
+        // Nettoyage d'éventuels espaces ou majuscules
+        return match[1].trim().replace(/^[a-z]/, c => c.toUpperCase());
       }
-      
-      return null; // Pas de catégorie trouvée
+      return null;
     }
 
     // Fonction pour scanner automatiquement le dossier Outils
@@ -117,12 +105,13 @@
         } else {
           // Fallback pour les navigateurs qui ne supportent pas l'API File System Access
           const staticFiles = [
-            { name: '2D - GIF creator.html', path: './Outils/2D - GIF creator.html' },
-            { name: '2D - Sprite sheet cutter.html', path: './Outils/2D - Sprite sheet cutter.html' },
-            { name: '2D - svg remove color.html', path: './Outils/2D - svg remove color.html' },
-            { name: '2D - Remove color as alpha.html', path: './Outils/2D - Remove color as alpha.html' },
-            { name: '3D - Json to GLTF.html', path: './Outils/3D - Json to GLTF.html' },
-            { name: 'Video - Timelaps to MP4.html', path: './Outils/Video - Timelaps to MP4.html' }
+            { name: '2D-GIF-creator.html', path: './Outils/2D-GIF-creator.html' },
+            { name: '2D-Sprite-sheet-cutter.html', path: './Outils/2D-Sprite-sheet-cutter.html' },
+            { name: '2D-svg-remove-color.html', path: './Outils/2D-svg-remove-color.html' },
+            { name: '2D-Remove-color-as-alpha.html', path: './Outils/2D-Remove-color-as-alpha.html' },
+            { name: '2D-color-replacement.html', path: './Outils/2D-color-replacement.html' },
+            { name: '3D-Json-to-GLTF.html', path: './Outils/3D-Json-to-GLTF.html' },
+            { name: 'Video-Timelaps-to-MP4.html', path: './Outils/Video-Timelaps-to-MP4.html' }
           ];
           
           tools = staticFiles;
@@ -133,12 +122,13 @@
         console.error('Erreur lors du scan du dossier:', error);
         // En cas d'erreur, utiliser la liste statique
         const staticFiles = [
-          { name: '2D - GIF creator.html', path: './Outils/2D - GIF creator.html' },
-          { name: '2D - Sprite sheet cutter.html', path: './Outils/2D - Sprite sheet cutter.html' },
-          { name: '2D - svg remove color.html', path: './Outils/2D - svg remove color.html' },
-          { name: '2D - Remove color as alpha.html', path: './Outils/2D - Remove color as alpha.html' },
-          { name: '3D - Json to GLTF.html', path: './Outils/3D - Json to GLTF.html' },
-          { name: 'Video - Timelaps to MP4.html', path: './Outils/Video - Timelaps to MP4.html' }
+          { name: '2D-GIF-creator.html', path: './Outils/2D-GIF-creator.html' },
+          { name: '2D-Sprite-sheet-cutter.html', path: './Outils/2D-Sprite-sheet-cutter.html' },
+          { name: '2D-svg-remove-color.html', path: './Outils/2D-svg-remove-color.html' },
+          { name: '2D-Remove-color-as-alpha.html', path: './Outils/2D-Remove-color-as-alpha.html' },
+          { name: '2D-color-replacement.html', path: './Outils/2D-color-replacement.html' },
+          { name: '3D-Json-to-GLTF.html', path: './Outils/3D-Json-to-GLTF.html' },
+          { name: 'Video-Timelaps-to-MP4.html', path: './Outils/Video-Timelaps-to-MP4.html' }
         ];
         
         tools = staticFiles;

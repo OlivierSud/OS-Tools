@@ -53,6 +53,106 @@ function hsvToRgb(h,s,v){h=(h%360+360)%360;s/=100;v/=100;const i=Math.floor(h/60
 function toHex(r,g,b){const h=x=>x.toString(16).padStart(2,'0');return '#'+h(r)+h(g)+h(b);}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 
+function hexToRgb(hex) {
+  hex = hex.replace(/^#/, '');
+  if (hex.length === 3) {
+    hex = hex.split('').map(x => x + x).join('');
+  }
+  const num = parseInt(hex, 16);
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255
+  };
+}
+
+function boxBlurMask(mask, width, height, radius) {
+  if (radius < 1) return mask;
+  const out = new Float32Array(mask.length);
+  const tmp = new Float32Array(mask.length);
+  // Horizontal blur (ignorer bords)
+  for (let y = 1; y < height-1; y++) {
+    let sum = 0;
+    for (let x = 1; x < width-1; x++) {
+      const idx = y * width + x;
+      sum = 0;
+      let count = 0;
+      for(let k = -Math.floor(radius/2); k <= Math.floor(radius/2); k++) {
+        const xx = x + k;
+        if(xx > 0 && xx < width-1) {
+          sum += mask[y*width + xx];
+          count++;
+        }
+      }
+      tmp[idx] = count > 0 ? sum / count : 0;
+    }
+  }
+  // Vertical blur (ignorer bords)
+  for (let x = 1; x < width-1; x++) {
+    for (let y = 1; y < height-1; y++) {
+      const idx = y * width + x;
+      let sum = 0;
+      let count = 0;
+      for(let k = -Math.floor(radius/2); k <= Math.floor(radius/2); k++) {
+        const yy = y + k;
+        if(yy > 0 && yy < height-1) {
+          sum += tmp[yy*width + x];
+          count++;
+        }
+      }
+      out[idx] = count > 0 ? sum / count : 0;
+    }
+  }
+  // Bords restent à 0
+  for(let x=0; x<width; x++) {
+    out[x] = 0;
+    out[(height-1)*width + x] = 0;
+  }
+  for(let y=0; y<height; y++) {
+    out[y*width] = 0;
+    out[y*width + (width-1)] = 0;
+  }
+  return out;
+}
+
+function dilateErodeMask(mask, width, height, amount) {
+  if (amount === 0) return mask;
+  let src = mask;
+  let dst = new Float32Array(mask.length);
+  const absAmount = Math.abs(amount);
+  for(let iter=0; iter<absAmount; iter++) {
+    dst.fill(0);
+    for(let y=1; y<height-1; y++) {
+      for(let x=1; x<width-1; x++) {
+        const idx = y*width + x;
+        if(amount > 0) { // Dilate
+          dst[idx] = Math.max(
+            src[idx],
+            src[idx-1], src[idx+1],
+            src[idx-width], src[idx+width],
+            src[idx-width-1], src[idx-width+1],
+            src[idx+width-1], src[idx+width+1]
+          );
+        } else { // Erode
+          dst[idx] = Math.min(
+            src[idx],
+            src[idx-1], src[idx+1],
+            src[idx-width], src[idx+width],
+            src[idx-width-1], src[idx-width+1],
+            src[idx+width-1], src[idx+width+1]
+          );
+        }
+      }
+    }
+    // Protéger le bord strict
+    for(let x=0; x<width; x++) { dst[x]=0; dst[(height-1)*width+x]=0; }
+    for(let y=0; y<height; y++) { dst[y*width]=0; dst[y*width+width-1]=0; }
+    // Préparer pour itération suivante
+    let tmp = src; src = dst; dst = tmp;
+  }
+  return src;
+}
+
 const fileInput=document.getElementById('fileInput');
 const canvasOriginal=document.getElementById('canvasOriginal');
 const ctxO=canvasOriginal.getContext('2d');
@@ -99,7 +199,12 @@ function addTargetPanel(){
   panel.classList.add('target-panel');
   panel.dataset.id=id;
   panel.innerHTML=`
-    <div class="panel-title"><span class="swatch-title" style="background:#ff0000"><span class="pipette-icon"></span></span> Couleur cible ${id}</div>
+    <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span class="swatch-title" style="background:#ff0000"><span class="pipette-icon"></span></span> Couleur cible ${id}
+      </span>
+      <span class="arrow" style="display:inline-block;cursor:pointer;user-select:none;transition:transform 0.2s;">▼</span>
+    </div>
     <div class="panel-content">
       <div class="row"><input type="checkbox" class="useColorReplace"> Remplacer par couleur</div>
       <input type="color" class="colorReplace disabled" value="#ff0000">
@@ -117,7 +222,16 @@ function addTargetPanel(){
   const title=panel.querySelector('.panel-title');
   const content=panel.querySelector('.panel-content');
   content.style.display='block';
-  title.addEventListener('click',()=>{content.style.display=content.style.display==='block'?'none':'block';});
+  const arrow=panel.querySelector('.arrow');
+  arrow.addEventListener('click',()=>{
+    if(content.style.display==='block'){
+      content.style.display='none';
+      arrow.style.transform='rotate(-90deg)';
+    }else{
+      content.style.display='block';
+      arrow.style.transform='';
+    }
+  });
 
   const swatch=panel.querySelector('.swatch-title');
   swatch.addEventListener('click',()=>{
@@ -164,13 +278,30 @@ canvasOriginal.addEventListener('click', ev => {
   applyEdits();
 });
 
+exportBtn.addEventListener('click', () => {
+  canvasPreview.toBlob(blob => {
+    if (!blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || 'export.png';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    }, 100);
+  }, 'image/png');
+});
+
 function applyEdits(){
     if(!image.width) return;
     ctxP.clearRect(0,0,canvasPreview.width,canvasPreview.height);
     ctxP.drawImage(image,0,0);
     let imgData = ctxP.getImageData(0,0,canvasPreview.width,canvasPreview.height);
     let data = imgData.data;
- 
+    const width = canvasPreview.width;
+    const height = canvasPreview.height;
+
     targets.forEach(t=>{
         const tol = parseInt(t.element.querySelector('.tolerance').value);
         const feather = parseInt(t.element.querySelector('.feather').value);
@@ -181,33 +312,56 @@ function applyEdits(){
         const useReplace = t.element.querySelector('.useColorReplace').checked;
         const replaceColor = useReplace ? hexToRgb(t.element.querySelector('.colorReplace').value) : null;
 
-        for(let i=0;i<data.length;i+=4){
+        // 1. Créer un masque binaire (1 = sélectionné, 0 = non), sans jamais sélectionner les pixels du bord strict (x=0, x=width-1, y=0, y=height-1)
+        const mask = new Float32Array(width * height);
+        for(let y=0; y<height; y++){
+          for(let x=0; x<width; x++){
+            if(x === 0 || x === width-1 || y === 0 || y === height-1) {
+              mask[y*width + x] = 0;
+              continue;
+            }
+            const i = (y*width + x)*4;
             const dr = Math.abs(data[i]-t.targetColor.r);
             const dg = Math.abs(data[i+1]-t.targetColor.g);
             const db = Math.abs(data[i+2]-t.targetColor.b);
             const dist = (dr+dg+db)/3;
-            if(dist<=tol){
-                // HSV
+            mask[y*width + x] = (dist <= tol) ? 1 : 0;
+          }
+        }
+        // 1b. Agrandir/Réduire la sélection (dilate/erode), sans toucher le bord
+        let mask2 = mask;
+        if(expand !== 0) {
+          mask2 = dilateErodeMask(mask, width, height, expand);
+        }
+        // 2. Flouter le masque (bordure) si feather > 0
+        let blurred = mask2;
+        if(feather > 0){
+          blurred = boxBlurMask(mask2, width, height, feather);
+        }
+        // 3. Appliquer l'effet selon le masque flouté, mais jamais sur les bords stricts
+        for(let y=0; y<height; y++){
+          for(let x=0; x<width; x++){
+            if(x === 0 || x === width-1 || y === 0 || y === height-1) continue;
+            const i = (y*width + x)*4;
+            const alpha = blurred[y*width + x];
+            if(alpha > 0){
                 let [h,s,v] = rgbToHsv(data[i],data[i+1],data[i+2]);
                 h = (h+hue+360)%360;
                 s = clamp(s+sat,0,100);
                 v = clamp(v+val,0,100);
                 let [r,g,b] = hsvToRgb(h,s,v);
-
-                // Remplacement couleur
                 if(useReplace && replaceColor){
                     r = replaceColor.r;
                     g = replaceColor.g;
                     b = replaceColor.b;
                 }
-
-                data[i] = r;
-                data[i+1] = g;
-                data[i+2] = b;
+                data[i]   = Math.round(data[i]*(1-alpha) + r*alpha);
+                data[i+1] = Math.round(data[i+1]*(1-alpha) + g*alpha);
+                data[i+2] = Math.round(data[i+2]*(1-alpha) + b*alpha);
             }
+          }
         }
     });
-
     ctxP.putImageData(imgData,0,0);
 }
 </script>
