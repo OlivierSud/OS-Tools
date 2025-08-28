@@ -19,8 +19,25 @@
     input, select, button { background: #0f162b; border: 1px solid rgba(255,255,255,.15); color: var(--text); padding: 8px 10px; border-radius: 10px; margin-right: 6px; }
     input[type="number"] { width: 80px; }
 
-    button { cursor: pointer; background: linear-gradient(135deg, var(--accent1), var(--accent2)); transition: transform .12s ease; border:0; color:#fff; font-weight:700; }
-    button:hover { background: linear-gradient(135deg, var(--accent3), var(--accent4)); transform: translateY(-1px); color:#011b0a; }
+    button, input[type="file"]::file-selector-button {
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      transition: transform .12s ease, background .12s ease;
+      border:0;
+      color:#fff;
+      font-weight:700;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+    button:hover, input[type="file"]::file-selector-button:hover {
+      background: linear-gradient(135deg, var(--accent3), var(--accent4));
+      transform: translateY(-1px);
+      color:#011b0a;
+    }
+    button:active, input[type="file"]::file-selector-button:active {
+      transform: translateY(0);
+      transition-duration: 0.05s;
+    }
 
     #image-upload, .fixed-size-inputs { margin-bottom: 15px; }
     .fixed-size-inputs label { margin-right: 15px; }
@@ -31,6 +48,32 @@
 
     .output-list { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; padding: 10px 0; max-height: 120px; }
     .output-list img { height: 90px; object-fit: contain; flex-shrink: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; background: #0f1a31; padding: 2px; }
+
+    .output-item { position: relative; flex-shrink: 0; }
+    .output-item:hover .delete-btn { display: block; }
+    .delete-btn {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 24px;
+      height: 24px;
+      background: #c0392b !important; /* Priorité pour la couleur de fond */
+      color: white;
+      border: none;
+      border-radius: 0 0 0 8px;
+      cursor: pointer;
+      font-weight: bold;
+      line-height: 24px;
+      text-align: center;
+      padding: 0; /* Réinitialiser le padding */
+      font-size: 20px; /* Ajuster la taille de la croix */
+      transform: none !important; /* Annuler la transformation au survol */
+    }
+    .delete-btn:hover {
+      background: #e74c3c !important;
+      color: white; /* S'assurer que la couleur du texte ne change pas */
+    }
 
     .preview-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .selectors { margin: 10px 0; flex-shrink: 0; }
@@ -180,8 +223,8 @@
     canvas.addEventListener('mouseup', () => { isDragging = false; });
 
     generateBtn.addEventListener('click', () => {
-      const previousBaseIndex = baseSelect.selectedIndex;
-      const previousOverlayIndex = overlaySelect.selectedIndex;
+      const previousBaseIndex = baseSelect.selectedIndex > -1 ? baseSelect.selectedIndex : 0;
+      const previousOverlayIndex = overlaySelect.selectedIndex > -1 ? overlaySelect.selectedIndex : 0;
       output.innerHTML = '';
       baseSelect.innerHTML = '';
       overlaySelect.innerHTML = '';
@@ -201,22 +244,51 @@
           tempCanvas.height = cropH;
           tempCtx.clearRect(0, 0, cropW, cropH);
           tempCtx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+          
           const croppedImg = new Image();
           croppedImg.src = tempCanvas.toDataURL();
-          croppedImg.dataset.index = index;
-          output.appendChild(croppedImg);
           images.push(croppedImg.src);
+
+          const itemContainer = document.createElement('div');
+          itemContainer.className = 'output-item';
+          itemContainer.dataset.index = index;
+          
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'delete-btn';
+          deleteBtn.innerHTML = '&times;';
+          deleteBtn.title = 'Supprimer';
+
+          itemContainer.appendChild(croppedImg);
+          itemContainer.appendChild(deleteBtn);
+          output.appendChild(itemContainer);
+
           const option = document.createElement('option');
           option.value = index;
           option.textContent = `Découpe ${index + 1}`;
           baseSelect.appendChild(option.cloneNode(true));
           overlaySelect.appendChild(option);
         });
-        if (previousBaseIndex >= 0) baseSelect.selectedIndex = previousBaseIndex;
-        if (previousOverlayIndex >= 0) overlaySelect.selectedIndex = previousOverlayIndex;
+        if (images.length > 0) {
+          baseSelect.selectedIndex = Math.min(previousBaseIndex, images.length - 1);
+          overlaySelect.selectedIndex = Math.min(previousOverlayIndex, images.length - 1);
+        }
         updateOverlay();
       };
       img.src = mainImage.src;
+    });
+
+    output.addEventListener('click', function(e) {
+      if (e.target.classList.contains('delete-btn')) {
+        const item = e.target.closest('.output-item');
+        const indexToRemove = parseInt(item.dataset.index, 10);
+        
+        // Supprimer le rectangle et régénérer
+        if (!isNaN(indexToRemove) && indexToRemove < rectangles.length) {
+          rectangles.splice(indexToRemove, 1);
+          drawAllRectangles();
+          generateBtn.click(); // Re-génère la liste pour garder les indices corrects
+        }
+      }
     });
 
     function updateOverlay() {

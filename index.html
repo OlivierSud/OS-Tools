@@ -1,45 +1,92 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OS-Tools - Accueil</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS-Tools - Boîte à Outils</title>
     <style>
-        :root { color-scheme: light dark; }
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif; margin: 24px; line-height: 1.5; }
-        h1 { margin-bottom: 8px; }
-        .subtitle { color: #666; margin-top: 0; }
-        ul { padding-left: 20px; }
-        a { text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .group { margin-top: 24px; }
-        .muted { color: #666; font-size: 0.95em; }
+        :root{ --bg:#061c30; --panel:#082137; --border:#051727; --text:#d7dde7; --accent1:#4f8cff; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 {
+            font-weight: 400;
+            margin-bottom: 40px;
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .tool-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-decoration: none;
+            color: var(--text);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-color: var(--accent1);
+        }
+        .tool-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--accent1);
+        }
+        .tool-card p {
+            font-size: 0.9em;
+            color: #9aa5b1;
+        }
     </style>
-    <link rel="icon" href="data:,">
 </head>
 <body>
-    <h1>OS-Tools</h1>
-    <p class="subtitle muted">Accès rapide à mes outils en ligne</p>
-
-    <div class="group">
-        <h2>Racine</h2>
-        <ul>
-            <li><a href="boite-a-outils.html">Boîte à outils</a></li>
-        </ul>
+    <h1>OS-Tools - Boîte à Outils</h1>
+    <div class="tools-grid">
+        <a href="Outils/2D-GIF-creator.html" class="tool-card">
+            <h2>GIF Creator</h2>
+            <p>Créez des animations GIF à partir d'images.</p>
+        </a>
+        <a href="Outils/2D-color-replacement.html" class="tool-card">
+            <h2>Color Replacement</h2>
+            <p>Remplacez des couleurs spécifiques dans une image.</p>
+        </a>
+        <a href="Outils/2D-Sprite-sheet-cutter.html" class="tool-card">
+            <h2>Sprite Sheet Cutter</h2>
+            <p>Découpez des sprites à partir d'une feuille de sprites.</p>
+        </a>
+        <a href="Outils/2D-Image-to-vector.html" class="tool-card">
+            <h2>Image to Vector</h2>
+            <p>Convertissez des images bitmap en graphiques vectoriels (SVG).</p>
+        </a>
+        <a href="Outils/2D-Remove-color-as-alpha.html" class="tool-card">
+            <h2>Remove Color as Alpha</h2>
+            <p>Rend une couleur transparente dans une image.</p>
+        </a>
+        <a href="Outils/2D-svg-remove-color.html" class="tool-card">
+            <h2>SVG Remove Color</h2>
+            <p>Supprimez une couleur d'un fichier SVG.</p>
+        </a>
+        <a href="Outils/3D-Json-to-GLTF.html" class="tool-card">
+            <h2>JSON to GLTF</h2>
+            <p>Convertissez des modèles 3D du format JSON vers GLTF.</p>
+        </a>
+        <a href="Outils/Video-Timelaps-to-MP4.html" class="tool-card">
+            <h2>Timelapse to MP4</h2>
+            <p>Créez une vidéo MP4 à partir d'une séquence d'images.</p>
+        </a>
     </div>
-
-    <div class="group">
-        <h2>Outils</h2>
-        <ul>
-            <li><a href="./Outils/2D-GIF-creator.html">2D-GIF-creator</a></li>
-            <li><a href="./Outils/2D-Sprite-sheet-cutter.html">2D-Sprite-sheet-cutter</a></li>
-            <li><a href="./Outils/2D-svg-remove-color.html">2D-svg-remove-color</a></li>
-            <li><a href="./Outils/3D-Json-to-GLTF.html">3D-Json-to-GLTF</a></li>
-            <li><a href="./Outils/Video-Timelaps-to-MP4.html">Video-Timelaps-to-MP4</a></li>
-        </ul>
-    </div>
-
-    <p class="muted">Astuce: ajoutez cette page en favori pour tout retrouver rapidement.</p>
 </body>
 </html>
 

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectoriseur d'Image</title>
+    <style>
+        :root{ --bg:#061c30; --panel:#082137; --border:#051727; --text:#d7dde7; --accent1:#4f8cff; --accent2:#7a5cff; --accent3:#4fff95; --accent4:#5cff85; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        h1 {
+            font-weight: 400;
+        }
+        .container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 400;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        #sourceImage {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: auto;
+            border-radius: 5px;
+        }
+        #svgPreview {
+            flex-grow: 1;
+            background-color: white;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        #svgPreview svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            background-color: var(--panel);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        button, input[type="file"]::file-selector-button {
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--accent1), var(--accent2));
+            transition: transform .12s ease, background .12s ease;
+            border:0;
+            color:#fff;
+            font-weight:700;
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+        button:hover, input[type="file"]::file-selector-button:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, var(--accent3), var(--accent4));
+            color: #011b0a;
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .options-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--panel);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .option-item label {
+            flex-shrink: 0;
+        }
+        .option-item input[type="range"] {
+            flex-grow: 1;
+        }
+        .option-item select, .option-item input[type="checkbox"] {
+             background: #0f162b;
+             border: 1px solid #444;
+             color: var(--text);
+             padding: 4px;
+             border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Vectoriseur d'Image en Ligne</h1>
+
+    <div class="controls">
+        <input type="file" id="imageLoader" name="imageLoader"/>
+        <button id="downloadButton" disabled>Télécharger le SVG</button>
+    </div>
+
+    <div class="options-panel">
+        <div class="option-item">
+            <label for="turdsize">Anti-taches (px):</label>
+            <input type="range" id="turdsize" min="0" max="10" value="2" step="1">
+            <span id="turdsizeValue">2</span>
+        </div>
+        <div class="option-item">
+            <label for="alphamax">Seuil de coin:</label>
+            <input type="range" id="alphamax" min="0" max="1.5" value="1" step="0.05">
+            <span id="alphamaxValue">1.00</span>
+        </div>
+        <div class="option-item">
+            <label for="opttolerance">Tolérance optim.:</label>
+            <input type="range" id="opttolerance" min="0" max="1" value="0.2" step="0.05">
+            <span id="opttoleranceValue">0.20</span>
+        </div>
+        <div class="option-item">
+            <label for="optcurve">Optimiser courbes:</label>
+            <input type="checkbox" id="optcurve" checked>
+        </div>
+        <div class="option-item">
+            <label for="turnpolicy">Politique virage:</label>
+            <select id="turnpolicy">
+                <option value="minority" selected>Minorité</option>
+                <option value="black">Noir</option>
+                <option value="white">Blanc</option>
+                <option value="left">Gauche</option>
+                <option value="right">Droite</option>
+                <option value="majority">Majorité</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Image Source</h2>
+            <img id="sourceImage" alt="Veuillez charger une image" />
+        </div>
+        <div class="panel">
+            <h2>Prévisualisation Vectorielle</h2>
+            <div id="svgPreview"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/potrace/src/potrace.js"></script>
+    <script>
+        const imageLoader = document.getElementById('imageLoader');
+        const sourceImage = document.getElementById('sourceImage');
+        const svgPreview = document.getElementById('svgPreview');
+        const downloadButton = document.getElementById('downloadButton');
+
+        // Contrôles des options
+        const turdsizeSlider = document.getElementById('turdsize');
+        const alphamaxSlider = document.getElementById('alphamax');
+        const opttoleranceSlider = document.getElementById('opttolerance');
+        const optcurveCheckbox = document.getElementById('optcurve');
+        const turnpolicySelect = document.getElementById('turnpolicy');
+        const turdsizeValue = document.getElementById('turdsizeValue');
+        const alphamaxValue = document.getElementById('alphamaxValue');
+        const opttoleranceValue = document.getElementById('opttoleranceValue');
+
+        let svgContent = '';
+
+        imageLoader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    sourceImage.src = event.target.result;
+                    sourceImage.onload = () => {
+                        vectorizeImage();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function getPotraceParameters() {
+            const policies = {
+                "black": Potrace.TURNPOLICY_BLACK,
+                "white": Potrace.TURNPOLICY_WHITE,
+                "left": Potrace.TURNPOLICY_LEFT,
+                "right": Potrace.TURNPOLICY_RIGHT,
+                "minority": Potrace.TURNPOLICY_MINORITY,
+                "majority": Potrace.TURNPOLICY_MAJORITY
+            };
+            return {
+                turnpolicy: policies[turnpolicySelect.value],
+                turdsize: parseFloat(turdsizeSlider.value),
+                optcurve: optcurveCheckbox.checked,
+                alphamax: parseFloat(alphamaxSlider.value),
+                opttolerance: parseFloat(opttoleranceSlider.value)
+            };
+        }
+
+        function vectorizeImage() {
+            if (!sourceImage.src) return;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = sourceImage.naturalWidth;
+            canvas.height = sourceImage.naturalHeight;
+            ctx.drawImage(sourceImage, 0, 0);
+
+            const params = getPotraceParameters();
+            
+            Potrace.trace(canvas, params, function(svg) {
+                svgContent = svg;
+                svgPreview.innerHTML = svgContent;
+                downloadButton.disabled = false;
+            });
+        }
+
+        downloadButton.addEventListener('click', () => {
+            if (svgContent) {
+                const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'vectorized-image.svg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Écouteurs pour les options
+        turdsizeSlider.addEventListener('input', () => {
+            turdsizeValue.textContent = turdsizeSlider.value;
+            vectorizeImage();
+        });
+        alphamaxSlider.addEventListener('input', () => {
+            alphamaxValue.textContent = parseFloat(alphamaxSlider.value).toFixed(2);
+            vectorizeImage();
+        });
+        opttoleranceSlider.addEventListener('input', () => {
+            opttoleranceValue.textContent = parseFloat(opttoleranceSlider.value).toFixed(2);
+            vectorizeImage();
+        });
+        optcurveCheckbox.addEventListener('change', vectorizeImage);
+        turnpolicySelect.addEventListener('change', vectorizeImage);
+
+    </script>
+</body>
+</html>

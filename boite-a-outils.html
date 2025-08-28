@@ -4,11 +4,26 @@
   <meta charset="UTF-8">
   <title>Outils hors ligne</title>
   <style>
+    :root{ --accent1:#4f8cff; --accent2:#7a5cff; --accent3:#4fff95; --accent4:#5cff85; }
     body { margin:0; display:flex; height:100vh; font-family:sans-serif; }
     #sidebar { width:300px; background: linear-gradient(135deg, #0b1c2c, #0e1d39);; color:#eaf5fe; padding:20px;
                display:flex; flex-direction:column; }
     #sidebar h2 { margin:0; font-size:18px; text-align:center; display:flex; justify-content:space-between; align-items:center; }
-    #refresh { background: linear-gradient(135deg, #2360a1, #205590); color:#ffffff; border:none; padding:4px 8px; border-radius:5px; cursor:pointer; }
+    #refresh {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color:#ffffff;
+      border:none;
+      padding:4px 8px;
+      border-radius:5px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease;
+      font-weight: normal;
+    }
+    #refresh:hover {
+      background: linear-gradient(135deg, var(--accent3), var(--accent4));
+      transform: translateY(-1px);
+      color:#011b0a;
+    }
     #list { list-style:none; padding:0; margin:10px 0 0; flex:1; overflow:auto; }
     #list li { margin:6px 0; }
     #list a { display:block; padding:6px 10px; color:#ffffff; text-decoration:none; border-radius:5px; }
@@ -110,6 +125,7 @@
             { name: '2D-svg-remove-color.html', path: './Outils/2D-svg-remove-color.html' },
             { name: '2D-Remove-color-as-alpha.html', path: './Outils/2D-Remove-color-as-alpha.html' },
             { name: '2D-color-replacement.html', path: './Outils/2D-color-replacement.html' },
+            { name: '2D-Image-to-vector.html', path: './Outils/2D-Image-to-vector.html' },
             { name: '3D-Json-to-GLTF.html', path: './Outils/3D-Json-to-GLTF.html' },
             { name: 'Video-Timelaps-to-MP4.html', path: './Outils/Video-Timelaps-to-MP4.html' }
           ];
@@ -127,6 +143,7 @@
           { name: '2D-svg-remove-color.html', path: './Outils/2D-svg-remove-color.html' },
           { name: '2D-Remove-color-as-alpha.html', path: './Outils/2D-Remove-color-as-alpha.html' },
           { name: '2D-color-replacement.html', path: './Outils/2D-color-replacement.html' },
+          { name: '2D-Image-to-vector.html', path: './Outils/2D-Image-to-vector.html' },
           { name: '3D-Json-to-GLTF.html', path: './Outils/3D-Json-to-GLTF.html' },
           { name: 'Video-Timelaps-to-MP4.html', path: './Outils/Video-Timelaps-to-MP4.html' }
         ];
