@@ -16,7 +16,7 @@ La boîte à outils permet d'accéder facilement à tous les outils disponibles,
 -   **[Color Replacement](https://oliviersud.github.io/OS-Tools/Outils/2D-color-replacement.html)** : Remplacez des couleurs spécifiques dans une image.
 -   **[Sprite Sheet Cutter](https://oliviersud.github.io/OS-Tools/Outils/2D-Sprite-sheet-cutter.html)** : Découpez des sprites à partir d'une feuille de sprites.
 -   **[Image to Vector](https://oliviersud.github.io/OS-Tools/Outils/2D-Image-to-vector.html)** : Convertissez des images bitmap en graphiques vectoriels (SVG).
--   **[Normal Map Generator](https://oliviersud.github.io/OS-Tools/Outils/2D-Normal-map-generator.html)** : Générez des normal maps à partir d'images de hauteur.
+-   **[Normal Map Generator](https://oliviersud.github.io/OS-Tools/Outils/3D-normal-map-generator.html)** : Générez des normal maps à partir d'images de hauteur.
 -   **[Remove Color as Alpha](https://oliviersud.github.io/OS-Tools/Outils/2D-Remove-color-as-alpha.html)** : Rend une couleur transparente dans une image.
 -   **[SVG Remove Color](./Outils/2D-svg-remove-color.html)** : Supprimez une couleur d'un fichier SVG.
 
