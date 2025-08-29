@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Normal Map v3.1</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #333;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .panel {
+            background-color: #444;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .controls-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        .preview-panel {
+            flex: 2;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            border-bottom: 2px solid #555;
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: #00aaff;
+        }
+        .control-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        .checkbox-label { display: inline-block; margin-left: 5px; font-weight: normal; }
+        input[type="file"] { padding: 8px; background-color: #555; border-radius: 4px; cursor: pointer; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        .original-preview { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 20px; }
+        #originalImagePreview { max-width: 150px; max-height: 150px; border: 2px dashed #666; border-radius: 4px; background-color: #3a3a3a; object-fit: contain; min-height: 50px; }
+        #normalMapCanvas { width: 100%; max-width: 512px; height: auto; border-radius: 4px; background-color: #3a3a3a; image-rendering: pixelated; }
+        .value-display { display: inline-block; margin-left: 10px; font-weight: normal; color: #ccc; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel controls-panel">
+        <h1>Paramètres</h1>
+
+        <div class="control-group">
+            <label for="imageLoader">1. Importer un fichier source</label>
+            <input type="file" id="imageLoader" name="imageLoader" accept="image/*"/>
+            <div class="original-preview">
+                 <label>Aperçu source</label>
+                <img id="originalImagePreview" src="" alt="Aperçu de l'image d'origine"/>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <h2>2. Réglages de la Normal Map</h2>
+            <label for="intensity">Intensité <span id="intensityValue" class="value-display">1.00</span></label>
+            <input type="range" id="intensity" min="0" max="100" value="50" step="1">
+
+            <label for="smallDetails">Petits Détails (Lissage) <span id="smallDetailsValue" class="value-display">1.00</span></label>
+            <input type="range" id="smallDetails" min="0" max="1" value="1" step="0.01">
+
+            <label for="mediumDetails">Moyens Détails <span id="mediumDetailsValue" class="value-display">0.00</span></label>
+            <input type="range" id="mediumDetails" min="0" max="1" value="0" step="0.01">
+
+            <label for="largeDetails">Grands Détails <span id="largeDetailsValue" class="value-display">0.00</span></label>
+            <input type="range" id="largeDetails" min="0" max="1" value="0" step="0.01">
+        </div>
+        
+        <div class="control-group">
+            <h2>3. Options des canaux</h2>
+            <div class="options-grid">
+                <div>
+                    <label>Format</label>
+                    <input type="radio" id="formatOpenGL" name="format" value="opengl" checked>
+                    <label for="formatOpenGL" class="checkbox-label">OpenGL</label><br>
+                    <input type="radio" id="formatDirectX" name="format" value="directx">
+                    <label for="formatDirectX" class="checkbox-label">DirectX</label>
+                </div>
+                <div>
+                    <label>Inverser</label>
+                    <input type="checkbox" id="invertR">
+                    <label for="invertR" class="checkbox-label">R (X)</label><br>
+                    <input type="checkbox" id="invertG">
+                    <label for="invertG" class="checkbox-label">V (Y)</label><br>
+                    <input type="checkbox" id="invertB">
+                    <label for="invertB" class="checkbox-label">B (Z)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel preview-panel">
+        <h2>Aperçu de la Normal Map</h2>
+        <canvas id="normalMapCanvas" width="512" height="512"></canvas>
+    </div>
+</div>
+
+<script>
+    // Elements DOM
+    const imageLoader = document.getElementById('imageLoader');
+    const originalImagePreview = document.getElementById('originalImagePreview');
+    const normalMapCanvas = document.getElementById('normalMapCanvas');
+    const ctx = normalMapCanvas.getContext('2d');
+
+    const intensitySlider = document.getElementById('intensity');
+    const smallDetailsSlider = document.getElementById('smallDetails');
+    const mediumDetailsSlider = document.getElementById('mediumDetails');
+    const largeDetailsSlider = document.getElementById('largeDetails');
+    
+    const intensityValue = document.getElementById('intensityValue');
+    const smallDetailsValue = document.getElementById('smallDetailsValue');
+    const mediumDetailsValue = document.getElementById('mediumDetailsValue');
+    const largeDetailsValue = document.getElementById('largeDetailsValue');
+
+    const formatOpenGL = document.getElementById('formatOpenGL');
+    const formatDirectX = document.getElementById('formatDirectX');
+    const invertR = document.getElementById('invertR');
+    const invertG = document.getElementById('invertG');
+    const invertB = document.getElementById('invertB');
+
+    let sourceImage = new Image();
+    let sourceCanvas = document.createElement('canvas');
+    let sourceCtx = sourceCanvas.getContext('2d');
+
+    function updateValueDisplay() {
+        intensityValue.textContent = parseFloat(intensitySlider.value).toFixed(2);
+        smallDetailsValue.textContent = parseFloat(smallDetailsSlider.value).toFixed(2);
+        mediumDetailsValue.textContent = parseFloat(mediumDetailsSlider.value).toFixed(2);
+        largeDetailsValue.textContent = parseFloat(largeDetailsSlider.value).toFixed(2);
+    }
+
+    function handleFormatChange() {
+        if (formatDirectX.checked) {
+            invertG.checked = true;
+            invertG.disabled = true;
+        } else {
+            invertG.checked = false;
+            invertG.disabled = false;
+        }
+        generateNormalMap();
+    }
+    
+    imageLoader.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = event => {
+            sourceImage.onload = () => {
+                originalImagePreview.src = sourceImage.src;
+                sourceCanvas.width = sourceImage.width;
+                sourceCanvas.height = sourceImage.height;
+                normalMapCanvas.width = sourceImage.width;
+                normalMapCanvas.height = sourceImage.height;
+                generateNormalMap();
+            };
+            sourceImage.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    });
+
+    const controls = [
+        intensitySlider, smallDetailsSlider, mediumDetailsSlider, largeDetailsSlider,
+        invertR, invertG, invertB
+    ];
+    controls.forEach(control => control.addEventListener('input', () => {
+        updateValueDisplay();
+        generateNormalMap();
+    }));
+    
+    formatOpenGL.addEventListener('change', handleFormatChange);
+    formatDirectX.addEventListener('change', handleFormatChange);
+    
+    function getPixel(imageData, x, y) {
+        if (x < 0 || x >= imageData.width || y < 0 || y >= imageData.height) return 0;
+        const i = (y * imageData.width + x) * 4;
+        return imageData.data[i] * 0.299 + imageData.data[i + 1] * 0.587 + imageData.data[i + 2] * 0.114;
+    }
+
+    function generateNormalMap() {
+        if (!sourceImage.src) return;
+
+        const width = sourceCanvas.width;
+        const height = sourceCanvas.height;
+        
+        const intensityRaw = parseFloat(intensitySlider.value) / 100;
+        const strength = Math.pow(intensityRaw, 2) * 2.5;
+        
+        const sStr = parseFloat(smallDetailsSlider.value);
+        const mStr = parseFloat(mediumDetailsSlider.value);
+        const lStr = parseFloat(largeDetailsSlider.value);
+
+        // --- NOUVELLE LOGIQUE DE LISSAGE ---
+        // Pour éviter les sauts de rendu, nous mélangeons une image nette et une image floue
+        // au lieu de faire varier le rayon du flou.
+        const maxBlur = 4; // Un flou constant pour la version lissée
+
+        // 1. Dessiner la version floue en premier sur le canvas source
+        sourceCtx.clearRect(0, 0, width, height);
+        sourceCtx.filter = `blur(${maxBlur}px)`;
+        sourceCtx.drawImage(sourceImage, 0, 0);
+
+        // 2. Dessiner la version nette par-dessus, avec une opacité contrôlée par le curseur
+        sourceCtx.globalAlpha = sStr;
+        sourceCtx.filter = 'none'; // Important: réinitialiser le filtre avant de dessiner
+        sourceCtx.drawImage(sourceImage, 0, 0);
+        
+        // 3. Récupérer les données de l'image mélangée et réinitialiser le contexte
+        sourceCtx.globalAlpha = 1.0;
+        const srcData = sourceCtx.getImageData(0, 0, width, height);
+        // --- FIN DE LA NOUVELLE LOGIQUE ---
+
+        const destImageData = ctx.createImageData(width, height);
+        const destData = destImageData.data;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const n_x1 = getPixel(srcData, x - 1, y), n_x2 = getPixel(srcData, x + 1, y);
+                const n_y1 = getPixel(srcData, x, y - 1), n_y2 = getPixel(srcData, x, y + 1);
+                const m_x1 = getPixel(srcData, x - 2, y), m_x2 = getPixel(srcData, x + 2, y);
+                const m_y1 = getPixel(srcData, x, y - 2), m_y2 = getPixel(srcData, x, y + 2);
+                const l_x1 = getPixel(srcData, x - 4, y), l_x2 = getPixel(srcData, x + 4, y);
+                const l_y1 = getPixel(srcData, x, y - 4), l_y2 = getPixel(srcData, x, y + 4);
+                
+                let dx = (n_x2 - n_x1) * sStr + (m_x2 - m_x1) * mStr + (l_x2 - l_x1) * lStr;
+                let dy = (n_y2 - n_y1) * sStr + (m_y2 - m_y1) * mStr + (l_y2 - l_y1) * lStr;
+
+                let normal = { x: -dx * strength, y: -dy * strength, z: 1.0 };
+                
+                const len = Math.sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
+                if (len > 0) { normal.x /= len; normal.y /= len; normal.z /= len; }
+
+                let r = (normal.x * 0.5 + 0.5) * 255;
+                let g = (normal.y * 0.5 + 0.5) * 255;
+                let b = (normal.z * 0.5 + 0.5) * 255;
+
+                if (invertR.checked) r = 255 - r;
+                if (invertG.checked) g = 255 - g;
+                if (invertB.checked) b = 255 - b;
+
+                const index = (y * width + x) * 4;
+                destData[index] = r;
+                destData[index + 1] = g;
+                destData[index + 2] = b;
+                destData[index + 3] = 255;
+            }
+        }
+        ctx.putImageData(destImageData, 0, 0);
+    }
+    
+    updateValueDisplay();
+    handleFormatChange();
+</script>
+
+</body>
+</html>
