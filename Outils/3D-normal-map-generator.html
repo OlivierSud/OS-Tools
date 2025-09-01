@@ -16,19 +16,26 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         .container {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 30px;
             width: 100%;
             max-width: 1200px;
+            height: 100%;
         }
         .panel {
             background-color: #444;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            overflow-y: auto;
+            height: 100%;
+            box-sizing: border-box;
         }
         .controls-panel {
             flex: 1;
@@ -92,27 +99,36 @@
             <label for="enableHeightmap" class="checkbox-label">Activer la génération de Heightmap</label>
             
             <div id="heightmap-options" style="margin-top: 10px;">
-                <label for="blurAmount">Flou <span id="blurAmountValue" class="value-display">0.0</span></label>
-                <input type="range" id="blurAmount" min="0" max="5" value="0" step="0.1">
+                <label for="hmLargeShapes">Formes Larges <span id="hmLargeShapesValue" class="value-display">0.60</span></label>
+                <input type="range" id="hmLargeShapes" min="0" max="1" value="0.6" step="0.05">
 
-                <label for="levelsAmount">Niveaux (Contraste) <span id="levelsAmountValue" class="value-display">1.0</span></label>
-                <input type="range" id="levelsAmount" min="0" max="3" value="1" step="0.05">
+                <label for="hmMediumDetails">Détails Moyens <span id="hmMediumDetailsValue" class="value-display">0.60</span></label>
+                <input type="range" id="hmMediumDetails" min="0" max="3" value="0.6" step="0.05">
+
+                <label for="hmFineDetails">Détails Fins <span id="hmFineDetailsValue" class="value-display">0.60</span></label>
+                <input type="range" id="hmFineDetails" min="0" max="3" value="0.6" step="0.05">
+                
+                <label for="hmIntensity">Intensité Globale <span id="hmIntensityValue" class="value-display">2.00</span></label>
+                <input type="range" id="hmIntensity" min="0" max="3" value="2.0" step="0.05">
+
+                <label for="hmSmoothing">Lissage Final <span id="hmSmoothingValue" class="value-display">2.0</span></label>
+                <input type="range" id="hmSmoothing" min="0" max="5" value="2.0" step="0.1">
             </div>
         </div>
 
         <div class="control-group">
             <h2>3. Réglages de la Normal Map</h2>
             <label for="intensity">Intensité <span id="intensityValue" class="value-display">1.00</span></label>
-            <input type="range" id="intensity" min="0" max="100" value="50" step="1">
+            <input type="range" id="intensity" min="0" max="100" value="63" step="1">
 
-            <label for="smallDetails">Petits Détails (Lissage) <span id="smallDetailsValue" class="value-display">1.00</span></label>
-            <input type="range" id="smallDetails" min="0" max="1" value="1" step="0.01">
+            <label for="smallDetails">Petits Détails (Lissage) <span id="smallDetailsValue" class="value-display">0.10</span></label>
+            <input type="range" id="smallDetails" min="0" max="1" value="0.1" step="0.01">
 
-            <label for="mediumDetails">Moyens Détails <span id="mediumDetailsValue" class="value-display">0.00</span></label>
-            <input type="range" id="mediumDetails" min="0" max="1" value="0" step="0.01">
+            <label for="mediumDetails">Moyens Détails <span id="mediumDetailsValue" class="value-display">0.10</span></label>
+            <input type="range" id="mediumDetails" min="0" max="1" value="0.1" step="0.01">
 
-            <label for="largeDetails">Grands Détails <span id="largeDetailsValue" class="value-display">0.00</span></label>
-            <input type="range" id="largeDetails" min="0" max="1" value="0" step="0.01">
+            <label for="largeDetails">Grands Détails <span id="largeDetailsValue" class="value-display">0.10</span></label>
+            <input type="range" id="largeDetails" min="0" max="1" value="0.1" step="0.01">
         </div>
         
         <div class="control-group">
@@ -191,10 +207,18 @@
 
     const enableHeightmap = document.getElementById('enableHeightmap');
     const heightmapOptions = document.getElementById('heightmap-options');
-    const blurSlider = document.getElementById('blurAmount');
-    const levelsSlider = document.getElementById('levelsAmount');
-    const blurValue = document.getElementById('blurAmountValue');
-    const levelsValue = document.getElementById('levelsAmountValue');
+    const hmLargeShapesSlider = document.getElementById('hmLargeShapes');
+    const hmMediumDetailsSlider = document.getElementById('hmMediumDetails');
+    const hmFineDetailsSlider = document.getElementById('hmFineDetails');
+    const hmIntensitySlider = document.getElementById('hmIntensity');
+    const hmSmoothingSlider = document.getElementById('hmSmoothing');
+
+    const hmLargeShapesValue = document.getElementById('hmLargeShapesValue');
+    const hmMediumDetailsValue = document.getElementById('hmMediumDetailsValue');
+    const hmFineDetailsValue = document.getElementById('hmFineDetailsValue');
+    const hmIntensityValue = document.getElementById('hmIntensityValue');
+    const hmSmoothingValue = document.getElementById('hmSmoothingValue');
+
     const roughnessSlider = document.getElementById('roughnessSlider');
     const roughnessValue = document.getElementById('roughnessValue');
 
@@ -205,7 +229,23 @@
     const invertB = document.getElementById('invertB');
 
     // Variables Babylon.js
-    let engine, scene, pbrMaterial, cube, sphere, currentMesh;
+    let engine, scene, pbrMaterial, cube, sphere, currentMesh, hdrTexture;
+    const INITIAL_CAMERA_ZOOM = 1.9; // <-- Réglage du zoom initial
+
+    // --- Optimisation des performances ---
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    // Créer des versions "débouncées" des fonctions coûteuses
+    const debouncedGenerateNormalMap = debounce(generateNormalMap, 50);
+    const debouncedGenerateHeightmap = debounce(generateHeightmap, 50);
+
 
     let sourceImage = new Image();
     let sourceCanvas = document.createElement('canvas');
@@ -220,8 +260,13 @@
         smallDetailsValue.textContent = parseFloat(smallDetailsSlider.value).toFixed(2);
         mediumDetailsValue.textContent = parseFloat(mediumDetailsSlider.value).toFixed(2);
         largeDetailsValue.textContent = parseFloat(largeDetailsSlider.value).toFixed(2);
-        blurValue.textContent = parseFloat(blurSlider.value).toFixed(1);
-        levelsValue.textContent = parseFloat(levelsSlider.value).toFixed(2);
+        
+        hmLargeShapesValue.textContent = parseFloat(hmLargeShapesSlider.value).toFixed(2);
+        hmMediumDetailsValue.textContent = parseFloat(hmMediumDetailsSlider.value).toFixed(2);
+        hmFineDetailsValue.textContent = parseFloat(hmFineDetailsSlider.value).toFixed(2);
+        hmIntensityValue.textContent = parseFloat(hmIntensitySlider.value).toFixed(2);
+        hmSmoothingValue.textContent = parseFloat(hmSmoothingSlider.value).toFixed(1);
+
         roughnessValue.textContent = parseFloat(roughnessSlider.value).toFixed(2);
     }
 
@@ -272,21 +317,21 @@
     ];
     parameterControls.forEach(control => control.addEventListener('input', () => {
         updateValueDisplay();
-        generateNormalMap();
+        debouncedGenerateNormalMap(); // Utilise la version optimisée
     }));
 
     // Nouveaux écouteurs
     enableHeightmap.addEventListener('change', () => {
         heightmapOptions.style.display = enableHeightmap.checked ? 'block' : 'none';
-        generateHeightmap();
+        generateHeightmap(); // Le clic est instantané, pas besoin de debounce ici
     });
-    blurSlider.addEventListener('input', () => {
-        updateValueDisplay();
-        generateHeightmap();
-    });
-    levelsSlider.addEventListener('input', () => {
-        updateValueDisplay();
-        generateHeightmap();
+    
+    const hmSliders = [hmLargeShapesSlider, hmMediumDetailsSlider, hmFineDetailsSlider, hmIntensitySlider, hmSmoothingSlider];
+    hmSliders.forEach(slider => {
+        slider.addEventListener('input', () => {
+            updateValueDisplay();
+            debouncedGenerateHeightmap(); // Utilise la version optimisée
+        });
     });
     
     roughnessSlider.addEventListener('input', () => {
@@ -313,24 +358,94 @@
         heightmapCtx.clearRect(0, 0, width, height);
 
         if (enableHeightmap.checked) {
-            const blur = parseFloat(blurSlider.value);
-            const levels = parseFloat(levelsSlider.value);
+            const largeShapesStrength = parseFloat(hmLargeShapesSlider.value);
+            const mediumDetailsStrength = parseFloat(hmMediumDetailsSlider.value);
+            const fineDetailsStrength = parseFloat(hmFineDetailsSlider.value);
+            const intensity = parseFloat(hmIntensitySlider.value);
+            const smoothing = parseFloat(hmSmoothingSlider.value);
 
-            // 1. Dessiner l'image source et appliquer le flou
-            heightmapCtx.filter = `blur(${blur}px) grayscale(1)`;
-            heightmapCtx.drawImage(sourceImage, 0, 0);
-            heightmapCtx.filter = 'none';
+            // --- Étape 1: Créer les couches multi-échelle ---
+            const tempCanvas1 = document.createElement('canvas');
+            const tempCtx1 = tempCanvas1.getContext('2d');
+            tempCanvas1.width = width;
+            tempCanvas1.height = height;
 
-            // 2. Appliquer l'ajustement des niveaux (contraste)
-            const imageData = heightmapCtx.getImageData(0, 0, width, height);
-            const data = imageData.data;
-            for (let i = 0; i < data.length; i += 4) {
-                let val = data[i]; // L'image est déjà en niveaux de gris
-                val = ((val / 255 - 0.5) * levels + 0.5) * 255;
-                val = Math.max(0, Math.min(255, val)); // Clamp
-                data[i] = data[i + 1] = data[i + 2] = val;
+            const tempCanvas2 = document.createElement('canvas');
+            const tempCtx2 = tempCanvas2.getContext('2d');
+            tempCanvas2.width = width;
+            tempCanvas2.height = height;
+
+            // Couche de base en niveaux de gris (détails fins)
+            tempCtx1.filter = 'grayscale(1)';
+            tempCtx1.drawImage(sourceImage, 0, 0);
+            tempCtx1.filter = 'none';
+            const fineData = tempCtx1.getImageData(0, 0, width, height).data;
+
+            // Couche flou moyen
+            tempCtx2.filter = 'blur(2px)';
+            tempCtx2.drawImage(tempCanvas1, 0, 0);
+            tempCtx2.filter = 'none';
+            const mediumData = tempCtx2.getImageData(0, 0, width, height).data;
+
+            // Couche flou large
+            tempCtx1.filter = 'blur(8px)';
+            tempCtx1.drawImage(tempCanvas1, 0, 0);
+            tempCtx1.filter = 'none';
+            const largeData = tempCtx1.getImageData(0, 0, width, height).data;
+
+            // --- Étape 2: Fusion et Normalisation ---
+            const combinedValues = new Float32Array(width * height);
+            let min = Infinity, max = -Infinity;
+
+            for (let i = 0; i < fineData.length; i += 4) {
+                const v_fine = fineData[i];
+                const v_medium = mediumData[i];
+                const v_large = largeData[i];
+
+                const largeComponent = v_large * largeShapesStrength;
+                const mediumComponent = (v_medium - v_large) * mediumDetailsStrength;
+                const fineComponent = (v_fine - v_medium) * fineDetailsStrength;
+                
+                const finalValue = largeComponent + mediumComponent + fineComponent;
+                combinedValues[i / 4] = finalValue;
+
+                if (finalValue < min) min = finalValue;
+                if (finalValue > max) max = finalValue;
             }
-            heightmapCtx.putImageData(imageData, 0, 0);
+
+            const finalImageData = heightmapCtx.createImageData(width, height);
+            const finalData = finalImageData.data;
+            const range = max - min;
+
+            for (let i = 0; i < combinedValues.length; i++) {
+                let normalized = 0;
+                if (range > 0.001) {
+                    normalized = 255 * (combinedValues[i] - min) / range;
+                }
+                
+                const j = i * 4;
+                finalData[j] = finalData[j + 1] = finalData[j + 2] = normalized;
+                finalData[j + 3] = 255;
+            }
+            
+            // --- Étape 3: Post-traitement (Intensité et Lissage) ---
+            for (let i = 0; i < finalData.length; i += 4) {
+                let val = finalData[i];
+                val = ((val / 255 - 0.5) * intensity + 0.5) * 255;
+                val = Math.max(0, Math.min(255, val));
+                finalData[i] = finalData[i + 1] = finalData[i + 2] = val;
+            }
+            
+            heightmapCtx.putImageData(finalImageData, 0, 0);
+
+            if (smoothing > 0) {
+                tempCtx1.clearRect(0, 0, width, height);
+                tempCtx1.drawImage(heightmapCanvas, 0, 0);
+                heightmapCtx.clearRect(0, 0, width, height);
+                heightmapCtx.filter = `blur(${smoothing}px)`;
+                heightmapCtx.drawImage(tempCanvas1, 0, 0);
+                heightmapCtx.filter = 'none';
+            }
         } else {
             // Si désactivé, on utilise juste l'image source
             heightmapCtx.drawImage(sourceImage, 0, 0);
@@ -439,13 +554,40 @@
         engine = new BABYLON.Engine(babylonCanvas, true, { preserveDrawingBuffer: true, stencil: true });
         scene = new BABYLON.Scene(engine);
 
-        const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 0), scene);
+        const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, INITIAL_CAMERA_ZOOM, new BABYLON.Vector3(0, 0, 0), scene);
         camera.attachControl(babylonCanvas, true);
-        camera.wheelPrecision = 0; // Bloque le zoom
+        // CORRIGÉ : Suppression complète de la gestion du zoom pour éviter les bugs
+        camera.inputs.remove(camera.inputs.attached.mousewheel);
 
-        const hdrTexture = new BABYLON.CubeTexture.CreateFromPrefilteredData("https://assets.babylonjs.com/environments/environmentSpecular.env", scene);
+        hdrTexture = new BABYLON.CubeTexture.CreateFromPrefilteredData("https://assets.babylonjs.com/environments/environmentSpecular.env", scene);
         scene.environmentTexture = hdrTexture;
         scene.createDefaultSkybox(hdrTexture, true, 1000, 0.0);
+
+        // Permet la rotation de l'HDRI avec MAJ + Clic Gauche
+        let hdrRotationY = 0;
+        let isRotatingHDR = false;
+        scene.onPointerObservable.add((pointerInfo) => {
+            switch (pointerInfo.type) {
+                case BABYLON.PointerEventTypes.POINTERDOWN:
+                    if (pointerInfo.event.shiftKey && pointerInfo.event.button === 0) {
+                        isRotatingHDR = true;
+                        camera.detachControl();
+                    }
+                    break;
+                case BABYLON.PointerEventTypes.POINTERUP:
+                    if (isRotatingHDR) {
+                        isRotatingHDR = false;
+                        camera.attachControl(babylonCanvas, true);
+                    }
+                    break;
+                case BABYLON.PointerEventTypes.POINTERMOVE:
+                    if (isRotatingHDR) {
+                        hdrRotationY -= pointerInfo.event.movementX * 0.01;
+                        hdrTexture.setReflectionTextureMatrix(BABYLON.Matrix.RotationY(hdrRotationY));
+                    }
+                    break;
+            }
+        });
 
         pbrMaterial = new BABYLON.PBRMaterial("pbr", scene);
         pbrMaterial.metallic = 0.2;
