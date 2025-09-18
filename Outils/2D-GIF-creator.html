@@ -15,7 +15,7 @@
     .card{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px; }
     h2{ margin:0 0 8px 0; font-size:18px; }
     label{ display:block; margin:6px 0; }
-    input[type="file"], input[type="number"], select{ padding:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); background:#0f162b; color:var(--text); }
+    input[type="file"], input[type="number"], select, input[type="color"]{ padding:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); background:#0f162b; color:var(--text); }
     input:disabled, select:disabled{ opacity:.6; }
     img.preview{ max-height:100px; margin:5px; border-radius:8px; box-shadow:0 0 6px rgba(0,0,0,0.5); }
     #gif-container img{ max-width:600px; width:100%; height:auto; margin-top:10px; border-radius:10px; box-shadow:0 0 12px rgba(0,0,0,0.6); }
@@ -24,6 +24,15 @@
     .size-group{ margin-top:8px; }
     .size-disabled{ opacity:.5; pointer-events:none; }
     #preview{ display:flex; flex-wrap:wrap; margin-top:10px; }
+    .color-label{ display:flex; align-items:center; gap:8px; }
+    input[type="color"] {
+  padding: 0;           /* pas de padding, sinon bug d'affichage */
+  border: none;         /* on retire les bordures custom */
+  background: none;     /* on garde le rendu natif */
+  width: 40px;          /* largeur visible */
+  height: 30px;         /* hauteur visible */
+  cursor: pointer;      /* pointeur main */
+}
   </style>
 </head>
 <body>
@@ -54,6 +63,7 @@
             <option value="%">%</option>
           </select>
         </div>
+        <label class="color-label">🎨 Couleur de fond (si alpha) : <input type="color" id="bg-color" value="#000000"></label>
       </div>
       <button class="btn" onclick="generateGIF()">⚡ Générer le GIF</button>
       <div id="preview"></div>
@@ -98,6 +108,7 @@
       const loopCheckbox = document.getElementById('loop');
       const reverseCheckbox = document.getElementById('reverse');
       const originalSizeCheckbox = document.getElementById('use-original-size');
+      const bgColorInput = document.getElementById('bg-color');
 
       const widthInput = document.getElementById('width');
       const heightInput = document.getElementById('height');
@@ -124,6 +135,7 @@
         const shouldLoop = loopCheckbox.checked;
         const shouldReverse = reverseCheckbox.checked;
         const useOriginalSize = originalSizeCheckbox.checked;
+        const bgColor = bgColorInput.value;
 
         gifContainer.innerHTML = '';
         downloadBtn.style.display = 'none';
@@ -173,8 +185,9 @@
           const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
           images.forEach(img => {
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
+            ctx.fillStyle = bgColor; // couleur choisie
+            ctx.fillRect(0, 0, width, height); // remplir le fond
+            ctx.drawImage(img, 0, 0, width, height); // dessiner l'image
             gif.addFrame(ctx, { delay: duration, copy: true });
           });
 
@@ -199,4 +212,4 @@
     }
   </script>
 </body>
-</html
+</html>

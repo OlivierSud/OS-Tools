@@ -89,7 +89,7 @@
         <h1>Paramètres</h1>
 
         <div class="control-group">
-            <h2>1. Importer un fichier source</h2>
+            <label for="imageLoader">1. Importer un fichier source</label>
             <input type="file" id="imageLoader" name="imageLoader" accept="image/*"/>
         </div>
 
@@ -243,8 +243,8 @@
     }
 
     // Créer des versions "débouncées" des fonctions coûteuses
-    const debouncedGenerateNormalMap = debounce(generateNormalMap, 100);
-    const debouncedGenerateHeightmap = debounce(generateHeightmap, 100);
+    const debouncedGenerateNormalMap = debounce(generateNormalMap, 50);
+    const debouncedGenerateHeightmap = debounce(generateHeightmap, 50);
 
 
     let sourceImage = new Image();
@@ -283,7 +283,6 @@
     
     imageLoader.addEventListener('change', e => {
         const file = e.target.files[0];
-        const UVScale = 1;
         if (!file) return;
         const reader = new FileReader();
         reader.onload = event => {
@@ -299,13 +298,9 @@
                 if (pbrMaterial) {
                     if (pbrMaterial.albedoTexture) pbrMaterial.albedoTexture.dispose();
                     pbrMaterial.albedoTexture = new BABYLON.Texture(sourceImage.src, scene);
-                    pbrMaterial.albedoTexture.uScale = UVScale;
-                    pbrMaterial.albedoTexture.vScale = UVScale;
-        
-                 if (pbrMaterial.bumpTexture) pbrMaterial.bumpTexture.dispose();
+
+                    if (pbrMaterial.bumpTexture) pbrMaterial.bumpTexture.dispose();
                     pbrMaterial.bumpTexture = new BABYLON.DynamicTexture("normalMap", normalMapCanvas, scene, false);
-                    pbrMaterial.bumpTexture .uScale = UVScale;
-                    pbrMaterial.bumpTexture .vScale = UVScale;
                 }
 
                 generateHeightmap();
@@ -601,14 +596,7 @@
         cube = BABYLON.MeshBuilder.CreateBox("cube", {size: 1}, scene);
         cube.material = pbrMaterial;
 
-        sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {
-            diameter: 1.4, 
-            segments: 64,
-            arc: 1, // sphère tronquée sur 25% de longitude
-            slice: 1, // demi-sphère (dôme)
-            frontUVs: new BABYLON.Vector4(0, 0, 0.5, 1), // moitié gauche de la texture
-            backUVs: new BABYLON.Vector4(0.5, 0, 1, 1)   // moitié droite de la texture
-        }, scene);
+        sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 1.4, segments: 64}, scene);
         sphere.material = pbrMaterial;
         sphere.setEnabled(false);
 
