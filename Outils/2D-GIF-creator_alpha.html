@@ -133,11 +133,12 @@
         previewDiv.innerHTML = '';
         container.innerHTML = '';
         downloadBtn.style.display = 'none';
-        fileNameInput.style.display = 'none';
         fileSizeSpan.textContent = '';
+        fileNameInput.style.display = 'none';
         if(files.length>0){
           const firstName = files[0].name.split('.').slice(0,-1).join('.');
-          fileNameInput.value = firstName;
+          fileNameInput.value = firstName; // valeur par défaut
+          fileNameInput.placeholder = firstName;
         }
         files.forEach(file => {
           const img = document.createElement('img');
@@ -158,7 +159,7 @@
       });
 
       window.generateAnimation = function () {
-        const duration = parseInt(document.getElementById('duration').value) || 200;
+        const durationValue = parseInt(document.getElementById('duration').value) || 200;
         const shouldLoop = loopCb.checked;
         const shouldReverse = reverseCb.checked;
         const useOriginalSize = sizeCb.checked;
@@ -167,14 +168,16 @@
 
         container.innerHTML = '';
         downloadBtn.style.display = 'none';
-        fileNameInput.style.display = 'none';
+        fileNameInput.style.display = 'inline-block';
         fileSizeSpan.textContent = '';
         loading.style.display = 'block';
         progressBar.style.display = 'block';
         progressFill.style.width = "0%";
-        progressFill.classList.add('animate');
 
-        const fileNameDefault = fileNameInput.value.trim() || "animation";
+        // Relancer l'animation de gradient
+        progressFill.classList.remove('animate');
+        void progressFill.offsetWidth;
+        progressFill.classList.add('animate');
 
         const loadImgs = files.map(file => new Promise((res, rej) => {
           const img = new Image();
@@ -185,105 +188,63 @@
 
         Promise.all(loadImgs).then(images => {
           if (shouldReverse) images.reverse();
-
           let width = images[0].width;
           let height = images[0].height;
           if (!useOriginalSize) {
             const w = parseFloat(widthInput.value);
             const h = parseFloat(heightInput.value);
-            if (unitInput.value === '%') {
-              width = Math.round(images[0].width * (w / 100));
-              height = Math.round(images[0].height * (h / 100));
-            } else {
-              width = w;
-              height = h;
-            }
+            if(unitInput.value === '%') { width = Math.round(images[0].width*(w/100)); height = Math.round(images[0].height*(h/100)); }
+            else { width = w; height = h; }
           }
 
-          if (keepAlpha) {
-            // APNG
+          // === Nom du fichier pris en compte correctement dès la première génération ===
+          const currentFileName = fileNameInput.value.trim() || (files[0]? files[0].name.split('.').slice(0,-1).join('.') : "animation");
+
+          if(keepAlpha) {
             const frames = [];
             const delays = [];
-            const canvas = document.createElement('canvas');
-            canvas.width = width; canvas.height = height;
+            const canvas = document.createElement('canvas'); canvas.width=width; canvas.height=height;
             const ctx = canvas.getContext('2d');
-
-            images.forEach((img,i) => {
+            images.forEach((img,i)=>{
               ctx.clearRect(0,0,width,height);
               ctx.drawImage(img,0,0,width,height);
               frames.push(ctx.getImageData(0,0,width,height).data.buffer);
-              delays.push(duration);
+              delays.push(durationValue);
               progressFill.style.width = ((i+1)/images.length*70) + "%";
             });
-
             const apng = UPNG.encode(frames,width,height,0,delays);
-            const blob = new Blob([apng], {type:"image/apng"});
+            const blob = new Blob([apng],{type:"image/apng"});
             const url = URL.createObjectURL(blob);
-
-            const out = document.createElement('img');
-            out.src = url;
-            container.appendChild(out);
-
-            progressFill.style.width = "100%";
-            progressFill.classList.remove('animate');
-
-            downloadBtn.href = url;
-            downloadBtn.download = fileNameDefault + ".apng";
-            downloadBtn.textContent = "💾 Exporter en APNG";
-            downloadBtn.style.display = 'inline-block';
-            fileNameInput.style.display = 'inline-block';
-            fileSizeSpan.textContent = "(" + (blob.size / (1024*1024)).toFixed(2) + " Mo)";
-            loading.style.display = 'none';
-
+            const out = document.createElement('img'); out.src=url; container.appendChild(out);
+            progressFill.style.width="100%"; progressFill.classList.remove('animate');
+            downloadBtn.href=url; downloadBtn.download=currentFileName+".apng"; downloadBtn.textContent="💾 Exporter en APNG"; downloadBtn.style.display="inline-block";
+            fileSizeSpan.textContent="("+ (blob.size/(1024*1024)).toFixed(2)+" Mo)";
+            loading.style.display="none";
           } else {
-            // GIF
-            const gif = new GIF({
-              workers:2,
-              quality:10,
-              workerScript:workerURL,
-              repeat:shouldLoop?0:-1
-            });
-
+            const gif = new GIF({workers:2,quality:10,workerScript:workerURL,repeat:shouldLoop?0:-1});
             gif.setOptions({width,height});
-            const canvas = document.createElement('canvas');
-            canvas.width = width; canvas.height = height;
+            const canvas = document.createElement('canvas'); canvas.width=width; canvas.height=height;
             const ctx = canvas.getContext('2d');
-
-            images.forEach((img,i) => {
+            images.forEach((img,i)=>{
               ctx.clearRect(0,0,width,height);
-              ctx.fillStyle = bgColor;
-              ctx.fillRect(0,0,width,height);
+              ctx.fillStyle = bgColor; ctx.fillRect(0,0,width,height);
               ctx.drawImage(img,0,0,width,height);
-              gif.addFrame(ctx,{delay:duration,copy:true});
-              progressFill.style.width = ((i+1)/images.length*70) + "%";
+              gif.addFrame(ctx,{delay:durationValue,copy:true});
+              progressFill.style.width=((i+1)/images.length*70)+"%";
             });
-
-            gif.on('finished', blob => {
-              const result = document.createElement('img');
-              result.src = URL.createObjectURL(blob);
-              container.innerHTML = '';
-              container.appendChild(result);
-
-              progressFill.style.width = "100%";
-              progressFill.classList.remove('animate');
-
-              downloadBtn.href = result.src;
-              downloadBtn.download = fileNameDefault + ".gif";
-              downloadBtn.textContent = "💾 Exporter en GIF";
-              downloadBtn.style.display = 'inline-block';
-              fileNameInput.style.display = 'inline-block';
-              fileSizeSpan.textContent = "(" + (blob.size / (1024*1024)).toFixed(2) + " Mo)";
-              loading.style.display = 'none';
+            gif.on('finished', blob=>{
+              const result=document.createElement('img'); result.src=URL.createObjectURL(blob);
+              container.innerHTML=''; container.appendChild(result);
+              progressFill.style.width="100%"; progressFill.classList.remove('animate');
+              downloadBtn.href=result.src; downloadBtn.download=currentFileName+".gif"; downloadBtn.textContent="💾 Exporter en GIF"; downloadBtn.style.display="inline-block";
+              fileSizeSpan.textContent="("+ (blob.size/(1024*1024)).toFixed(2)+" Mo)";
+              loading.style.display="none";
             });
-
             gif.render();
           }
 
-        }).catch(err => {
-          alert(err);
-          loading.style.display = 'none';
-          progressBar.style.display = 'none';
-          progressFill.classList.remove('animate');
+        }).catch(err=>{
+          alert(err); loading.style.display='none'; progressBar.style.display='none'; progressFill.classList.remove('animate');
         });
       };
     }
