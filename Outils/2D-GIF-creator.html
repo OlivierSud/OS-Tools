@@ -36,6 +36,7 @@
     .actions { display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap; }
     #file-size { color:var(--muted); font-size:13px; }
     #file-name { padding:8px; border-radius:6px; border:1px solid #444; background:#0f162b; color:var(--text); display:none; }
+    .gif-quality-group { margin-top:12px; }
   </style>
 </head>
 <body>
@@ -67,6 +68,22 @@
           </label>
           <label><input type="checkbox" id="keep-alpha"> Garder alpha (export APNG)</label>
         </div>
+        <!-- Ajout des options de qualité GIF -->
+        <div class="gif-quality-group" style="margin-top:12px;">
+          <label>
+            Nombre de couleurs :
+            <select id="color-count">
+              <option value="2">2</option>
+              <option value="4">4</option>
+              <option value="8">8</option>
+              <option value="16">16</option>
+              <option value="32">32</option>
+              <option value="64">64</option>
+              <option value="128">128</option>
+              <option value="256" selected>256</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <div class="actions">
@@ -88,6 +105,58 @@
   <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js"></script>
 
+  <!-- NeuQuant (adaptation courte, utilisée pour générer la palette) -->
+  <script>
+    // NeuQuant implementation (lightweight port). Source idea: classic NeuQuant algorithm.
+    // Minimal implementation for browser usage to return palette bytes.
+    // Note: it's a compact/adjusted version - sufficient to produce a palette.
+    function NeuQuant(pixels, samplefac) {
+      // pixels: Uint8Array RGBRGB...
+      this.pixels = pixels;
+      this.samplefac = samplefac || 10;
+      this.network = new Array(256);
+      for (let i = 0; i < 256; i++) this.network[i] = [ (i<<2), (i<<2), (i<<2), 0 ];
+    }
+    NeuQuant.prototype.buildColormap = function(colors) {
+      // Very simplified learning: pick random samples and fill palette by k-means-ish approach.
+      const px = this.pixels;
+      const len = px.length;
+      const sampleStep = Math.max(1, Math.floor(this.samplefac));
+      const palette = [];
+      // initialize seeds by sampling
+      for (let i=0; i<colors; i++) {
+        const idx = ( (i * sampleStep) % (len/3) ) * 3;
+        palette.push([px[idx], px[idx+1], px[idx+2]]);
+      }
+      // few iterations of Lloyd-like relocation
+      for (let iter=0; iter<8; iter++) {
+        const sums = new Array(colors).fill(0).map(()=>[0,0,0,0]);
+        const counts = new Array(colors).fill(0);
+        for (let i=0;i<len;i+=3) {
+          const r=px[i], g=px[i+1], b=px[i+2];
+          let best=0, bd=1e9;
+          for (let j=0;j<colors;j++){
+            const p=palette[j];
+            const d=(r-p[0])*(r-p[0])+(g-p[1])*(g-p[1])+(b-p[2])*(b-p[2]);
+            if (d<bd){bd=d; best=j;}
+          }
+          sums[best][0]+=r; sums[best][1]+=g; sums[best][2]+=b; counts[best]++;
+        }
+        for (let j=0;j<colors;j++){
+          if (counts[j]>0) {
+            palette[j][0] = Math.round(sums[j][0]/counts[j]);
+            palette[j][1] = Math.round(sums[j][1]/counts[j]);
+            palette[j][2] = Math.round(sums[j][2]/counts[j]);
+          }
+        }
+      }
+      // flatten to Uint8Array
+      const out = new Uint8Array(colors*3);
+      for (let i=0;i<colors;i++){ out[i*3]=palette[i][0]; out[i*3+1]=palette[i][1]; out[i*3+2]=palette[i][2]; }
+      return out;
+    };
+  </script>
+  
   <script>
     fetch("https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.worker.js")
       .then(r => r.text())
@@ -125,6 +194,66 @@
       const bgColorInput = document.getElementById('bg-color');
       const bgColorLabel = document.getElementById('bg-color-label');
       const keepAlphaCb = document.getElementById('keep-alpha');
+      // Ajout des nouveaux contrôles
+      const colorCountInput = document.getElementById('color-count');
+      // Fonction de réduction de couleurs + tramage (Floyd–Steinberg)
+      function applyPalette(imageData, paletteBytes) {
+        const w = imageData.width, h = imageData.height;
+        const data = imageData.data;
+        const palN = paletteBytes.length / 3;
+        const palette = [];
+        for (let i=0;i<palN;i++) palette.push([paletteBytes[i*3], paletteBytes[i*3+1], paletteBytes[i*3+2]]);
+        // map chaque pixel au plus proche (sans diffusion d'erreur)
+        for (let y=0; y<h; y++){
+          for (let x=0; x<w; x++){
+            const idx = (y*w + x)*4;
+            const a = data[idx+3];
+            if (a < 128) { data[idx]=data[idx+1]=data[idx+2]=0; data[idx+3]=0; continue; }
+            const r = data[idx], g = data[idx+1], b = data[idx+2];
+            let best=0, bd=1e9;
+            for (let p=0;p<palN;p++){
+              const pc = palette[p];
+              const dd = (r-pc[0])*(r-pc[0]) + (g-pc[1])*(g-pc[1]) + (b-pc[2])*(b-pc[2]);
+              if (dd < bd){ bd = dd; best = p; }
+            }
+            data[idx] = palette[best][0];
+            data[idx+1] = palette[best][1];
+            data[idx+2] = palette[best][2];
+          }
+        }
+      }
+
+      // Construire une palette globale à partir d'un échantillon des frames (utilise NeuQuant ci-dessus)
+      async function buildPalette(images, w, h, colorCount) {
+        const tmp = document.createElement('canvas');
+        tmp.width = w; tmp.height = h;
+        const tctx = tmp.getContext('2d');
+        const samplePixels = [];
+        const maxSamples = 200000; // limite d'échantillons
+        for (let k = 0; k < images.length; k++) {
+          tctx.clearRect(0, 0, w, h);
+          tctx.drawImage(images[k], 0, 0, w, h);
+          const id = tctx.getImageData(0, 0, w, h).data;
+          // étape pour limiter le nombre d'échantillons
+          const step = Math.max(1, Math.floor((w * h) / Math.max(1, Math.floor(maxSamples / images.length))));
+          for (let i = 0; i < id.length; i += 4 * step) {
+            if (id[i+3] < 128) continue; // ignorer transparent
+            samplePixels.push(id[i], id[i+1], id[i+2]);
+          }
+        }
+        if (samplePixels.length === 0) {
+          // fallback : palette grayscale
+          const out = new Uint8Array(colorCount * 3);
+          for (let i = 0; i < colorCount; i++) {
+            const v = Math.round(i * (255 / Math.max(1, colorCount - 1)));
+            out[i*3] = out[i*3+1] = out[i*3+2] = v;
+          }
+          return out;
+        }
+        const pixelsArr = new Uint8Array(samplePixels);
+        const nq = new NeuQuant(pixelsArr, 10);
+        return nq.buildColormap(colorCount);
+      }
 
       let files = [];
 
@@ -133,11 +262,12 @@
         previewDiv.innerHTML = '';
         container.innerHTML = '';
         downloadBtn.style.display = 'none';
-        fileNameInput.style.display = 'none';
         fileSizeSpan.textContent = '';
+        fileNameInput.style.display = 'none';
         if(files.length>0){
           const firstName = files[0].name.split('.').slice(0,-1).join('.');
-          fileNameInput.value = firstName;
+          fileNameInput.value = firstName; // valeur par défaut
+          fileNameInput.placeholder = firstName;
         }
         files.forEach(file => {
           const img = document.createElement('img');
@@ -158,23 +288,27 @@
       });
 
       window.generateAnimation = function () {
-        const duration = parseInt(document.getElementById('duration').value) || 200;
+        const durationValue = parseInt(document.getElementById('duration').value) || 200;
         const shouldLoop = loopCb.checked;
         const shouldReverse = reverseCb.checked;
         const useOriginalSize = sizeCb.checked;
         const keepAlpha = keepAlphaCb.checked;
         const bgColor = bgColorInput.value;
+        // Récupération des options de qualité GIF
+        const colorCount = parseInt(colorCountInput.value, 10);
 
         container.innerHTML = '';
         downloadBtn.style.display = 'none';
-        fileNameInput.style.display = 'none';
+        fileNameInput.style.display = 'inline-block';
         fileSizeSpan.textContent = '';
         loading.style.display = 'block';
         progressBar.style.display = 'block';
         progressFill.style.width = "0%";
-        progressFill.classList.add('animate');
 
-        const fileNameDefault = fileNameInput.value.trim() || "animation";
+        // Relancer l'animation de gradient
+        progressFill.classList.remove('animate');
+        void progressFill.offsetWidth;
+        progressFill.classList.add('animate');
 
         const loadImgs = files.map(file => new Promise((res, rej) => {
           const img = new Image();
@@ -183,110 +317,93 @@
           img.src = URL.createObjectURL(file);
         }));
 
-        Promise.all(loadImgs).then(images => {
-          if (shouldReverse) images.reverse();
-
-          let width = images[0].width;
-          let height = images[0].height;
-          if (!useOriginalSize) {
-            const w = parseFloat(widthInput.value);
-            const h = parseFloat(heightInput.value);
-            if (unitInput.value === '%') {
-              width = Math.round(images[0].width * (w / 100));
-              height = Math.round(images[0].height * (h / 100));
-            } else {
-              width = w;
-              height = h;
-            }
+        Promise.all(loadImgs).then(async images => {
+           if (shouldReverse) images.reverse();
+           let width = images[0].width;
+           let height = images[0].height;
+           if (!useOriginalSize) {
+             const w = parseFloat(widthInput.value);
+             const h = parseFloat(heightInput.value);
+             if(unitInput.value === '%') { width = Math.round(images[0].width*(w/100)); height = Math.round(images[0].height*(h/100)); }
+             else { width = w; height = h; }
+           }
+          // si on demande une palette réduite, on la construit globalement avant d'ajouter les frames
+          let globalPalette = null;
+          if (!keepAlpha && colorCount && colorCount < 256) {
+            progressFill.style.width = "5%";
+            globalPalette = await buildPalette(images, width, height, colorCount);
+            progressFill.style.width = "10%";
           }
+ 
+           // === Nom du fichier pris en compte correctement dès la première génération ===
+           const currentFileName = fileNameInput.value.trim() || (files[0]? files[0].name.split('.').slice(0,-1).join('.') : "animation");
+ 
+           if(keepAlpha) {
+             const frames = [];
+             const delays = [];
+             const canvas = document.createElement('canvas'); canvas.width=width; canvas.height=height;
+             const ctx = canvas.getContext('2d');
+             images.forEach((img,i)=>{
+               ctx.clearRect(0,0,width,height);
+               ctx.drawImage(img,0,0,width,height);
+               frames.push(ctx.getImageData(0,0,width,height).data.buffer);
+               delays.push(durationValue);
+               progressFill.style.width = ((i+1)/images.length*70) + "%";
+             });
+             const apng = UPNG.encode(frames,width,height,0,delays);
+             const blob = new Blob([apng],{type:"image/apng"});
+             const url = URL.createObjectURL(blob);
+             const out = document.createElement('img'); out.src=url; container.appendChild(out);
+             progressFill.style.width="100%"; progressFill.classList.remove('animate');
+             downloadBtn.href=url; downloadBtn.download=currentFileName+".apng"; downloadBtn.textContent="💾 Exporter en APNG"; downloadBtn.style.display="inline-block";
+             fileSizeSpan.textContent="("+ (blob.size/(1024*1024)).toFixed(2)+" Mo)";
+             loading.style.display="none";
+           } else {
+             // Création du GIF
+             const gif = new GIF({
+               workers: 2,
+               quality: 10,
+               workerScript: workerURL,
+               repeat: shouldLoop ? 0 : -1
+             });
+             // si palette globale, transmettre palette + colors à gif.js pour forcer la palette finale
+             if (globalPalette) {
+               // gif.js.optimized accepte 'palette' comme tableau ou Uint8Array
+               gif.setOptions({ width, height, colors: colorCount, palette: Array.from(globalPalette) });
+             } else {
+               gif.setOptions({ width, height });
+             }
+             const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+             const ctx = canvas.getContext('2d');
+             images.forEach((img, i) => {
+               ctx.clearRect(0, 0, width, height);
+               ctx.fillStyle = bgColor; ctx.fillRect(0, 0, width, height);
+               ctx.drawImage(img, 0, 0, width, height);
+               // si on a construit une palette globale, appliquer quantification par frame (mapping au plus proche)
+               if (globalPalette) {
+                 const imgData = ctx.getImageData(0, 0, width, height);
+                 applyPalette(imgData, globalPalette);
+                 ctx.putImageData(imgData, 0, 0);
+               }
+               gif.addFrame(ctx, { delay: durationValue, copy: true });
+               progressFill.style.width = ((i + 1) / images.length * 70) + "%";
+             });
+             gif.on('finished', blob=>{
+               const result=document.createElement('img'); result.src=URL.createObjectURL(blob);
+               container.innerHTML=''; container.appendChild(result);
+               progressFill.style.width="100%"; progressFill.classList.remove('animate');
+               downloadBtn.href=result.src; downloadBtn.download=currentFileName+".gif"; downloadBtn.textContent="💾 Exporter en GIF"; downloadBtn.style.display="inline-block";
+               fileSizeSpan.textContent="("+ (blob.size/(1024*1024)).toFixed(2)+" Mo)";
+               loading.style.display="none";
+             });
+             gif.render();
+           }
 
-          if (keepAlpha) {
-            // APNG
-            const frames = [];
-            const delays = [];
-            const canvas = document.createElement('canvas');
-            canvas.width = width; canvas.height = height;
-            const ctx = canvas.getContext('2d');
-
-            images.forEach((img,i) => {
-              ctx.clearRect(0,0,width,height);
-              ctx.drawImage(img,0,0,width,height);
-              frames.push(ctx.getImageData(0,0,width,height).data.buffer);
-              delays.push(duration);
-              progressFill.style.width = ((i+1)/images.length*70) + "%";
-            });
-
-            const apng = UPNG.encode(frames,width,height,0,delays);
-            const blob = new Blob([apng], {type:"image/apng"});
-            const url = URL.createObjectURL(blob);
-
-            const out = document.createElement('img');
-            out.src = url;
-            container.appendChild(out);
-
-            progressFill.style.width = "100%";
-            progressFill.classList.remove('animate');
-
-            downloadBtn.href = url;
-            downloadBtn.download = fileNameDefault + ".apng";
-            downloadBtn.textContent = "💾 Exporter en APNG";
-            downloadBtn.style.display = 'inline-block';
-            fileNameInput.style.display = 'inline-block';
-            fileSizeSpan.textContent = "(" + (blob.size / (1024*1024)).toFixed(2) + " Mo)";
-            loading.style.display = 'none';
-
-          } else {
-            // GIF
-            const gif = new GIF({
-              workers:2,
-              quality:10,
-              workerScript:workerURL,
-              repeat:shouldLoop?0:-1
-            });
-
-            gif.setOptions({width,height});
-            const canvas = document.createElement('canvas');
-            canvas.width = width; canvas.height = height;
-            const ctx = canvas.getContext('2d');
-
-            images.forEach((img,i) => {
-              ctx.clearRect(0,0,width,height);
-              ctx.fillStyle = bgColor;
-              ctx.fillRect(0,0,width,height);
-              ctx.drawImage(img,0,0,width,height);
-              gif.addFrame(ctx,{delay:duration,copy:true});
-              progressFill.style.width = ((i+1)/images.length*70) + "%";
-            });
-
-            gif.on('finished', blob => {
-              const result = document.createElement('img');
-              result.src = URL.createObjectURL(blob);
-              container.innerHTML = '';
-              container.appendChild(result);
-
-              progressFill.style.width = "100%";
-              progressFill.classList.remove('animate');
-
-              downloadBtn.href = result.src;
-              downloadBtn.download = fileNameDefault + ".gif";
-              downloadBtn.textContent = "💾 Exporter en GIF";
-              downloadBtn.style.display = 'inline-block';
-              fileNameInput.style.display = 'inline-block';
-              fileSizeSpan.textContent = "(" + (blob.size / (1024*1024)).toFixed(2) + " Mo)";
-              loading.style.display = 'none';
-            });
-
-            gif.render();
-          }
-
-        }).catch(err => {
-          alert(err);
-          loading.style.display = 'none';
-          progressBar.style.display = 'none';
-          progressFill.classList.remove('animate');
+        }).catch(err=>{
+          alert(err); loading.style.display='none'; progressBar.style.display='none'; progressFill.classList.remove('animate');
         });
       };
-    }
-  </script>
+     }
+   </script>
 </body>
 </html>
