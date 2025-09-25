@@ -7,6 +7,9 @@
   window.heightmapCtx = heightmapCanvas.getContext('2d', { willReadFrequently: true });
   window.normalMapCanvas = document.getElementById('normalMapCanvas');
   window.ctx = normalMapCanvas.getContext('2d');
+  window.roughnessCanvas = document.createElement('canvas');
+  window.roughnessCtx = roughnessCanvas.getContext('2d', { willReadFrequently: true });
+  window.roughnessDynamicTexture = null;
 
   // Babylon related globals
   window.engine = null;

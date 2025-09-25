@@ -8,17 +8,21 @@
   };
 
   window.generateRoughnessMap = function() {
+    // ensure global canvases/context exist
+    const rCanvas = window.roughnessCanvas || (window.roughnessCanvas = document.createElement('canvas'));
+    const rCtx = window.roughnessCtx || (window.roughnessCtx = rCanvas.getContext('2d', { willReadFrequently: true }));
     if (!heightmapCanvas || !heightmapCanvas.width) return;
     const w = heightmapCanvas.width, h = heightmapCanvas.height;
-    roughnessCanvas.width = w; roughnessCanvas.height = h;
+    rCanvas.width = w; rCanvas.height = h;
+
     const src = heightmapCtx.getImageData(0,0,w,h).data;
-    const out = roughnessCtx.createImageData(w,h);
-    const darkI = parseFloat(roughDarkIntensity.value || 1);
-    const lightI = parseFloat(roughLightIntensity.value || 1);
-    const black = parseInt(levelsBlack.value||0,10);
-    const white = parseInt(levelsWhite.value||255,10);
-    const gamma = parseFloat(levelsGamma.value||1.0);
-    const inv = invertRough && invertRough.checked;
+    const out = rCtx.createImageData(w,h);
+    const darkI = parseFloat( (window.roughDarkIntensity && window.roughDarkIntensity.value) || 1 );
+    const lightI = parseFloat( (window.roughLightIntensity && window.roughLightIntensity.value) || 1 );
+    const black = parseInt( (window.levelsBlack && window.levelsBlack.value) || 0, 10 );
+    const white = parseInt( (window.levelsWhite && window.levelsWhite.value) || 255, 10 );
+    const gamma = parseFloat( (window.levelsGamma && window.levelsGamma.value) || 1.0 );
+    const inv = (window.invertRough && window.invertRough.checked);
 
     for (let i=0;i<src.length;i+=4){
       const lum = src[i];
@@ -31,24 +35,42 @@
       out.data[i] = out.data[i+1] = out.data[i+2] = v;
       out.data[i+3] = 255;
     }
-    roughnessCtx.putImageData(out,0,0);
+    rCtx.putImageData(out,0,0);
 
     // assign to material (prefer roughnessTexture)
-    if (pbrMaterial) {
+    if (window.pbrMaterial) {
       try {
-        if ('roughnessTexture' in pbrMaterial) {
-          if (!pbrMaterial.roughnessTexture) pbrMaterial.roughnessTexture = new BABYLON.DynamicTexture("roughnessTex", roughnessCanvas, scene, false);
-          else pbrMaterial.roughnessTexture.getContext().drawImage(roughnessCanvas,0,0);
-          roughnessDynamicTexture = pbrMaterial.roughnessTexture;
+        if ('roughnessTexture' in window.pbrMaterial) {
+          if (!window.pbrMaterial.roughnessTexture) {
+            window.pbrMaterial.roughnessTexture = new BABYLON.DynamicTexture("roughnessTex", rCanvas, window.scene, false);
+            window.roughnessDynamicTexture = window.pbrMaterial.roughnessTexture;
+          } else {
+            window.pbrMaterial.roughnessTexture.getContext().drawImage(rCanvas,0,0);
+            window.roughnessDynamicTexture = window.pbrMaterial.roughnessTexture;
+          }
         } else {
-          if (!pbrMaterial.metallicTexture) pbrMaterial.metallicTexture = new BABYLON.DynamicTexture("metallicRough", roughnessCanvas, scene, false);
-          else pbrMaterial.metallicTexture.getContext().drawImage(roughnessCanvas,0,0);
-          roughnessDynamicTexture = pbrMaterial.metallicTexture;
-          if ('useRoughnessFromMetallicTextureGreen' in pbrMaterial) pbrMaterial.useRoughnessFromMetallicTextureGreen = true;
+          if (!window.pbrMaterial.metallicTexture) {
+            window.pbrMaterial.metallicTexture = new BABYLON.DynamicTexture("metallicRough", rCanvas, window.scene, false);
+            window.roughnessDynamicTexture = window.pbrMaterial.metallicTexture;
+          } else {
+            window.pbrMaterial.metallicTexture.getContext().drawImage(rCanvas,0,0);
+            window.roughnessDynamicTexture = window.pbrMaterial.metallicTexture;
+          }
+          if ('useRoughnessFromMetallicTextureGreen' in window.pbrMaterial) {
+            window.pbrMaterial.useRoughnessFromMetallicTextureGreen = true;
+          }
         }
       } catch(e) { console.warn("Assign roughness texture failed", e); }
     }
+
     if (window.updateBabylonTextures) updateBabylonTextures();
+
+    // update preview if roughness view active
+    try {
+      if (window.viewRoughBtn && window.viewRoughBtn.classList.contains('active') && window.mainPreviewImage) {
+        window.mainPreviewImage.src = rCanvas.toDataURL();
+      }
+    } catch(e){ /* ignore */ }
   };
 
 })();
