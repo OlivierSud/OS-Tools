@@ -30,4 +30,6 @@ La boîte à outils permet d'accéder facilement à tous les outils disponibles,
 ## 📝 Notes et conseils
 
 - Les outils sont faits pour être légers et fonctionner entièrement côté client (navigateur) sans envoi de fichiers sur un serveur.
+- Pour le GIF Creator : la taille par défaut utilisée est celle de la première image importée ; la réduction du nombre de couleurs produit une palette globale utilisée pour toutes les frames afin de réduire la taille du fichier exporté.
+- Roughness Map Generator (Normal Map tool) : nouvelle option pour générer une texture de roughness depuis la heightmap. Contrôles disponibles : intensité des tons sombres / tons clairs, réglages de niveaux (noir / gamma / blanc) et inversion noir/blanc. La texture générée est automatiquement appliquée au viewer dans le champ roughness du matériau PBR (si la version de Babylon utilisée supporte roughnessTexture, sinon un fallback est utilisé).
 - Si vous avez besoin de fonctionnalités avancées (meilleure quantification, dithering fin, optimisation additionnelle), signalez-le et je peux intégrer des bibliothèques supplémentaires ou options avancées.

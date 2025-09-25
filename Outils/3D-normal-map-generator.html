@@ -132,25 +132,28 @@
         </div>
         
         <div class="control-group">
-            <h2>4. Options des canaux</h2>
-            <div class="options-grid">
-                <div>
-                    <label>Format</label>
-                    <input type="radio" id="formatOpenGL" name="format" value="opengl" checked>
-                    <label for="formatOpenGL" class="checkbox-label">OpenGL</label><br>
-                    <input type="radio" id="formatDirectX" name="format" value="directx">
-                    <label for="formatDirectX" class="checkbox-label">DirectX</label>
-                </div>
-                <div>
-                    <label>Inverser</label>
-                    <input type="checkbox" id="invertR">
-                    <label for="invertR" class="checkbox-label">R (X)</label><br>
-                    <input type="checkbox" id="invertG">
-                    <label for="invertG" class="checkbox-label">V (Y)</label><br>
-                    <input type="checkbox" id="invertB">
-                    <label for="invertB" class="checkbox-label">B (Z)</label>
-                </div>
+            <h2>4. Roughness Map (nouveau)</h2>
+            <label for="roughDarkIntensity">Intensité tons sombres <span id="roughDarkValue" class="value-display">1.00</span></label>
+            <input type="range" id="roughDarkIntensity" min="0" max="2" value="1" step="0.01">
+
+            <label for="roughLightIntensity">Intensité tons clairs <span id="roughLightValue" class="value-display">1.00</span></label>
+            <input type="range" id="roughLightIntensity" min="0" max="2" value="1" step="0.01">
+
+            <div style="margin-top:8px;">
+              <label>Levels (Photoshop-like)</label>
+              <label for="levelsBlack">Noir <span id="levelsBlackValue" class="value-display">0</span></label>
+              <input type="range" id="levelsBlack" min="0" max="255" value="0" step="1">
+              <label for="levelsGamma">Gamma <span id="levelsGammaValue" class="value-display">1.00</span></label>
+              <input type="range" id="levelsGamma" min="0.1" max="5" value="1" step="0.01">
+              <label for="levelsWhite">Blanc <span id="levelsWhiteValue" class="value-display">255</span></label>
+              <input type="range" id="levelsWhite" min="0" max="255" value="255" step="1">
             </div>
+
+            <label style="margin-top:8px;"><input type="checkbox" id="invertRough"> Inverser noir/blanc</label>
+        </div>
+
+        <div class="control-group" style="margin-top:6px;">
+            <button id="regenerateRoughBtn" class="btn" type="button">Générer Roughness</button>
         </div>
     </div>
 
@@ -160,6 +163,7 @@
             <button id="viewNormalBtn" class="active">Normal Map</button>
             <button id="viewHeightmapBtn">Heightmap</button>
             <button id="viewSourceBtn">Source</button>
+            <button id="viewRoughBtn">Roughness</button>
         </div>
         <div class="main-preview-container">
             <canvas id="normalMapCanvas" width="512" height="512"></canvas>
@@ -192,8 +196,26 @@
     const viewNormalBtn = document.getElementById('viewNormalBtn');
     const viewHeightmapBtn = document.getElementById('viewHeightmapBtn');
     const viewSourceBtn = document.getElementById('viewSourceBtn');
-    const viewSwitcherBtns = [viewNormalBtn, viewHeightmapBtn, viewSourceBtn];
+    const viewRoughBtn = document.getElementById('viewRoughBtn');
+    const viewSwitcherBtns = [viewNormalBtn, viewHeightmapBtn, viewSourceBtn, viewRoughBtn];
 
+    // Work canvases and source image (must be defined before reader.onload uses them)
+    let sourceImage = new Image();
+    let sourceCanvas = document.createElement('canvas');
+    // willReadFrequently: utilisé car on appelle souvent getImageData sur ce canvas
+    let sourceCtx = sourceCanvas.getContext('2d', { willReadFrequently: true });
+    let heightmapCanvas = document.createElement('canvas');
+    let heightmapCtx = heightmapCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Déclarations globales pour Babylon / matériel — évite ReferenceError lors du chargement d'une image
+    let engine = null;
+    let scene = null;
+    let pbrMaterial = null;
+    let cube = null;
+    let sphere = null;
+    let currentMesh = null;
+    let hdrTexture = null;
+    
     // Contrôles des options
     const intensitySlider = document.getElementById('intensity');
     const smallDetailsSlider = document.getElementById('smallDetails');
@@ -222,36 +244,40 @@
     const roughnessSlider = document.getElementById('roughnessSlider');
     const roughnessValue = document.getElementById('roughnessValue');
 
-    const formatOpenGL = document.getElementById('formatOpenGL');
-    const formatDirectX = document.getElementById('formatDirectX');
-    const invertR = document.getElementById('invertR');
-    const invertG = document.getElementById('invertG');
-    const invertB = document.getElementById('invertB');
-
-    // Variables Babylon.js
-    let engine, scene, pbrMaterial, cube, sphere, currentMesh, hdrTexture;
-    const INITIAL_CAMERA_ZOOM = 1.9; // <-- Réglage du zoom initial
-
-    // --- Optimisation des performances ---
-    function debounce(func, delay) {
-        let timeout;
-        return function(...args) {
-            const context = this;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(context, args), delay);
-        };
+    // helper: retourne l'élément ou un dummy avec addEventListener() no-op et propriétés basiques
+    function opt(id, defaults = {}) {
+      const el = document.getElementById(id);
+      if (el) return el;
+      const d = {
+        checked: defaults.checked || false,
+        disabled: defaults.disabled || false,
+        addEventListener: function() {},
+      };
+      return d;
     }
+    const formatOpenGL = opt('formatOpenGL', { checked: true });
+    const formatDirectX = opt('formatDirectX');
+    const invertR = opt('invertR');
+    const invertG = opt('invertG');
+    const invertB = opt('invertB');
 
-    // Créer des versions "débouncées" des fonctions coûteuses
-    const debouncedGenerateNormalMap = debounce(generateNormalMap, 50);
-    const debouncedGenerateHeightmap = debounce(generateHeightmap, 50);
+    // --- New roughness map helpers ---
+    const roughDarkIntensity = document.getElementById('roughDarkIntensity');
+    const roughLightIntensity = document.getElementById('roughLightIntensity');
+    const roughDarkValue = document.getElementById('roughDarkValue');
+    const roughLightValue = document.getElementById('roughLightValue');
+    const levelsBlack = document.getElementById('levelsBlack');
+    const levelsGamma = document.getElementById('levelsGamma');
+    const levelsWhite = document.getElementById('levelsWhite');
+    const levelsBlackValue = document.getElementById('levelsBlackValue');
+    const levelsGammaValue = document.getElementById('levelsGammaValue');
+    const levelsWhiteValue = document.getElementById('levelsWhiteValue');
+    const invertRough = document.getElementById('invertRough');
+    const regenerateRoughBtn = document.getElementById('regenerateRoughBtn');
 
-
-    let sourceImage = new Image();
-    let sourceCanvas = document.createElement('canvas');
-    let sourceCtx = sourceCanvas.getContext('2d');
-    let heightmapCanvas = document.createElement('canvas');
-    let heightmapCtx = heightmapCanvas.getContext('2d');
+    let roughnessCanvas = document.createElement('canvas');
+    let roughnessCtx = roughnessCanvas.getContext('2d', { willReadFrequently: true });
+    let roughnessDynamicTexture = null;
 
     function updateValueDisplay() {
         const intensityRaw = parseFloat(intensitySlider.value) / 100;
@@ -341,12 +367,17 @@
         updateValueDisplay();
     });
 
+    // safe: if formatOpenGL/formatDirectX are missing, opt() gave un stub avec addEventListener() no-op
     formatOpenGL.addEventListener('change', handleFormatChange);
     formatDirectX.addEventListener('change', handleFormatChange);
     
     function getPixel(imageData, x, y) {
-        if (x < 0 || x >= imageData.width || y < 0 || y >= imageData.height) return 0;
-        const i = (y * imageData.width + x) * 4;
+        // wrap coordinates so edges behave as tiled (repeat)
+        const w = imageData.width, h = imageData.height;
+        // positive modulo
+        let xr = x % w; if (xr < 0) xr += w;
+        let yr = y % h; if (yr < 0) yr += h;
+        const i = (yr * w + xr) * 4;
         return imageData.data[i] * 0.299 + imageData.data[i + 1] * 0.587 + imageData.data[i + 2] * 0.114;
     }
 
@@ -366,12 +397,12 @@
 
             // --- Étape 1: Créer les couches multi-échelle ---
             const tempCanvas1 = document.createElement('canvas');
-            const tempCtx1 = tempCanvas1.getContext('2d');
+            const tempCtx1 = tempCanvas1.getContext('2d', { willReadFrequently: true });
             tempCanvas1.width = width;
             tempCanvas1.height = height;
 
             const tempCanvas2 = document.createElement('canvas');
-            const tempCtx2 = tempCanvas2.getContext('2d');
+            const tempCtx2 = tempCanvas2.getContext('2d', { willReadFrequently: true });
             tempCanvas2.width = width;
             tempCanvas2.height = height;
 
@@ -452,6 +483,8 @@
         }
 
         generateNormalMap();
+        // also regenerate roughness map when heightmap regenerated
+        debouncedGenerateRoughness();
     }
 
     function generateNormalMap() {
@@ -521,6 +554,8 @@
             mainPreviewImage.src = heightmapCanvas.toDataURL();
         }
         updateBabylonTextures();
+        // keep roughness in sync with normal/height changes
+        debouncedGenerateRoughness();
     }
     
     function setActiveView(activeBtn) {
@@ -536,6 +571,10 @@
                 mainPreviewImage.src = heightmapCanvas.toDataURL();
             } else if (view === 'viewSourceBtn') {
                 mainPreviewImage.src = sourceImage.src;
+            } else if (view === 'viewRoughBtn') {
+                // show generated roughness preview
+                // roughnessCanvas est créé dans le code de génération de roughness
+                mainPreviewImage.src = roughnessCanvas.toDataURL();
             }
             mainPreviewImage.style.display = 'block';
             normalMapCanvas.style.display = 'none';
@@ -545,6 +584,7 @@
     viewNormalBtn.addEventListener('click', () => setActiveView(viewNormalBtn));
     viewHeightmapBtn.addEventListener('click', () => setActiveView(viewHeightmapBtn));
     viewSourceBtn.addEventListener('click', () => setActiveView(viewSourceBtn));
+    viewRoughBtn.addEventListener('click', () => setActiveView(viewRoughBtn));
 
     // --- Initialisation de la scène 3D ---
     initBabylon();
@@ -638,12 +678,21 @@
         // Mettre à jour uniquement la DynamicTexture de la normal map.
         // L'albedo ne change pas avec les curseurs.
         if (pbrMaterial && pbrMaterial.bumpTexture) {
-            pbrMaterial.bumpTexture.update();
+             pbrMaterial.bumpTexture.update();
         }
-    }
+        // update roughness/metallic dynamic texture if present
+        if (roughnessDynamicTexture && roughnessDynamicTexture.update) {
+          try { roughnessDynamicTexture.update(); } catch(e){ /* ignore */ }
+        } else if (pbrMaterial && pbrMaterial.roughnessTexture && pbrMaterial.roughnessTexture.update) {
+          try { pbrMaterial.roughnessTexture.update(); } catch(e){/*ignore*/ }
+        }
+     }
 
+    // --- end new roughness helpers ---
     updateValueDisplay();
     handleFormatChange();
+    // generate initial roughness if image already loaded
+    debouncedGenerateRoughness();
 </script>
 
 </body>
