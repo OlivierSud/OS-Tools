@@ -17,8 +17,12 @@
         <h1>Paramètres</h1>
 
         <div class="control-group">
-            <label for="imageLoader">1. Importer un fichier source</label>
-            <input type="file" id="imageLoader" name="imageLoader" accept="image/*"/>
+            <h2>1. Importer un fichier source</h2>
+            <div class="file-input-row">
+                <input type="file" id="imageLoader" name="imageLoader" accept="image/*" hidden>
+                <label for="imageLoader" class="custom-file-btn">📁 Choisir un fichier</label>
+                <span id="fileName" class="file-name">Aucun fichier sélectionné</span>
+            </div>
         </div>
 
         <div class="control-group" id="heightmapControls">
@@ -115,5 +119,76 @@
 <script src="./3d-normal-map-generator/3D-normal-map-generator.normalmap.js"></script>
 <script src="./3d-normal-map-generator/3D-normal-map-generator.roughness.js"></script>
 <script src="./3d-normal-map-generator/3D-normal-map-generator.main.js"></script>
+
+<script>
+document.querySelectorAll('input[type="range"]').forEach(slider => {
+  const valueDisplay = document.getElementById(slider.id + "Value");
+  if (valueDisplay) {
+    // Met à jour immédiatement à l'ouverture
+    valueDisplay.textContent = parseFloat(slider.value).toFixed(2);
+
+    // Met à jour à chaque changement de curseur
+    slider.addEventListener("input", () => {
+      let value = parseFloat(slider.value);
+      // Si max > 10 (comme les niveaux), on affiche sans décimales
+      valueDisplay.textContent = value > 10 ? Math.round(value) : value.toFixed(2);
+    });
+  }
+});
+</script>
+<script>
+document.querySelectorAll('input[type="range"]').forEach(slider => {
+  const valueDisplay = document.getElementById(slider.id + "Value");
+  if (valueDisplay) {
+    // Crée le bouton reset
+    const resetBtn = document.createElement("button");
+    resetBtn.textContent = "↺";
+    resetBtn.className = "reset-btn";
+    valueDisplay.parentElement.appendChild(resetBtn);
+
+    // Valeur initiale
+    const defaultValue = slider.getAttribute("value");
+
+    // Met à jour l'affichage initial
+    const updateDisplay = () => {
+      let value = parseFloat(slider.value);
+      valueDisplay.textContent = value > 10 ? Math.round(value) : value.toFixed(2);
+    };
+    updateDisplay();
+
+    // Quand on bouge le curseur
+    slider.addEventListener("input", updateDisplay);
+
+    // Quand on clique sur reset
+    resetBtn.addEventListener("click", () => {
+      slider.value = defaultValue;
+      updateDisplay();
+      slider.dispatchEvent(new Event("input")); // pour déclencher d'autres éventuelles mises à jour
+    });
+  }
+});
+</script>
+<script>
+const fileInput = document.getElementById("imageLoader");
+const fileNameDisplay = document.getElementById("fileName");
+
+fileInput.addEventListener("change", () => {
+  if (fileInput.files.length > 0) {
+    fileNameDisplay.textContent = "📄 " + fileInput.files[0].name;
+  } else {
+    fileNameDisplay.textContent = "Aucun fichier sélectionné";
+  }
+});
+</script>
+
+<script>
+document.querySelectorAll(".accordion-header").forEach(header => {
+  header.addEventListener("click", () => {
+    const section = header.parentElement;
+    section.classList.toggle("closed");
+  });
+});
+</script>
+
 </body>
 </html>
