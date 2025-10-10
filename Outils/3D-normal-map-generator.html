@@ -4,191 +4,451 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Générateur de Normal Map v3.1</title>
+
+  <!-- BabylonJS -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script>
+window.addEventListener("DOMContentLoaded", () => {
+  const roughnessSlider = document.getElementById('roughnessSlider');
+  const roughnessValueSpan = document.getElementById('roughnessValue');
 
-  <!-- remplace le <style> inline par un fichier CSS externe -->
+  if (roughnessSlider && pbrMaterial) {
+    // Initialisation de l'affichage
+    roughnessValueSpan.textContent = roughnessSlider.value;
+
+    // Écouteur pour mise à jour en temps réel
+    roughnessSlider.addEventListener('input', () => {
+      const value = parseFloat(roughnessSlider.value);
+      roughnessValueSpan.textContent = value.toFixed(2); // affichage 2 décimales
+      if (pbrMaterial) {
+        pbrMaterial.roughness = value;
+      }
+    });
+  }
+});
+</script>
+
+  <!-- Ton CSS principal -->
   <link rel="stylesheet" href="./3d-normal-map-generator/3D-normal-map-generator.css">
+
+  <!-- Styles additionnels -->
+  <style>
+    .preview-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      width:100%;
+      gap:10px;
+    }
+    .export-btn {
+      background: linear-gradient(135deg,#00aa88,#007755);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .export-btn:hover { transform: translateY(-2px); }
+
+    /* Popup export */
+    .export-popup {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.6);
+      justify-content:center;
+      align-items:center;
+      z-index:2000;
+    }
+    .popup-content {
+      background:#2f2f2f;
+      color:#eee;
+      border-radius:10px;
+      padding:20px;
+      box-shadow:0 8px 30px rgba(0,0,0,0.6);
+      width:min(420px,90%);
+    }
+    .popup-content h3{margin-top:0;color:#00aaff;}
+    .file-list{display:grid;gap:10px;margin-top:10px;}
+    .file-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+    .file-item input{
+      flex:1;
+      padding:6px;
+      border:none;
+      border-radius:6px;
+      background:#444;
+      color:#fff;
+      font-weight:600;
+    }
+    .save-icon{
+      cursor:pointer;
+      background:#00aaff;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      width:32px;
+      height:32px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-size:1.2rem;
+      transition:0.2s;
+    }
+    .save-icon:hover{background:#0090dd;transform:translateY(-2px);}
+    .popup-buttons{margin-top:15px;display:flex;justify-content:flex-end;}
+    .popup-cancel{background:#666;color:#fff;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;font-weight:700;}
+  </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="panel controls-panel">
-        <h1>Paramètres</h1>
+  <!-- === PANNEAU CONTRÔLES === -->
+  <div class="panel controls-panel">
+    <h1>Paramètres</h1>
+    
 
-        <div class="control-group">
-            <h2>1. Importer un fichier source</h2>
-            <div class="file-input-row">
-                <input type="file" id="imageLoader" name="imageLoader" accept="image/*" hidden>
-                <label for="imageLoader" class="custom-file-btn">📁 Choisir un fichier</label>
-                <span id="fileName" class="file-name">Aucun fichier sélectionné</span>
-            </div>
+    <!-- SECTION 1 : Import -->
+    <div class="accordion-section">
+      <h2 class="accordion-header"><span class="arrow">▾</span> 1. Importer un fichier source</h2>
+      <div class="accordion-content">
+        <div class="file-input-row">
+          <input type="file" id="imageLoader" accept="image/*" hidden>
+          <label for="imageLoader" class="custom-file-btn">📁 Choisir un fichier</label>
+          <span id="fileName" class="file-name">Aucun fichier sélectionné</span>
         </div>
-
-        <div class="control-group" id="heightmapControls">
-            <h2>2. Génération de la Heightmap</h2>
-            <input type="checkbox" id="enableHeightmap" checked>
-            <label for="enableHeightmap" class="checkbox-label">Activer la génération de Heightmap</label>
-            
-            <div id="heightmap-options" style="margin-top: 10px;">
-                <label for="hmLargeShapes">Formes Larges <span id="hmLargeShapesValue" class="value-display">0.60</span></label>
-                <input type="range" id="hmLargeShapes" min="0" max="1" value="0.6" step="0.05">
-
-                <label for="hmMediumDetails">Détails Moyens <span id="hmMediumDetailsValue" class="value-display">0.60</span></label>
-                <input type="range" id="hmMediumDetails" min="0" max="3" value="0.6" step="0.05">
-
-                <label for="hmFineDetails">Détails Fins <span id="hmFineDetailsValue" class="value-display">0.60</span></label>
-                <input type="range" id="hmFineDetails" min="0" max="3" value="0.6" step="0.05">
-                
-                <label for="hmIntensity">Intensité Globale <span id="hmIntensityValue" class="value-display">2.00</span></label>
-                <input type="range" id="hmIntensity" min="0" max="3" value="2.0" step="0.05">
-
-                <label for="hmSmoothing">Lissage Final <span id="hmSmoothingValue" class="value-display">2.0</span></label>
-                <input type="range" id="hmSmoothing" min="0" max="5" value="2.0" step="0.1">
-            </div>
-        </div>
-
-        <div class="control-group">
-            <h2>3. Réglages de la Normal Map</h2>
-            <label for="intensity">Intensité <span id="intensityValue" class="value-display">1.00</span></label>
-            <input type="range" id="intensity" min="0" max="100" value="63" step="1">
-
-            <label for="smallDetails">Petits Détails (Lissage) <span id="smallDetailsValue" class="value-display">0.10</span></label>
-            <input type="range" id="smallDetails" min="0" max="1" value="0.1" step="0.01">
-
-            <label for="mediumDetails">Moyens Détails <span id="mediumDetailsValue" class="value-display">0.10</span></label>
-            <input type="range" id="mediumDetails" min="0" max="1" value="0.1" step="0.01">
-
-            <label for="largeDetails">Grands Détails <span id="largeDetailsValue" class="value-display">0.10</span></label>
-            <input type="range" id="largeDetails" min="0" max="1" value="0.1" step="0.01">
-        </div>
-        
-        <div class="control-group">
-            <h2>4. Roughness Map (nouveau)</h2>
-            <label for="roughDarkIntensity">Intensité tons sombres <span id="roughDarkValue" class="value-display">1.00</span></label>
-            <input type="range" id="roughDarkIntensity" min="0" max="2" value="1" step="0.01">
-
-            <label for="roughLightIntensity">Intensité tons clairs <span id="roughLightValue" class="value-display">1.00</span></label>
-            <input type="range" id="roughLightIntensity" min="0" max="2" value="1" step="0.01">
-
-            <div style="margin-top:8px;">
-              <label>Levels (Photoshop-like)</label>
-              <label for="levelsBlack">Noir <span id="levelsBlackValue" class="value-display">0</span></label>
-              <input type="range" id="levelsBlack" min="0" max="255" value="0" step="1">
-              <label for="levelsGamma">Gamma <span id="levelsGammaValue" class="value-display">1.00</span></label>
-              <input type="range" id="levelsGamma" min="0.1" max="5" value="1" step="0.01">
-              <label for="levelsWhite">Blanc <span id="levelsWhiteValue" class="value-display">255</span></label>
-              <input type="range" id="levelsWhite" min="0" max="255" value="255" step="1">
-            </div>
-
-            <label style="margin-top:8px;"><input type="checkbox" id="invertRough"> Inverser noir/blanc</label>
-        </div>
+      </div>
     </div>
 
-    <div class="panel preview-panel">
-        <h2>Aperçu</h2>
-        <div class="view-switcher">
-            <button id="viewNormalBtn" class="active">Normal Map</button>
-            <button id="viewHeightmapBtn">Heightmap</button>
-            <button id="viewSourceBtn">Source</button>
-            <button id="viewRoughBtn">Roughness</button>
-        </div>
-        <div class="main-preview-container">
-            <canvas id="normalMapCanvas" width="512" height="512"></canvas>
-            <img id="mainPreviewImage" src="" alt="Aperçu principal" />
-        </div>
+    <!-- SECTION 2 : Heightmap -->
+    <div class="accordion-section">
+      <h2 class="accordion-header"><span class="arrow">▾</span> 2. Génération de la Heightmap</h2>
+      <div class="accordion-content">
+        <input type="checkbox" id="enableHeightmap" checked>
+        <label for="enableHeightmap" class="checkbox-label">Activer la génération de Heightmap</label>
+        <div id="heightmap-options" style="margin-top:10px;">
 
-        <div class="control-group" style="margin-top: 20px; width: 100%; max-width: 512px;">
-            <h2 style="font-size: 1.2em; margin-bottom: 10px;">Aperçu 3D</h2>
-            <div class="view-switcher" id="shape-switcher">
-                <button id="viewCubeBtn" class="active">Cube</button>
-                <button id="viewSphereBtn">Sphère</button>
-            </div>
-            <canvas id="threeCanvas"></canvas>
-            <div style="margin-top: 10px; width: 100%;">
-                <label for="roughnessSlider">Rugosité <span id="roughnessValue" class="value-display">0.6</span></label>
-                <input type="range" id="roughnessSlider" min="0" max="1" value="0.6" step="0.01">
-            </div>
+          <label for="hmLargeShapes">Formes Larges <span id="hmLargeShapesValue" class="value-display">0.60</span></label>
+          <input type="range" id="hmLargeShapes" min="0" max="1" value="0.6" step="0.01">
+          <label for="hmMediumDetails">Détails Moyens <span id="hmMediumDetailsValue" class="value-display">0.60</span></label>
+          <input type="range" id="hmMediumDetails" min="0" max="3" value="0.6" step="0.01">
+          <label for="hmFineDetails">Détails Fins <span id="hmFineDetailsValue" class="value-display">0.60</span></label>
+          <input type="range" id="hmFineDetails" min="0" max="3" value="0.6" step="0.01">
+          <label for="hmIntensity">Intensité Globale <span id="hmIntensityValue" class="value-display">2.00</span></label>
+          <input type="range" id="hmIntensity" min="0" max="3" value="2.0" step="0.01">
+          <label for="hmSmoothing">Lissage Final <span id="hmSmoothingValue" class="value-display">2.0</span></label>
+          <input type="range" id="hmSmoothing" min="0" max="5" value="2.0" step="0.01">
+
         </div>
+      </div>
     </div>
+
+    <!-- SECTION 3 : Normal Map -->
+    <div class="accordion-section">
+      <h2 class="accordion-header"><span class="arrow">▾</span> 3. Réglages de la Normal Map</h2>
+      <div class="accordion-content">
+        <label for="intensity">Intensité <span id="intensityValue" class="value-display">1.00</span></label>
+        <input type="range" id="intensity" min="0" max="100" value="50" step="1">
+        <label for="smallDetails">Petits Détails <span id="smallDetailsValue" class="value-display">0.10</span></label>
+        <input type="range" id="smallDetails" min="0" max="1" value="0.1" step="0.01">
+        <label for="mediumDetails">Moyens Détails <span id="mediumDetailsValue" class="value-display">0.10</span></label>
+        <input type="range" id="mediumDetails" min="0" max="1" value="0.1" step="0.01">
+        <label for="largeDetails">Grands Détails <span id="largeDetailsValue" class="value-display">0.10</span></label>
+        <input type="range" id="largeDetails" min="0" max="1" value="0.1" step="0.01">
+      </div>
+    </div>
+
+    <!-- SECTION 4 : Roughness -->
+    <div class="accordion-section">
+      <h2 class="accordion-header"><span class="arrow">▾</span> 4. Roughness Map "WIP"</h2>
+      <div class="accordion-content">
+        <label for="roughDarkIntensity">Intensité tons sombres <span id="roughDarkValue" class="value-display">1.00</span></label>
+        <input type="range" id="roughDarkIntensity" min="0" max="2" value="1" step="0.01">
+        <label for="roughLightIntensity">Intensité tons clairs <span id="roughLightValue" class="value-display">1.00</span></label>
+        <input type="range" id="roughLightIntensity" min="0" max="2" value="1" step="0.01">
+      </div>
+    </div>
+  </div>
+
+  <!-- === PANEL APERÇU === -->
+  <div class="panel preview-panel">
+    <div class="preview-header">
+      <h2>Aperçu</h2>
+      <button id="exportTexturesBtn" class="export-btn">💾 Exporter</button>
+    </div>
+
+    <div class="view-switcher">
+      <button id="viewNormalBtn" class="active">Normal Map</button>
+      <button id="viewHeightmapBtn">Heightmap</button>
+      <button id="viewSourceBtn">Source</button>
+      <button id="viewRoughBtn">Roughness</button>
+    </div>
+
+    <div class="main-preview-container">
+      <canvas id="normalMapCanvas" width="512" height="512"></canvas>
+      <img id="mainPreviewImage" src="" alt="Aperçu principal" style="display:none;">
+    </div>
+
+    <!-- Visionneuse 3D -->
+
+    <div class="control-group" style="margin-top:20px;width:100%;max-width:512px;">
+      <h2 style="font-size:1.2em;margin-bottom:10px;">Aperçu 3D</h2>
+      <canvas id="threeCanvas"></canvas>
+      <div class="mesh-switcher" style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+    <button id="btnCube">Cube</button>
+    <button id="btnSphere">Sphere</button>
+  </div>
+
+  <!-- Nouveau slider Roughness globale -->
+  <div class="slider-label-container" style="margin-top:10px;">
+    <label for="roughnessSlider">Roughness globale <span id="roughnessValue" class="value-display">0.5</span></label>
+    <input type="range" id="roughnessSlider" min="0" max="1" value="0.5" step="0.01">
+  </div>
 </div>
 
-<!-- Chargement des modules JS séparés.
-       IMPORTANT : ordre de chargement -> heightmap, normalmap, roughness, main -->
+    
+  </div>
+</div>
+
+<!-- === POPUP EXPORT === -->
+<div id="exportPopup" class="export-popup">
+  <div class="popup-content">
+    <h3>Exporter les textures</h3>
+    <div class="file-list">
+      <div class="file-item"><input id="nameBase" placeholder="nom_base"><button class="save-icon" data-type="base">💾</button></div>
+      <div class="file-item"><input id="nameRough" placeholder="nom_rough"><button class="save-icon" data-type="rough">💾</button></div>
+      <div class="file-item"><input id="nameHigh" placeholder="nom_high"><button class="save-icon" data-type="high">💾</button></div>
+      <div class="file-item"><input id="nameNM" placeholder="nom_nm"><button class="save-icon" data-type="nm">💾</button></div>
+    </div>
+    <div class="popup-buttons">
+      <button id="cancelExport" class="popup-cancel">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- === Scripts === -->
 <script src="./3d-normal-map-generator/3D-normal-map-generator.heightmap.js"></script>
 <script src="./3d-normal-map-generator/3D-normal-map-generator.normalmap.js"></script>
 <script src="./3d-normal-map-generator/3D-normal-map-generator.roughness.js"></script>
 <script src="./3d-normal-map-generator/3D-normal-map-generator.main.js"></script>
 
 <script>
-document.querySelectorAll('input[type="range"]').forEach(slider => {
-  const valueDisplay = document.getElementById(slider.id + "Value");
-  if (valueDisplay) {
-    // Met à jour immédiatement à l'ouverture
-    valueDisplay.textContent = parseFloat(slider.value).toFixed(2);
-
-    // Met à jour à chaque changement de curseur
-    slider.addEventListener("input", () => {
-      let value = parseFloat(slider.value);
-      // Si max > 10 (comme les niveaux), on affiche sans décimales
-      valueDisplay.textContent = value > 10 ? Math.round(value) : value.toFixed(2);
-    });
+/** Convertit un élément en DataURL PNG */
+async function elementToDataURL(el) {
+  if (!el) return null;
+  if (el.tagName === "CANVAS") {
+    try { return el.toDataURL("image/png"); } catch { return null; }
   }
-});
-</script>
-<script>
-document.querySelectorAll('input[type="range"]').forEach(slider => {
-  const valueDisplay = document.getElementById(slider.id + "Value");
-  if (valueDisplay) {
-    // Crée le bouton reset
-    const resetBtn = document.createElement("button");
-    resetBtn.textContent = "↺";
-    resetBtn.className = "reset-btn";
-    valueDisplay.parentElement.appendChild(resetBtn);
+  if (el.tagName === "IMG" && el.src) return el.src;
+  return null;
+}
 
-    // Valeur initiale
-    const defaultValue = slider.getAttribute("value");
+/** Télécharge un DataURL sous forme d'image */
+function downloadDataURL(dataURL, filename) {
+  if (!dataURL) {
+    alert("❌ Impossible de trouver cette texture.");
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = dataURL;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 
-    // Met à jour l'affichage initial
-    const updateDisplay = () => {
-      let value = parseFloat(slider.value);
-      valueDisplay.textContent = value > 10 ? Math.round(value) : value.toFixed(2);
+/** Convertit une image en niveaux de gris (fallback pour rough/height) */
+async function createGrayscale(el) {
+  const src = await elementToDataURL(el);
+  if (!src) return null;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        data[i] = data[i + 1] = data[i + 2] = lum;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
     };
-    updateDisplay();
+    img.src = src;
+  });
+}
 
-    // Quand on bouge le curseur
-    slider.addEventListener("input", updateDisplay);
+/** Ouverture / fermeture de la popup */
+const popup = document.getElementById("exportPopup");
+const exportBtn = document.getElementById("exportTexturesBtn");
+const cancelExport = document.getElementById("cancelExport");
 
-    // Quand on clique sur reset
-    resetBtn.addEventListener("click", () => {
-      slider.value = defaultValue;
-      updateDisplay();
-      slider.dispatchEvent(new Event("input")); // pour déclencher d'autres éventuelles mises à jour
-    });
+exportBtn.addEventListener("click", () => {
+  const sourceFile = document.getElementById("fileName").textContent.trim();
+  let baseName = "texture";
+  if (sourceFile && sourceFile !== "Aucun fichier sélectionné") {
+    baseName = sourceFile.replace(/\.[^/.]+$/, "");
   }
+  document.getElementById("nameBase").value = baseName + "_base";
+  document.getElementById("nameRough").value = baseName + "_rough";
+  document.getElementById("nameHigh").value = baseName + "_high";
+  document.getElementById("nameNM").value = baseName + "_nm";
+  popup.style.display = "flex";
 });
-</script>
-<script>
-const fileInput = document.getElementById("imageLoader");
-const fileNameDisplay = document.getElementById("fileName");
 
-fileInput.addEventListener("change", () => {
-  if (fileInput.files.length > 0) {
-    fileNameDisplay.textContent = "📄 " + fileInput.files[0].name;
-  } else {
-    fileNameDisplay.textContent = "Aucun fichier sélectionné";
-  }
-});
-</script>
+cancelExport.addEventListener("click", () => (popup.style.display = "none"));
 
-<script>
-document.querySelectorAll(".accordion-header").forEach(header => {
-  header.addEventListener("click", () => {
-    const section = header.parentElement;
-    section.classList.toggle("closed");
+/** Gestion des boutons disquette */
+document.querySelectorAll(".save-icon").forEach((btn) => {
+  btn.type = "button";
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const type = btn.dataset.type;
+
+    // Recherche intelligente des sources possibles
+    const sources = {
+      base: ["mainPreviewImage"],
+      rough: ["roughnessCanvas", "roughnessPreview", "roughnessImage"],
+      high: ["heightmapCanvas", "heightPreview", "heightImage"],
+      nm: ["normalMapCanvas"],
+    };
+
+    let el = null;
+    for (const id of sources[type]) {
+      const candidate = document.getElementById(id);
+      if (candidate) {
+        el = candidate;
+        break;
+      }
+    }
+
+    let dataURL = await elementToDataURL(el);
+
+    // Fallback : si la texture rough/high n’existe pas encore
+    if (!dataURL && (type === "rough" || type === "high")) {
+      const baseEl = document.getElementById("mainPreviewImage");
+      dataURL = await createGrayscale(baseEl);
+    }
+
+    // Sélection du champ input correspondant
+    let input = null;
+    switch (type) {
+      case "base": input = document.getElementById("nameBase"); break;
+      case "rough": input = document.getElementById("nameRough"); break;
+      case "high": input = document.getElementById("nameHigh"); break;
+      case "nm": input = document.getElementById("nameNM"); break;
+    }
+
+    if (!input) {
+      alert("Champ de nom introuvable pour " + type);
+      return;
+    }
+
+    const filename = (input.value?.trim() || type) + ".png";
+    downloadDataURL(dataURL, filename);
   });
 });
 </script>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  // Configuration initiale des sliders avec leurs valeurs par défaut
+  const sliders = [
+    { id: "hmLargeShapes", default: 0.6 },
+    { id: "hmMediumDetails", default: 0.6 },
+    { id: "hmFineDetails", default: 0.6 },
+    { id: "hmIntensity", default: 2.0 },
+    { id: "hmSmoothing", default: 2.0 },
+    { id: "intensity", default: 63 },
+    { id: "smallDetails", default: 0.1 },
+    { id: "mediumDetails", default: 0.1 },
+    { id: "largeDetails", default: 0.1 },
+    { id: "roughDarkIntensity", default: 1.0 },
+    { id: "roughLightIntensity", default: 1.0 },
+     { id: "roughnessSlider", default: 0.5 } 
+  ];
+
+  function enhanceSlider(sliderConfig) {
+    const slider = document.getElementById(sliderConfig.id);
+    if (!slider) return;
+
+    const label = slider.previousElementSibling;
+    if (!label) return;
+
+    const valueSpan = label.querySelector(".value-display");
+    if (!valueSpan) return;
+
+    // Créer bouton reset
+    const resetBtn = document.createElement("button");
+    resetBtn.textContent = "⟲";
+    resetBtn.className = "reset-btn";
+    label.appendChild(resetBtn);
+
+    // Synchronisation slider -> span
+    slider.addEventListener("input", () => {
+      valueSpan.textContent = slider.value;
+    });
+
+    // Bouton reset
+    resetBtn.addEventListener("click", () => {
+      slider.value = sliderConfig.default;
+      valueSpan.textContent = sliderConfig.default;
+      slider.dispatchEvent(new Event("input")); // déclenche tout éventuel callback (y compris 3D)
+    });
+
+    // Initialisation de la valeur au chargement
+    valueSpan.textContent = slider.value;
+  }
+
+  // Appliquer à tous les sliders
+  sliders.forEach(enhanceSlider);
+});
+</script>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const btnCube = document.getElementById('btnCube');
+  const btnSphere = document.getElementById('btnSphere');
+
+  function switchMesh(mesh) {
+    if (!cube || !sphere) return;
+    if (mesh === 'cube') {
+      cube.setEnabled(true);
+      sphere.setEnabled(false);
+      currentMesh = cube;
+      btnCube.classList.add('active');
+      btnSphere.classList.remove('active');
+    } else if (mesh === 'sphere') {
+      cube.setEnabled(false);
+      sphere.setEnabled(true);
+      currentMesh = sphere;
+      btnCube.classList.remove('active');
+      btnSphere.classList.add('active');
+    }
+  }
+
+  btnCube && btnCube.addEventListener('click', () => switchMesh('cube'));
+  btnSphere && btnSphere.addEventListener('click', () => switchMesh('sphere'));
+
+  // initialisation de l'état actif
+  switchMesh('cube');
+});
+</script>
+
+
 
 </body>
 </html>
