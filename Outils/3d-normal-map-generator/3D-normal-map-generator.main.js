@@ -92,6 +92,8 @@
   if (imageLoader) {
     imageLoader.addEventListener('change', e => {
       const f = e.target.files[0];
+      window.sourceFileName = f.name.replace(/\.[^/.]+$/, ""); // nom sans extension
+
       if (!f) return;
       const r = new FileReader();
       r.onload = ev => {
@@ -121,6 +123,8 @@
 
           // set default view (safe)
           if (window.viewNormalBtn && window.viewNormalBtn.click) window.viewNormalBtn.click();
+
+          if (typeof updateExportNames === "function") updateExportNames();
         };
         sourceImage.src = ev.target.result;
       };
@@ -357,6 +361,99 @@ if (btnSwitchEnv) {
   loadEnvironment(currentEnvIndex);
 }
 
+// 4. Gestion du popup d’export
+const exportBtn = $('exportTexturesBtn');
+const exportPopup = $('exportPopup');
+const cancelExport = $('cancelExport');
+
+if (exportBtn && exportPopup) {
+  exportBtn.addEventListener('click', () => {
+    exportPopup.style.display = 'flex'; // Affiche la popup (grâce à display:flex dans ton CSS)
+  });
+}
+
+if (cancelExport && exportPopup) {
+  cancelExport.addEventListener('click', () => {
+    exportPopup.style.display = 'none'; // Cache la popup
+  });
+}
+
+// Option : fermer la popup si on clique à l’extérieur
+if (exportPopup) {
+  exportPopup.addEventListener('click', (e) => {
+    if (e.target === exportPopup) exportPopup.style.display = 'none';
+  });
+}
+
+// 5. Auto-remplissage et export des textures
+const exportInputs = {
+  base: $('nameBase'),
+  rough: $('nameRough'),
+  high: $('nameHigh'),
+  nm: $('nameNM'),
+};
+
+function updateExportNames() {
+  const baseName = window.sourceFileName || "texture";
+  if (exportInputs.base) exportInputs.base.value = `${baseName}_base.png`;
+  if (exportInputs.rough) exportInputs.rough.value = `${baseName}_rough.png`;
+  if (exportInputs.high) exportInputs.high.value = `${baseName}_height.png`;
+  if (exportInputs.nm) exportInputs.nm.value = `${baseName}_normal.png`;
+}
+
+// Dès qu'on ouvre la popup → on met à jour les noms
+if (exportBtn && exportPopup) {
+  exportBtn.addEventListener('click', () => {
+    updateExportNames();
+    exportPopup.style.display = 'flex';
+  });
+}
+
+// Fonction utilitaire pour enregistrer un canvas sous forme d’image PNG
+function saveCanvasAsImage(canvas, filename) {
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// Gestion des boutons 💾
+document.querySelectorAll('.save-icon').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.type;
+    const input = exportInputs[type];
+    const filename = (input?.value || `export_${type}.png`).trim();
+
+    switch (type) {
+      case 'base':
+        // Si une image source est chargée, on télécharge directement cette image
+        if (window.sourceImage && window.sourceImage.src) {
+          const link = document.createElement('a');
+          link.download = filename;
+          link.href = window.sourceImage.src;
+          link.click();
+        } else if (window.sourceCanvas) {
+          // fallback si jamais l'image n'existe plus
+          saveCanvasAsImage(window.sourceCanvas, filename);
+        }
+        break;
+
+      case 'rough':
+        if (window.roughnessCanvas) saveCanvasAsImage(window.roughnessCanvas, filename);
+        break;
+      case 'high':
+        if (window.heightmapCanvas) saveCanvasAsImage(window.heightmapCanvas, filename);
+        break;
+      case 'nm':
+        if (window.normalMapCanvas) saveCanvasAsImage(window.normalMapCanvas, filename);
+        break;
+      default:
+        console.warn("Type de texture inconnu :", type);
+    }
+  });
+});
+
 
 
   }
@@ -366,5 +463,8 @@ if (btnSwitchEnv) {
   } else {
     document.addEventListener('DOMContentLoaded', startOnceReady);
   }
+
+  
+
 
 })();
