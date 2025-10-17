@@ -33,6 +33,8 @@
   window.smallDetails = $('smallDetails');
   window.mediumDetails = $('mediumDetails');
   window.largeDetails = $('largeDetails');
+  window.invertNormal = $('invertNormal');
+
 
   // heightmap controls (names match HTML ids)
   window.hmLargeShapes = $('hmLargeShapes');
@@ -315,9 +317,9 @@ const btnSwitchEnv = $('btnSwitchEnv');
 if (btnSwitchEnv) {
   // === Liste des environnements disponibles ===
   const envList = [
+    { name: "🏢 Street", url: "https://assets.babylonjs.com/environments/environmentSpecular.env" },
     { name: "⛰️ Country", url: "https://playground.babylonjs.com/textures/country.env" },
     { name: "📸 Studio", url: "https://playground.babylonjs.com/textures/Studio_Softbox_2Umbrellas_cube_specular.dds" },
-    { name: "🏢 Street", url: "https://assets.babylonjs.com/environments/environmentSpecular.env" },
     { name: "🏰 Ruin", url: "https://playground.babylonjs.com/textures/SpecularHDR.dds" },
     { name: "🌛 Night", url: "https://playground.babylonjs.com/textures/night.env" },
     { name: "🌳 Forest", url: "https://playground.babylonjs.com/textures/forest.env" },

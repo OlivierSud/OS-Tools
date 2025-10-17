@@ -29,6 +29,9 @@
     const dest = ctx.createImageData(width,height);
     const d = dest.data;
 
+    // Vérifie si la case "inverser la normal map" est cochée
+    const invertAll = window.invertNormal && window.invertNormal.checked;
+
     for (let y=0;y<height;y++){
       for (let x=0;x<width;x++){
         const n_x1 = getPixel(srcData, x-1, y), n_x2 = getPixel(srcData, x+1, y);
@@ -40,13 +43,26 @@
 
         let dx = (n_x2 - n_x1) * sStr + (m_x2 - m_x1) * mStr + (l_x2 - l_x1) * lStr;
         let dy = (n_y2 - n_y1) * sStr + (m_y2 - m_y1) * mStr + (l_y2 - l_y1) * lStr;
+
+        // Calcul du vecteur normal
         let normal = { x: -dx * strength, y: -dy * strength, z: 1.0 };
+
+        // ✅ Inversion complète du vecteur si demandé
+        if (invertAll) {
+          normal.x = -normal.x;
+          normal.y = -normal.y;
+          normal.z = -normal.z;
+        }
+
+        // Normalisation
         const len = Math.sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
         if (len>0){ normal.x/=len; normal.y/=len; normal.z/=len; }
 
         let r = (normal.x*0.5 + 0.5)*255;
         let g = (normal.y*0.5 + 0.5)*255;
         let b = (normal.z*0.5 + 0.5)*255;
+
+        // Inversions individuelles existantes
         if (invertR && invertR.checked) r = 255 - r;
         if (invertG && invertG.checked) g = 255 - g;
         if (invertB && invertB.checked) b = 255 - b;
