@@ -258,11 +258,6 @@ label {
   background: #aaa;
 }
 
-.file-list {
-  margin-top: 10px;
-  text-align: left;
-}
-
 .file-list label {
   display: flex;
   justify-content: space-between;
@@ -288,5 +283,114 @@ label {
 #preview3DContainer {
   transition: all 0.3s ease;
 }
+
+/* === POPUP EXPORT MODERNE === */
+.export-popup {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.popup-content {
+  background: #3f3f3f;
+  border-radius: 12px;
+  padding: 25px 30px;
+  width: 320px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.popup-content h3 {
+  color: #00aaff;
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-item label {
+  font-size: 0.9em;
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+.file-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.file-row input {
+  flex: 1;
+  padding: 8px 10px;
+  background: #555;
+  border: 1px solid #666;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9em;
+  outline: none;
+  transition: border 0.2s, background 0.2s;
+}
+
+.file-row input:focus {
+  border-color: #00aaff;
+  background: #4a4a4a;
+}
+
+.save-icon {
+  background: linear-gradient(135deg, #00aaff, #025a86);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.25s, transform 0.15s;
+}
+
+.save-icon:hover {
+  background: #31b2f2;
+  transform: translateY(-2px);
+}
+
+.save-icon:active {
+  transform: translateY(2px);
+}
+
+.popup-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.popup-cancel {
+  background: #888;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.15s;
+}
+
+.popup-cancel:hover {
+  background: #00aaff;
+  transform: translateY(-2px);
+}
+
 
 

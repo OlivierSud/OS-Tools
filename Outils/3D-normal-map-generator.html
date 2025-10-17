@@ -132,18 +132,44 @@
 <!-- === POPUP EXPORT === -->
 <div id="exportPopup" class="export-popup">
   <div class="popup-content">
-    <h3>Exporter les textures</h3>
+    <h3>💾 Exporter les textures</h3>
     <div class="file-list">
-      <div class="file-item"><input id="nameBase" placeholder="nom_base"><button class="save-icon" data-type="base">💾</button></div>
-      <div class="file-item"><input id="nameRough" placeholder="nom_rough"><button class="save-icon" data-type="rough">💾</button></div>
-      <div class="file-item"><input id="nameHigh" placeholder="nom_high"><button class="save-icon" data-type="high">💾</button></div>
-      <div class="file-item"><input id="nameNM" placeholder="nom_nm"><button class="save-icon" data-type="nm">💾</button></div>
+      <div class="file-item">
+        <label>Base</label>
+        <div class="file-row">
+          <input id="nameBase" placeholder="nom_base.png">
+          <button class="save-icon" data-type="base" title="Exporter la texture source">💾</button>
+        </div>
+      </div>
+      <div class="file-item">
+        <label>Roughness</label>
+        <div class="file-row">
+          <input id="nameRough" placeholder="nom_rough.png">
+          <button class="save-icon" data-type="rough" title="Exporter la roughness map">💾</button>
+        </div>
+      </div>
+      <div class="file-item">
+        <label>Heightmap</label>
+        <div class="file-row">
+          <input id="nameHigh" placeholder="nom_height.png">
+          <button class="save-icon" data-type="high" title="Exporter la heightmap">💾</button>
+        </div>
+      </div>
+      <div class="file-item">
+        <label>Normal Map</label>
+        <div class="file-row">
+          <input id="nameNM" placeholder="nom_normal.png">
+          <button class="save-icon" data-type="nm" title="Exporter la normal map">💾</button>
+        </div>
+      </div>
     </div>
+
     <div class="popup-buttons">
       <button id="cancelExport" class="popup-cancel">Fermer</button>
     </div>
   </div>
 </div>
+
 
 <!-- === Scripts === -->
 <script src="./3d-normal-map-generator/3D-normal-map-generator.heightmap.js"></script>
