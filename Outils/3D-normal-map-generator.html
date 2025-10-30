@@ -217,6 +217,147 @@ sliders.forEach(enhanceSlider);
 });
 </script>
 
+<script>
+  // applique la roughness canvas (si disponible) au matériau PBR de la scène
+  (function(){
+    function findRoughnessCanvas(){
+      // tentatives habituelles pour retrouver la roughness render target/canvas
+      return document.getElementById('roughnessCanvas')
+        || document.getElementById('roughnessMapCanvas')
+        || document.getElementById('roughness')
+        || document.getElementById('roughnessCanvasOut')
+        || document.querySelector('canvas.roughness')
+        || (window.roughnessMapCanvas && window.roughnessMapCanvas instanceof HTMLCanvasElement && window.roughnessMapCanvas)
+        || document.getElementById('normalMapCanvas'); // fallback si la roughness est peinte dans le même canvas (rare)
+    }
 
+    function createTextureFromCanvas(canvas, scene){
+      try {
+        const dataURL = canvas.toDataURL('image/png');
+        const tex = new BABYLON.Texture(dataURL, scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE, () => {}, null, undefined, false);
+        // ensure correct sampling
+        tex.wrapU = tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+        return tex;
+      } catch (e) {
+        console.warn('createTextureFromCanvas failed', e);
+        return null;
+      }
+    }
+
+    function applyRoughnessToPBR(){
+      if (!window.scene) return;
+      const scene = window.scene;
+      const canvas = findRoughnessCanvas();
+      if (!canvas) {
+        console.debug('No roughness canvas found yet');
+        return;
+      }
+
+      // create a Babylon texture from the canvas (keep grayscale as-is)
+      let tex = null;
+      try {
+        // prefer DynamicTexture for live canvas to avoid re-creating dataURLs repeatedly
+        try {
+          tex = new BABYLON.DynamicTexture("roughnessDyn", canvas, scene, false);
+        } catch(e) {
+          // fallback to standard Texture using dataURL
+          const dataURL = canvas.toDataURL('image/png');
+          tex = new BABYLON.Texture(dataURL, scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+        }
+        tex.wrapU = tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+      } catch (e) {
+        console.warn('createTextureFromCanvas failed', e);
+        return;
+      }
+
+      // find a PBR material to apply to
+      const mats = scene.materials || [];
+      let pbr = mats.find(m => m && (m.getClassName && m.getClassName() === 'PBRMaterial' || m instanceof BABYLON.PBRMaterial));
+      if (!pbr) {
+        for (const mesh of scene.meshes) {
+          if (mesh.material && (mesh.material.getClassName && mesh.material.getClassName() === 'PBRMaterial' || mesh.material instanceof BABYLON.PBRMaterial)) { pbr = mesh.material; break; }
+        }
+      }
+      if (!pbr) {
+        console.warn('No PBR material found to apply roughness.');
+        return;
+      }
+
+      let applied = false;
+      try {
+        // 1) preferred: assign to dedicated roughnessTexture if available
+        if ('roughnessTexture' in pbr) {
+          try { if (pbr.roughnessTexture) { try { pbr.roughnessTexture.dispose(); } catch(_){} } } catch(_) {}
+          pbr.roughnessTexture = tex;
+          // Ensure material uses texture values rather than scalar override
+          if ('useRoughnessFromMetallicTextureGreen' in pbr) pbr.useRoughnessFromMetallicTextureGreen = false;
+          applied = true;
+        } else if ('metallicTexture' in pbr) {
+          // 2) fallback: place grayscale roughness into metallicTexture and instruct PBR to read roughness from alpha channel if supported
+          try { if (pbr.metallicTexture) { try { pbr.metallicTexture.dispose(); } catch(_){} } } catch(_) {}
+          pbr.metallicTexture = tex;
+          // Configure which channel contains roughness: prefer alpha, else green
+          if ('useRoughnessFromMetallicTextureAlpha' in pbr) {
+            pbr.useRoughnessFromMetallicTextureAlpha = true;
+            // disable other channel-reads to avoid conflicts
+            if ('useRoughnessFromMetallicTextureGreen' in pbr) pbr.useRoughnessFromMetallicTextureGreen = false;
+            applied = true;
+          } else if ('useRoughnessFromMetallicTextureGreen' in pbr) {
+            pbr.useRoughnessFromMetallicTextureGreen = true;
+            applied = true;
+          } else {
+            // last resort: set roughness scalar from average
+            try {
+              const ctx = canvas.getContext('2d');
+              const w = Math.min(64, canvas.width), h = Math.min(64, canvas.height);
+              const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+              tmp.getContext('2d').drawImage(canvas, 0, 0, w, h);
+              const d = tmp.getContext('2d').getImageData(0,0,w,h).data;
+              let sum = 0;
+              for(let i=0;i<d.length;i+=4) sum += d[i]; // grayscale
+              const avg = sum / (w*h) / 255;
+              pbr.roughness = avg;
+              applied = true;
+            } catch(e){}
+          }
+        }
+      } catch(e){
+        console.warn('Error while assigning roughness texture to PBR material', e);
+      }
+
+      if (applied) {
+        try {
+          if (typeof window.updateBabylonTextures === 'function') window.updateBabylonTextures();
+          // mark material dirty so renderer recompiles/shaders update
+          if (scene && scene.markAllMaterialsAsDirty) scene.markAllMaterialsAsDirty(BABYLON.Constants.MATERIAL_TextureDirtyFlag || 1);
+        } catch(e){/* ignore */ }
+        console.info('Roughness map applied to PBR material.');
+      } else {
+        console.warn('Could not apply roughness map to PBR material (no compatible property found).');
+      }
+    }
+
+    // If generator exposes generateRoughnessMap, wrap it to apply result automatically
+    if (typeof window.generateRoughnessMap === 'function') {
+      const orig = window.generateRoughnessMap;
+      window.generateRoughnessMap = function(...args){
+        const res = orig.apply(this, args);
+        setTimeout(() => applyRoughnessToPBR(), 120); // small delay for DOM/canvas updates
+        return res;
+      };
+    } else {
+      // fallback: try to apply periodically until scene + roughness available
+      const tryInterval = setInterval(() => {
+        if (window.scene && findRoughnessCanvas()) {
+          applyRoughnessToPBR();
+          clearInterval(tryInterval);
+        }
+      }, 500);
+    }
+
+    // also expose manual function
+    window.applyRoughnessToPBR = applyRoughnessToPBR;
+  })();
+</script>
 </body>
 </html>

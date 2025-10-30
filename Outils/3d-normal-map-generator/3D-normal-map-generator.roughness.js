@@ -44,66 +44,26 @@
     const gamma = parseFloat(document.getElementById("levelsGamma")?.value || 1);
     const invert = document.getElementById("invertRough")?.checked;
 
+    // Encode roughness in GREEN channel only (R=0,B=0,G=roughness)
     for (let i = 0; i < srcData.length; i += 4) {
       const luminance = srcData[i];
       let normalizedValue = applyLevels(luminance, black, gamma, white);
-      
-      if (invert) {
-        normalizedValue = 1.0 - normalizedValue;
-      }
-      
+      if (invert) normalizedValue = 1.0 - normalizedValue;
       const finalValue = Math.round(normalizedValue * 255);
-      outData[i] = outData[i + 1] = outData[i + 2] = finalValue;
+      // Keep roughness as grayscale (R=G=B=finalValue) — viewer decides which channel to sample.
+      outData[i] = finalValue;
+      outData[i + 1] = finalValue;
+      outData[i + 2] = finalValue;
       outData[i + 3] = 255;
     }
     rCtx.putImageData(outImageData, 0, 0);
 
-    // --- MISE À JOUR COMPLÈTE DU MATÉRIAU BABYLONJS ---
-    if (window.pbrMaterial && window.scene) {
-      try {
-        // ÉTAPE 1 : Ré-assigner la texture de base (Albedo/Source).
-        if (window.sourceImage && window.sourceImage.src) {
-          if (window.pbrMaterial.albedoTexture) window.pbrMaterial.albedoTexture.dispose();
-          window.pbrMaterial.albedoTexture = new BABYLON.Texture(window.sourceImage.src, window.scene, false, true);
-        }
-
-        // ÉTAPE 2 : Ré-assigner la Normal Map (Bump).
-        if (window.normalMapCanvas) {
-            if (window.pbrMaterial.bumpTexture) window.pbrMaterial.bumpTexture.dispose();
-            window.pbrMaterial.bumpTexture = new BABYLON.DynamicTexture("normalMap", window.normalMapCanvas, window.scene, false);
-        }
-
-        // ÉTAPE 3 : Assigner la nouvelle Roughness Map.
-        if (window.pbrMaterial.metallicTexture) window.pbrMaterial.metallicTexture.dispose();
-        window.pbrMaterial.metallicTexture = new BABYLON.DynamicTexture(
-          "metallicRough",
-          rCanvas,
-          window.scene,
-          false
-        );
-
-        // ÉTAPE 4 : Configurer le matériau pour lire les canaux.
-        window.pbrMaterial.useRoughnessFromMetallicTextureGreen = true;
-        window.pbrMaterial.useAmbientOcclusionFromMetallicTextureRed = false;
-        window.pbrMaterial.useMetallicityFromMetallicTextureBlue = false;
-        
-        // =====================================================================
-        // === CORRECTION : On respecte la valeur du slider global ===
-        // =====================================================================
-        // Au lieu de forcer la roughness à 1.0, on lit la valeur actuelle du slider.
-        const roughnessSlider = document.getElementById('roughnessSlider');
-        const currentRoughnessMultiplier = roughnessSlider ? parseFloat(roughnessSlider.value) : 1.0;
-        
-        window.pbrMaterial.metallic = 0.0; // Pas de metallicité
-        window.pbrMaterial.roughness = currentRoughnessMultiplier; // Applique la valeur du slider comme multiplicateur
-
-      } catch (e) {
-        console.warn("⚠️ Échec de la mise à jour complète du matériau PBR :", e);
-      }
-    }
-
-    if(window.updateBabylonTextures) {
-        window.updateBabylonTextures();
+    // Notifier le runtime central (main.js) pour appliquer la roughness via DynamicTexture
+    if (typeof window.applyRoughnessFromCanvas === 'function') {
+      try { window.applyRoughnessFromCanvas(rCanvas); } catch(e){ console.warn("applyRoughnessFromCanvas failed", e); }
+    } else {
+      // fallback : demander la mise à jour globale si possible
+      try { if (typeof window.updateBabylonTextures === 'function') window.updateBabylonTextures(); } catch(e){/*ignore*/ }
     }
 
     try {

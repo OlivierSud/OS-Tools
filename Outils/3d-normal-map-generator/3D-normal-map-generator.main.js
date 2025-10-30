@@ -117,6 +117,11 @@
               // bump/normal dynamic texture
               if (window.pbrMaterial.bumpTexture) { try { window.pbrMaterial.bumpTexture.dispose(); } catch(_){} }
               window.pbrMaterial.bumpTexture = new BABYLON.DynamicTexture("normalMap", normalMapCanvas, window.scene, false);
+
+              // Si une roughnessCanvas existe déjà, appliquer via la même méthode (DynamicTexture)
+              if (window.roughnessCanvas) {
+                try { if (typeof window.applyRoughnessFromCanvas === 'function') window.applyRoughnessFromCanvas(window.roughnessCanvas); } catch(e){ console.warn("applyRoughnessFromCanvas failed", e); }
+              }
             }
           } catch(e){ console.warn("Erreur update Babylon textures après chargement image :", e); }
 
@@ -223,6 +228,18 @@
       window.pbrMaterial.metallic = 0.2;
       window.pbrMaterial.roughness = 0.5; // Initial value from the new slider
 
+      // Par défaut, configurer le matériau pour accepter roughness depuis metallicTexture (canal G)
+      try {
+        window.pbrMaterial.useRoughnessFromMetallicTextureGreen = true;
+        window.pbrMaterial.useAmbientOcclusionFromMetallicTextureRed = false;
+        window.pbrMaterial.useMetallicityFromMetallicTextureBlue = false;
+      } catch(e){ /* ignore if properties not present */ }
+
+      // if a roughness canvas already exists, apply it now
+      if (window.roughnessCanvas && typeof window.generateRoughnessMap === 'function') {
+        try { window.generateRoughnessMap(); } catch(e){ /* ignore */ }
+      }
+
       // create geometry previews
       window.cube = BABYLON.MeshBuilder.CreateBox("cube", {size:1}, window.scene);
       window.cube.material = window.pbrMaterial;
@@ -257,13 +274,61 @@
 
     try {
       // La texture de roughness est dans le canal `metallicTexture`
-      if (window.pbrMaterial && window.pbrMaterial.metallicTexture && window.pbrMaterial.metallicTexture.update) {
-        window.pbrMaterial.metallicTexture.update();
+      if (window.pbrMaterial && window.pbrMaterial.metallicTexture) {
+        // some dynamic textures have update(), others don't; try to replace with a new DynamicTexture if needed
+        try {
+          if (window.pbrMaterial.metallicTexture.update) window.pbrMaterial.metallicTexture.update();
+        } catch(e) { console.warn("metallicTexture.update failed", e); }
       }
     } catch(e){ console.warn("metallicTexture (for roughness) update failed", e); }
 
     try { if (window.engine) window.engine.resize(); } catch(e){}
   };
+
+  // Applique la roughness canvas au matériau PBR en utilisant DynamicTexture (comme la normal map)
+  window.applyRoughnessFromCanvas = function(canvas){
+    if (!canvas || !window.scene || !window.pbrMaterial) return;
+    try {
+      // Dispose ancienne texture si présente
+      try { if (window.pbrMaterial.metallicTexture) { window.pbrMaterial.metallicTexture.dispose(); } } catch(e){/*ignore*/ }
+
+      // Créer DynamicTexture directement depuis le canvas (méthode identique à la normal map)
+      // on force la DynamicTexture (live) pour que les mises à jour de canvas soient prises en compte
+      const dyn = new BABYLON.DynamicTexture("roughnessDyn", canvas, window.scene, false);
+      dyn.wrapU = dyn.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+
+      // Pour compatibilité maximale : utiliser metallicTexture + lire la roughness depuis le canal GREEN
+      // (la roughnessCanvas est en NB => R=G=B, donc G contient la donnée de roughness)
+      window.pbrMaterial.metallicTexture = dyn;
+
+      // Configurer les flags pour lire la roughness depuis le canal G de metallicTexture
+      if ('useRoughnessFromMetallicTextureAlpha' in window.pbrMaterial) {
+        // Si alpha est disponible mais canvas n'a pas d'alpha utile, désactiver et basculer sur green
+        window.pbrMaterial.useRoughnessFromMetallicTextureAlpha = false;
+      }
+      if ('useRoughnessFromMetallicTextureGreen' in window.pbrMaterial) {
+        window.pbrMaterial.useRoughnessFromMetallicTextureGreen = true;
+      }
+      // Désactiver les autres usages de canaux pour éviter conflits
+      if ('useAmbientOcclusionFromMetallicTextureRed' in window.pbrMaterial) window.pbrMaterial.useAmbientOcclusionFromMetallicTextureRed = false;
+      if ('useMetallicityFromMetallicTextureBlue' in window.pbrMaterial) window.pbrMaterial.useMetallicityFromMetallicTextureBlue = false;
+
+      // Appliquer le multiplicateur global depuis le slider "roughnessSlider"
+      const roughnessSlider = document.getElementById('roughnessSlider');
+      const currentRoughnessMultiplier = roughnessSlider ? parseFloat(roughnessSlider.value) : window.pbrMaterial.roughness || 1.0;
+      // Le scalar roughness multiplie la texture (texture * roughness)
+      window.pbrMaterial.roughness = currentRoughnessMultiplier;
+
+      // Forcer la mise à jour des textures/materials
+      if (window.updateBabylonTextures) window.updateBabylonTextures();
+      if (window.scene && window.scene.markAllMaterialsAsDirty) window.scene.markAllMaterialsAsDirty(BABYLON.Constants.MATERIAL_TextureDirtyFlag || 1);
+
+      console.info("Roughness DynamicTexture appliquée au matériau PBR (metallicTexture, roughness->G).");
+    } catch (e) {
+      console.warn("Erreur applyRoughnessFromCanvas :", e);
+    }
+  };
+
 
   // === start (init Babylon after DOM ready to be safe) ===
   function startOnceReady() {
