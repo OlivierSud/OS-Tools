@@ -87,7 +87,23 @@
     if (s && s.addEventListener) s.addEventListener('input', () => { window.debouncedGenerateRoughness(); });
   });
 
-  
+  // === Ensure invertNormal checkbox triggers normal map update immediately (same behavior as sliders) ===
+  (function(){
+    try {
+      const inv = window.invertNormal || document.getElementById('invertNormal');
+      if (!inv) return;
+      const handler = () => {
+        try {
+          if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
+          else if (typeof window.generateNormalMap === 'function') window.generateNormalMap();
+        } catch(e){ console.warn('invertNormal handler failed', e); }
+      };
+      if (inv.addEventListener) inv.addEventListener('change', handler);
+    } catch(e){
+      /* non bloquant */
+      console.warn('Could not attach invertNormal handler', e);
+    }
+  })();
 
   // === image loader wiring (safeguarded) ===
   const imageLoader = $('imageLoader');
