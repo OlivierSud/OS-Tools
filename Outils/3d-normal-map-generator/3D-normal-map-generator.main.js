@@ -548,6 +548,27 @@ document.querySelectorAll('.save-icon').forEach(btn => {
   }
 
   
-
+  // === Ensure invert R/G/B checkboxes update normal map preview immediately (same as sliders) ===
+  (function(){
+    try {
+      ['invertR','invertG','invertB'].forEach(id => {
+        const el = window[id] || document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', () => {
+          try {
+            // Relaunch normal map generation (debounced, like sliders)
+            if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
+            else if (typeof window.generateNormalMap === 'function') window.generateNormalMap();
+          } catch(e){ console.warn('invert channel change handler failed', e); }
+          try {
+            // Force 2D preview sync so the inversion is visible immediately
+            if (typeof window.force2DPreviewUpdate === 'function') window.force2DPreviewUpdate();
+          } catch(e){ /* ignore */ }
+        });
+      });
+    } catch(e){
+      console.warn('Could not attach invert channel handlers', e);
+    }
+  })();
 
 })();
