@@ -94,8 +94,8 @@
   if (imageLoader) {
     imageLoader.addEventListener('change', e => {
       const f = e.target.files[0];
-      window.sourceFileName = f.name.replace(/\.[^/.]+$/, ""); // nom sans extension
-
+      window.sourceFileName = f.name; // nom avec extension
+      window.sourceFileNameBase = f.name.replace(/\.[^/.]+$/, ""); // nom avec extension
       if (!f) return;
       const r = new FileReader();
       r.onload = ev => {
@@ -461,7 +461,7 @@ const exportInputs = {
 };
 
 function updateExportNames() {
-  const baseName = window.sourceFileName || "texture";
+  const baseName = window.sourceFileNameBase || "texture";
   if (exportInputs.base) exportInputs.base.value = `${baseName}_base.png`;
   if (exportInputs.rough) exportInputs.rough.value = `${baseName}_rough.png`;
   if (exportInputs.high) exportInputs.high.value = `${baseName}_height.png`;

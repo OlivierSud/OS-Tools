@@ -26,10 +26,10 @@
         <div class="file-input-row">
           <input type="file" id="imageLoader" accept="image/*" hidden>
           <label for="imageLoader" class="custom-file-btn">📁 Choisir un fichier</label>
-          <span id="fileName" class="file-name">Aucun fichier sélectionné</span>
+          <span id="fileName" class="file-name"></span>
         </div>
       </div>
-    </div>
+    </div> 
 
     <!-- SECTION 2 : Heightmap -->
     <div class="accordion-section">
@@ -101,9 +101,9 @@
     </div>
 
     <div class="view-switcher">
-      <button id="viewNormalBtn" class="active">Normal Map</button>
+      <button id="viewSourceBtn" class="active">Source</button>
       <button id="viewHeightmapBtn">Heightmap</button>
-      <button id="viewSourceBtn">Source</button>
+      <button id="viewNormalBtn" >Normal Map</button>
       <button id="viewRoughBtn">Roughness</button>
     </div>
 
@@ -179,8 +179,8 @@
 <!-- === Scripts === -->
 <script src="./3d-normal-map-generator/3D-normal-map-generator.heightmap.js"></script>
 <script src="./3d-normal-map-generator/3D-normal-map-generator.normalmap.js"></script>
-<script src="./3d-normal-map-generator/3D-normal-map-generator.roughness.js"></script>
 <script src="./3d-normal-map-generator/3D-normal-map-generator.main.js"></script>
+<script src="./3d-normal-map-generator/3D-normal-map-generator.roughness.js"></script>
 
 <script>
 // Gestion de l’affichage des valeurs sliders
@@ -357,6 +357,37 @@ sliders.forEach(enhanceSlider);
 
     // also expose manual function
     window.applyRoughnessToPBR = applyRoughnessToPBR;
+  })();
+</script>
+<script>
+  // Fallback UI update: assurer l'affichage du nom du fichier sélectionné
+  (function(){
+    try {
+      const fileInput = document.getElementById('imageLoader');
+      const fileNameSpan = document.getElementById('fileName');
+      if (!fileInput || !fileNameSpan) return;
+      fileInput.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f && f.name) {
+          fileNameSpan.textContent = f.name;
+        } else {
+          // si aucun fichier sélectionné, vider
+          fileNameSpan.textContent = window.sourceFileName;
+        }
+      });
+      
+      // si main.js met window.sourceFileName plus tard, s'abonner à un petit intervalle pour synchroniser (sécurise tous les cas)
+      const syncInterval = setInterval(() => {
+        if (window.sourceFileName && fileNameSpan.textContent !== window.sourceFileName) {
+          fileNameSpan.textContent = window.sourceFileName;
+        }
+        // arrêter si un nom est affiché ou si l'input contient déjà un fichier
+        if (fileNameSpan.textContent || (fileInput.files && fileInput.files.length)) clearInterval(syncInterval);
+      }, 200);
+    } catch (e) {
+      // silent
+      console.warn('fileName sync init failed', e);
+    }
   })();
 </script>
 </body>
