@@ -44,32 +44,22 @@
         </label>
         <div id="heightmapEdgeOptions" class="edge-options-compact" style="margin-top:8px; display:none;">
           <!-- compact stacked sliders for Sobel mode (ids preserved) -->
-          <div class="compact-row">
-            <label for="edgeThreshold">Seuil contours <span id="edgeThresholdValue" class="value-display">40</span></label>
-            <input id="edgeThreshold" type="range" min="0" max="255" value="40" step="1">
-          </div>
-
-          <div class="compact-row" style="display:flex;align-items:center;gap:8px;">
+          <div class="compact-row" style="display:flex;align-items:center;gap:8px;"">
+          <label for="edgeThreshold">Seuil contours <span id="edgeThresholdValue" class="value-display">40</span></label>
+          <input id="edgeThreshold" type="range" min="0" max="255" value="40" step="1">
+          
             <input type="checkbox" id="invertEdges">
             <label for="invertEdges" class="checkbox-label" style="margin:0;">Inverser contours</label>
-          </div>
 
-          <div class="compact-row">
             <label for="edgeLevelsBlack">Niveau noir <span id="edgeLevelsBlackValue" class="value-display">0</span></label>
             <input id="edgeLevelsBlack" type="range" min="0" max="255" value="0" step="1">
-          </div>
 
-          <div class="compact-row">
             <label for="edgeLevelsGamma">Gamma <span id="edgeLevelsGammaValue" class="value-display">1.00</span></label>
             <input id="edgeLevelsGamma" type="range" min="0.1" max="3" value="1" step="0.01">
-          </div>
 
-          <div class="compact-row">
             <label for="edgeLevelsWhite">Niveau blanc <span id="edgeLevelsWhiteValue" class="value-display">255</span></label>
             <input id="edgeLevelsWhite" type="range" min="0" max="255" value="255" step="1">
-          </div>
-
-          <div class="compact-row">
+            
             <label for="edgeBlur">Flou (px) <span id="edgeBlurValue" class="value-display">0</span></label>
             <input id="edgeBlur" type="range" min="0" max="20" value="0" step="1">
           </div>
