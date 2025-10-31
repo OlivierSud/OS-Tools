@@ -42,7 +42,14 @@
   window.hmFineDetails = $('hmFineDetails');
   window.hmIntensity = $('hmIntensity');
   window.hmSmoothing = $('hmSmoothing');
-  window.enableHeightmap = $('enableHeightmap');
+  // new: heightmap generation mode and edge options
+  window.heightmapMode = $('heightmapMode');
+  window.edgeThreshold = $('edgeThreshold');
+  window.invertEdges = $('invertEdges');
+  window.edgeLevelsBlack = $('edgeLevelsBlack');
+  window.edgeLevelsGamma = $('edgeLevelsGamma');
+  window.edgeLevelsWhite = $('edgeLevelsWhite');
+  window.edgeBlur = $('edgeBlur');
 
   // roughness controls (some may be absent depending on HTML version)
   window.roughDarkIntensity = $('roughDarkIntensity');
@@ -82,6 +89,48 @@
     if (s && s.addEventListener) s.addEventListener('input', () => { window.debouncedGenerateHeightmap(); });
   });
 
+  // listen for changes to the heightmap mode / edge options
+  if (window.heightmapMode && window.heightmapMode.addEventListener) {
+    window.heightmapMode.addEventListener('change', () => {
+      // show/hide edge options in the UI if present
+      try {
+        const el = document.getElementById('heightmapEdgeOptions');
+        if (el) el.style.display = (window.heightmapMode.value === 'edges') ? 'flex' : 'none';
+        // hide the original slider block when edges mode is active
+        const hmOpts = document.getElementById('heightmap-options');
+        if (hmOpts) hmOpts.style.display = (window.heightmapMode.value === 'edges') ? 'none' : 'block';
+      } catch(e){}
+      if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap();
+    });
+  }
+  if (window.edgeThreshold && window.edgeThreshold.addEventListener) {
+    const tv = document.getElementById('edgeThresholdValue');
+    window.edgeThreshold.addEventListener('input', () => { if(tv) tv.textContent = window.edgeThreshold.value; if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+  }
+  if (window.invertEdges && window.invertEdges.addEventListener) {
+    window.invertEdges.addEventListener('change', () => { if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+  }
+  // wire new edge-levels and blur controls to heightmap generation
+  if (window.edgeLevelsBlack && window.edgeLevelsBlack.addEventListener) {
+    const elv = document.getElementById('edgeLevelsBlackValue');
+    window.edgeLevelsBlack.addEventListener('input', ()=>{ if(elv) elv.textContent = window.edgeLevelsBlack.value; if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+  }
+  if (window.edgeLevelsGamma && window.edgeLevelsGamma.addEventListener) {
+    const elg = document.getElementById('edgeLevelsGammaValue');
+    window.edgeLevelsGamma.addEventListener('input', ()=>{ if(elg) elg.textContent = parseFloat(window.edgeLevelsGamma.value).toFixed(2); if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+  }
+  if (window.edgeLevelsWhite && window.edgeLevelsWhite.addEventListener) {
+    const elw = document.getElementById('edgeLevelsWhiteValue');
+    window.edgeLevelsWhite.addEventListener('input', ()=>{ if(elw) elw.textContent = window.edgeLevelsWhite.value; if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+  }
+  if (window.edgeBlur && window.edgeBlur.addEventListener) {
+    const ebv = document.getElementById('edgeBlurValue');
+    window.edgeBlur.addEventListener('input', ()=>{ if(ebv) ebv.textContent = window.edgeBlur.value; if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+  }
+  // initialize edge options visibility on load
+  try { const el = document.getElementById('heightmapEdgeOptions'); if(el) el.style.display = (window.heightmapMode && window.heightmapMode.value === 'edges') ? 'flex' : 'none'; } catch(e){}
+  try { const hmOpts = document.getElementById('heightmap-options'); if(hmOpts) hmOpts.style.display = (window.heightmapMode && window.heightmapMode.value === 'edges') ? 'none' : 'block'; } catch(e){}
+  
   // include both old rough sliders (if present) and new level sliders (if present)
   [window.roughDarkIntensity, window.roughLightIntensity, window.levelsBlack, window.levelsGamma, window.levelsWhite, window.invertRough].forEach(s => {
     if (s && s.addEventListener) s.addEventListener('input', () => { window.debouncedGenerateRoughness(); });
