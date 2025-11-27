@@ -33,7 +33,9 @@
   window.smallDetails = $('smallDetails');
   window.mediumDetails = $('mediumDetails');
   window.largeDetails = $('largeDetails');
-  window.invertNormal = $('invertNormal');
+
+  // Nouveau contrôle : flou de la normal map finale
+  window.normalBlur = $('normalBlur');
 
 
   // heightmap controls (names match HTML ids)
@@ -82,9 +84,17 @@
   window.debouncedGenerateRoughness = debounce(()=>{ if (window.generateRoughnessMap) try { window.generateRoughnessMap(); } catch(e){ console.warn("generateRoughnessMap error", e); } }, 80);
 
   // wire UI events to debounced functions (safe checks)
-  [window.intensity, window.smallDetails, window.mediumDetails, window.largeDetails].forEach(s => {
+  [window.intensity, window.smallDetails, window.mediumDetails, window.largeDetails, window.normalBlur].forEach(s => {
     if (s && s.addEventListener) s.addEventListener('input', () => { window.debouncedGenerateNormalMap(); });
   });
+  // update displayed value + trigger generation
+  if (window.normalBlur && window.normalBlur.addEventListener) {
+    const nbv = document.getElementById('normalBlurValue');
+    window.normalBlur.addEventListener('input', () => {
+      if (nbv) nbv.textContent = parseFloat(window.normalBlur.value).toFixed(1);
+      if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
+    });
+  }
   [window.hmLargeShapes, window.hmMediumDetails, window.hmFineDetails, window.hmIntensity, window.hmSmoothing].forEach(s => {
     if (s && s.addEventListener) s.addEventListener('input', () => { window.debouncedGenerateHeightmap(); });
   });

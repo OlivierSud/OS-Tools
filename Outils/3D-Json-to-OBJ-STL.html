@@ -51,6 +51,7 @@
     <label for="fileInput" class="btn">⬇️ Choisir un fichier</label>
     <button class="btn" id="exportOBJ">💾 Exporter OBJ</button>
     <button class="btn" id="exportSTL">💾 Exporter STL</button>
+    <button class="btn" id="exportGLB">📦 Exporter GLB</button>
    </div>
    <canvas id="renderCanvas"></canvas>
   </main>
@@ -59,6 +60,7 @@
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script src="https://cdn.babylonjs.com/serializers/babylon.objSerializer.min.js"></script>
+  <script src="https://cdn.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
 
   <script>
   const canvas = document.getElementById("renderCanvas");
@@ -278,6 +280,81 @@
     }catch(err){
       console.error(err);
       alert("Erreur export STL: " + (err && err.message ? err.message : err));
+    }
+  });
+
+  // --- EXPORT GLB ---
+  document.getElementById("exportGLB").addEventListener("click", ()=>{
+    const meshes = scene.meshes.filter(m => m.getTotalVertices && m.getTotalVertices()>0 && m.isEnabled(true));
+    if(meshes.length===0){ alert("Aucun mesh exportable."); return; }
+    try{
+      const baked = meshes.map(m => bakeMeshClone(m)).filter(m=>m);
+      
+      // Exporter en GLB depuis la scène principale (avec les clones bakés)
+      // Note: GLBAsync attend la scène à exporter
+      BABYLON.GLTF2Export.GLBAsync(scene, lastFileName, {
+        shouldExportTransformNode: true,
+        shouldExportMesh: true,
+        shouldExportLight: false,
+        shouldExportCamera: false
+      }).then((glbData) => {
+        // glbData peut être : Blob directement, ou objet avec propriété .glb (Blob ou ArrayBuffer)
+        let blob = null;
+        
+        // Cas 1: glbData est directement un Blob
+        if (glbData instanceof Blob) {
+          blob = glbData;
+          console.log("✓ glbData est un Blob");
+        }
+        // Cas 2: glbData a une propriété .glb qui est un Blob
+        else if (glbData && glbData.glb instanceof Blob) {
+          blob = glbData.glb;
+          console.log("✓ glbData.glb est un Blob");
+        }
+        // Cas 3: glbData.glb est un ArrayBuffer
+        else if (glbData && glbData.glb instanceof ArrayBuffer) {
+          blob = new Blob([glbData.glb], { type: 'model/gltf-binary' });
+          console.log("✓ glbData.glb est un ArrayBuffer, créé Blob");
+        }
+        // Cas 4: glbData est directement un ArrayBuffer
+        else if (glbData instanceof ArrayBuffer) {
+          blob = new Blob([glbData], { type: 'model/gltf-binary' });
+          console.log("✓ glbData est un ArrayBuffer, créé Blob");
+        }
+        
+        if (!blob || !(blob instanceof Blob)) {
+          console.error("Blob invalide. glbData structure:", {
+            type: typeof glbData,
+            constructor: glbData?.constructor?.name,
+            isBlob: glbData instanceof Blob,
+            hasGlb: glbData && 'glb' in glbData,
+            glbType: glbData?.glb?.constructor?.name
+          });
+          alert("Erreur export GLB : impossible d'extraire un Blob valide");
+          baked.forEach(m => { try { m.dispose(false, true); } catch (e) { } });
+          return;
+        }
+        
+        // Télécharger
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = lastFileName + ".glb";
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        // Nettoyage
+        baked.forEach(m => { try { m.dispose(false, true); } catch (e) { } });
+        console.log("✓ Export GLB réussi, taille:", blob.size, "bytes");
+        
+      }).catch(err => {
+        console.error("Erreur GLBAsync:", err);
+        alert("Erreur export GLB : " + (err && err.message ? err.message : String(err)));
+        baked.forEach(m => { try { m.dispose(false, true); } catch (e) { } });
+      });
+    }catch(e){
+      console.error("Erreur générale export GLB:", e);
+      alert("Erreur export GLB : " + (e && e.message ? e.message : String(e)));
     }
   });
 

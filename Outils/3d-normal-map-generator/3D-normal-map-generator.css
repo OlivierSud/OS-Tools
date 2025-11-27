@@ -399,7 +399,7 @@ label {
 }
 .edge-options-compact .compact-row {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	gap: 4px;
 	margin-bottom: 4px;
 }

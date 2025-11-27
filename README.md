@@ -22,6 +22,7 @@ La boîte à outils permet d'accéder facilement à tous les outils disponibles,
 
 ### 3D
 - **[JSON to GLTF](https://oliviersud.github.io/OS-Tools/Outils/3D-Json-to-OBJ-STL.html)** : Convertit des données 3D au format JSON vers GLTF/OBJ/STL selon besoin (export pour visualisation ou impression 3D).
+- **[JSON to GLB](https://oliviersud.github.io/OS-Tools/Outils/3D-Json-to-GLB.html)** : Convertit des fichiers JSON 3D au format GLB (GLTF binaire) pour une meilleure compression et compatibilité avec les viewers 3D modernes. Inclut validation de la géométrie et optimisation automatique.
 
 ### Vidéo
 - **[Timelapse to MP4](https://oliviersud.github.io/OS-Tools/Outils/Video-Timelaps-to-MP4.html)** : Assemble une séquence d'images en une vidéo MP4 avec réglage de la cadence (fps) et encodage simple.
