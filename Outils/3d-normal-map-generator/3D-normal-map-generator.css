@@ -26,6 +26,8 @@ body {
   min-width:300px; 
   max-height: 95vh; /* empêche le scroll vertical */
   overflow-y: auto; /* au cas où */
+  overflow-x: hidden; /* empêche le panneau de contrôles d'avoir un scroll horizontal si contenu wrappe */
+  box-sizing: border-box;
 }
 .preview-panel{
   flex:2; 
@@ -107,25 +109,36 @@ label {
 
 /* Bouton "Choisir un fichier" */
 .custom-file-btn {
-  background:linear-gradient(135deg,#00aaff,#025a86);
-  transition:transform .12s ease, filter .15s ease; display:inline-block;
-  color: white;
-  padding: 10px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
   border-radius: 8px;
-  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.15s ease;
   user-select: none;
-  text-align: center;
-  white-space: nowrap;
+  transition: transform .12s ease, filter .15s ease, background .12s ease;
+  background: linear-gradient(135deg,#00aaff,#025a86); /* même visuel de base que le bouton fichier */
+  box-shadow: 0 6px 16px rgba(79,140,255,.18);
 }
-.custom-file-btn:hover {
-  background: #31b2f2;
-  transform: translateY(-2px);
+.custom-file-btn:hover { background:#31b2f2; transform:translateY(-2px); color:#011b0a; }
+
+/* si on met custom-file-btn sur un <label> contenant checkbox, rendre le layout naturel */
+.custom-file-btn input[type="checkbox"] {
+  margin-right: 8px;
+  width: auto;
+  height: auto;
+  accent-color: var(--accent1);
+  transform: scale(1.05);
 }
-.custom-file-btn:active {
-  transform: translateY(2px);
-}
+
+/* éviter que la règle .btn influe négativement : priorité pour custom-file-btn */
+.custom-file-btn.btn { border: none; }
+
+/* focus visible */
+.custom-file-btn:focus { outline: 2px solid rgba(255,255,255,0.12); outline-offset: 2px; }
 
 /* Nom du fichier */
 .file-name {
@@ -174,6 +187,7 @@ label {
   max-height: 1000px;
   opacity: 1;
   transition: max-height 0.4s ease, opacity 0.3s ease;
+  overflow-x: hidden; /* pour les containers d'accordéon, éviter overflow-x */
 }
 
 .accordion-section.closed .accordion-content {
@@ -427,6 +441,37 @@ label {
 	transform: scale(0.95);
 	margin-right: 6px;
 }
+
+/* bouton custom full width (utilisé pour Direction / Mode) */
+.custom-file-btn.fullwidth {
+	box-sizing: border-box;
+	width: 100%;
+	justify-content: center;
+}
+
+/* petites cases pour invert R/G/B : s'adaptent et wrapent proprement */
+.custom-file-btn.small-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	/* permet 3 éléments côte-à-côte puis wrap si espace insuffisant */
+	flex: 1 1 1;
+	min-width: 20px; /* prévient boutons trop étroits */
+	max-width: 100%;
+	box-sizing: border-box;
+	white-space: nowrap;
+  width: max-content;
+  justify-content: center;
+}
+
+/* s'assurer que les inputs à l'intérieur peuvent se réduire sans causer overflow */
+.custom-file-btn.small-check input[type="checkbox"] {
+	margin-right: 6px;
+	flex: 0 0 auto;
+}
+
+/* bouton fichier principal (haut) peut rester inline, mais supporte aussi fullwidth */
+.custom-file-btn { /* ...existing styles... */ box-sizing: border-box; }
 
 
 

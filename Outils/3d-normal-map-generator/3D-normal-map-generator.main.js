@@ -95,6 +95,115 @@
       if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
     });
   }
+  // Bouton "Invert normal" & bouton Mode API — gestion robuste et enforcement des contraintes R/G
+  (function(){
+    const invertBtn = document.getElementById('invertNormalBtn');
+    const apiBtn    = document.getElementById('apiModeBtn');
+
+    // état API global : 'OpenGL' | 'DirectX'
+    window.apiMode = window.apiMode || 'OpenGL';
+    function updateApiButton() {
+      if (!apiBtn) return;
+      apiBtn.textContent = `Mode: ${window.apiMode}`;
+      apiBtn.style.background = (window.apiMode === 'DirectX')
+        ? 'linear-gradient(135deg,#4fffb0,#2ecc71)'
+        : 'linear-gradient(135deg,#ffd166,#ff8a00)';
+    }
+    updateApiButton();
+
+    // suppression d'événements lorsque l'on modifie programmatique les checkboxes
+    let suppress = false;
+
+    // Enforcement : appliqué quand R change
+    function enforceFromR() {
+      if (suppress) return;
+      const r = document.getElementById('invertR');
+      const g = document.getElementById('invertG');
+      if (!r || !g) return;
+      suppress = true;
+      try {
+        if (window.apiMode === 'DirectX') {
+          g.checked = r.checked;               // DirectX : G = R
+        } else {
+          g.checked = !r.checked;              // OpenGL  : G = opposite of R
+        }
+      } finally { suppress = false; }
+      if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
+    }
+
+    // Enforcement : appliqué quand G change
+    function enforceFromG() {
+      if (suppress) return;
+      const r = document.getElementById('invertR');
+      const g = document.getElementById('invertG');
+      if (!r || !g) return;
+      suppress = true;
+      try {
+        if (window.apiMode === 'DirectX') {
+          r.checked = g.checked;               // DirectX : R = G
+        } else {
+          r.checked = !g.checked;              // OpenGL  : R = opposite of G
+        }
+      } finally { suppress = false; }
+      if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
+    }
+
+    // Attacher les listeners de façon robuste (réessaie si éléments pas encore montés)
+    const attachInterval = setInterval(() => {
+      const r = document.getElementById('invertR');
+      const g = document.getElementById('invertG');
+      if (r && g) {
+        try { r.addEventListener('change', enforceFromR); } catch(e){}
+        try { g.addEventListener('change', enforceFromG); } catch(e){}
+        clearInterval(attachInterval);
+      }
+    }, 150);
+
+    // invertNormalBtn : toggle R then enforce relation (robuste)
+    if (invertBtn) {
+      // état directionnel : 'bump' | 'hole' (par défaut bump)
+      invertBtn.dataset.direction = invertBtn.dataset.direction || 'bump';
+      invertBtn.textContent = (invertBtn.dataset.direction === 'bump') ? 'Direction: Bump 🔼​' : 'Direction: Hole 🔽';
+
+      invertBtn.addEventListener('click', () => {
+        const r = document.getElementById('invertR');
+        if (!r) return;
+        // bascule l'inversion R (comme avant) et applique la contrainte R/G
+        r.checked = !r.checked;
+        enforceFromR();
+        // bascule l'affichage entre Bump / Hole
+        invertBtn.dataset.direction = (invertBtn.dataset.direction === 'bump') ? 'hole' : 'bump';
+        invertBtn.textContent = (invertBtn.dataset.direction === 'bump') ? 'Direction: Bump 🔼' : 'Direction: Hole 🔽';
+      });
+    }
+
+    // apiBtn : bascule le mode et applique la règle demandée :
+    // - DirectX -> G = R
+    // - OpenGL  -> G = opposite of its current state (flip G)
+    if (apiBtn) {
+      apiBtn.addEventListener('click', () => {
+        window.apiMode = (window.apiMode === 'OpenGL') ? 'DirectX' : 'OpenGL';
+        updateApiButton();
+
+        const r = document.getElementById('invertR');
+        const g = document.getElementById('invertG');
+        if (!r || !g) return;
+
+        suppress = true;
+        try {
+          if (window.apiMode === 'DirectX') {
+            // make them identical
+            g.checked = r.checked;
+          } else {
+            // OpenGL requested: flip G relative to its current state (opposé à celui actuel)
+            g.checked = !g.checked;
+          }
+        } finally { suppress = false; }
+
+        if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
+      });
+    }
+  })();
   [window.hmLargeShapes, window.hmMediumDetails, window.hmFineDetails, window.hmIntensity, window.hmSmoothing].forEach(s => {
     if (s && s.addEventListener) s.addEventListener('input', () => { window.debouncedGenerateHeightmap(); });
   });

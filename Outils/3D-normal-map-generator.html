@@ -95,20 +95,28 @@
         <label for="normalBlur">Flou Normal <span id="normalBlurValue" class="value-display">0.0</span></label>
         <input type="range" id="normalBlur" min="0" max="8" step="0.1" value="0">
       </div>
-      <div style="margin-top:10px; display:flex; gap:12px; align-items:center;">
-        <label style="display:flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="invertR">
-          <span class="checkbox-label">Inverser R</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="invertG">
-          <span class="checkbox-label">Inverser G</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="invertB">
-          <span class="checkbox-label">Inverser B</span>
-        </label>
+      <!-- Bouton raccourci pour inverser simultanément les canaux R et G -->
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px; align-items:stretch;">
+        <!-- boutons en pleine largeur de la colonne -->
+        <button id="invertNormalBtn" class="custom-file-btn fullwidth" type="button">Direction: Bump</button>
+        <!-- la couleur "apiModeBtn" est gérée dynamiquement via JS (style inline côté script si besoin) -->
+        <button id="apiModeBtn" class="custom-file-btn fullwidth" type="button">Mode: OpenGL</button>
       </div>
+      <!-- container responsive : wrap pour éviter scroll horizontal -->
+      <div style="margin-top:10px;  display:inside; gap:12px; align-items:stretch; flex-wrap:wrap;">
+         <label class="custom-file-btn small-check" style="padding:2px 12px;">
+           <input type="checkbox" id="invertR">
+           <span class="checkbox-label">Inv. R</span>
+         </label>
+         <label class="custom-file-btn small-check" style="padding:2px 12px;">
+           <input type="checkbox" id="invertG">
+           <span class="checkbox-label">Inv. G</span>
+         </label>
+         <label class="custom-file-btn small-check" style="padding:2px 12px;">
+           <input type="checkbox" id="invertB">
+           <span class="checkbox-label">Inv. B</span>
+         </label>
+       </div>
     </div>
 
     <!-- SECTION 4 : Roughness -->
