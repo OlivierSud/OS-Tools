@@ -12,65 +12,162 @@ body {
   box-sizing: border-box;
   overflow: hidden;
 }
-.container { 
-  display:flex; 
-  flex-wrap:nowrap; 
-  gap:30px; 
-  width:100%; 
-  max-width:1200px; 
-  height:100%; 
+
+.container {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 30px;
+  width: 100%;
+  max-width: 1200px;
+  height: 100%;
 }
-.panel { background-color:#444; padding:20px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,.3); overflow-y:auto; height:100%; box-sizing:border-box; }
-.controls-panel{ 
-  flex:1; 
-  min-width:300px; 
-  max-height: 95vh; /* empêche le scroll vertical */
-  overflow-y: auto; /* au cas où */
-  overflow-x: hidden; /* empêche le panneau de contrôles d'avoir un scroll horizontal si contenu wrappe */
+
+.panel {
+  background-color: #444;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, .3);
+  overflow-y: auto;
+  height: 100%;
   box-sizing: border-box;
 }
-.preview-panel{
-  flex:2; 
-  min-width:400px; 
-  display:flex; 
-  flex-direction:column; 
-  align-items:center; 
-  max-height: 95vh; /* empêche le scroll vertical */
-  overflow-y: auto; /* au cas où */
-}
-h1,h2{font-size: 20px; border-bottom:2px solid #555; padding-bottom:2px; margin-top:0; color:#00aaff; }
-.control-group{ margin-bottom:5px; }
-label{ display:block; margin-bottom:8px; font-weight:bold; }
-.checkbox-label{ display:inline-block; margin-left:5px; font-weight:normal; }
-input[type="file"]{ padding:8px; background:#555; border-radius:4px; cursor:pointer; }
-input[type="range"]{ width:100%; cursor:pointer; }
-.main-preview-container{ position:relative; width:100%; max-width:512px; }
 
-#normalMapCanvas,#mainPreviewImage{
+.controls-panel {
+  flex: 1;
+  min-width: 300px;
+  max-height: 95vh;
+  /* empêche le scroll vertical */
+  overflow-y: auto;
+  /* au cas où */
+  overflow-x: hidden;
+  /* empêche le panneau de contrôles d'avoir un scroll horizontal si contenu wrappe */
+  box-sizing: border-box;
+}
+
+.preview-panel {
+  flex: 2;
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-height: 95vh;
+  /* empêche le scroll vertical */
+  overflow-y: auto;
+  /* au cas où */
+}
+
+h1,
+h2 {
+  font-size: 20px;
+  border-bottom: 2px solid #555;
+  padding-bottom: 2px;
+  margin-top: 0;
+  color: #00aaff;
+}
+
+.control-group {
+  margin-bottom: 5px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.checkbox-label {
+  display: inline-block;
+  margin-left: 5px;
+  font-weight: normal;
+}
+
+input[type="file"] {
+  padding: 8px;
+  background: #555;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type="range"] {
   width: 100%;
-  max-height: 350px; /* au lieu de 512px plein écran */
+  cursor: pointer;
+}
+
+.main-preview-container {
+  position: relative;
+  width: 100%;
+  max-width: 512px;
+}
+
+#normalMapCanvas,
+#mainPreviewImage {
+  width: 100%;
+  max-height: 350px;
+  /* au lieu de 512px plein écran */
   height: 35vh;
   border-radius: 4px;
   background: #3a3a3a;
   object-fit: contain;
 }
-#mainPreviewImage{ display:none; }
-.view-switcher{ margin-bottom:15px; display:flex; gap:10px; background:#333; padding:5px; border-radius:8px; }
-.view-switcher button{ padding:5px 15px; border:1px solid #555; background:#444; color:#eee; cursor:pointer; border-radius:5px; font-weight:normal; }
-.view-switcher button.active{ background:#00aaff; color:#fff; border-color:#00aaff; }
-#threeCanvas{
+
+#mainPreviewImage {
+  display: none;
+}
+
+.view-switcher {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 10px;
+  background: #333;
+  padding: 5px;
+  border-radius: 8px;
+}
+
+.view-switcher button {
+  padding: 5px 15px;
+  border: 1px solid #555;
+  background: #444;
+  color: #eee;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: normal;
+}
+
+.view-switcher button.active {
+  background: #00aaff;
+  color: #fff;
+  border-color: #00aaff;
+}
+
+#threeCanvas {
   width: 100%;
   height: 30vh;
   border-radius: 4px;
   margin-top: 10px;
 }
-#shape-switcher button{ flex:1; }
-.value-display{ display:inline-block; margin-left:10px; font-weight:normal; color:#ccc; }
-.options-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+#shape-switcher button {
+  flex: 1;
+}
+
+.value-display {
+  display: inline-block;
+  margin-left: 10px;
+  font-weight: normal;
+  color: #ccc;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .reset-btn:hover {
   background: #00aaff;
   color: white;
 }
+
 label {
   display: flex;
   justify-content: space-between;
@@ -95,6 +192,7 @@ label {
   font-size: 0.9em;
   transition: background 0.2s, color 0.2s;
 }
+
 .reset-btn:hover {
   background: #f23328;
   color: white;
@@ -120,10 +218,16 @@ label {
   cursor: pointer;
   user-select: none;
   transition: transform .12s ease, filter .15s ease, background .12s ease;
-  background: linear-gradient(135deg,#00aaff,#025a86); /* même visuel de base que le bouton fichier */
-  box-shadow: 0 6px 16px rgba(79,140,255,.18);
+  background: linear-gradient(135deg, #00aaff, #025a86);
+  /* même visuel de base que le bouton fichier */
+  box-shadow: 0 6px 16px rgba(79, 140, 255, .18);
 }
-.custom-file-btn:hover { background:#31b2f2; transform:translateY(-2px); color:#011b0a; }
+
+.custom-file-btn:hover {
+  background: #31b2f2;
+  transform: translateY(-2px);
+  color: #011b0a;
+}
 
 /* si on met custom-file-btn sur un <label> contenant checkbox, rendre le layout naturel */
 .custom-file-btn input[type="checkbox"] {
@@ -135,17 +239,23 @@ label {
 }
 
 /* éviter que la règle .btn influe négativement : priorité pour custom-file-btn */
-.custom-file-btn.btn { border: none; }
+.custom-file-btn.btn {
+  border: none;
+}
 
 /* focus visible */
-.custom-file-btn:focus { outline: 2px solid rgba(255,255,255,0.12); outline-offset: 2px; }
+.custom-file-btn:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.12);
+  outline-offset: 2px;
+}
 
 /* Nom du fichier */
 .file-name {
   font-size: 0.9em;
   color: #ccc;
   word-break: break-all;
-  flex: 1; /* occupe tout l’espace restant */
+  flex: 1;
+  /* occupe tout l’espace restant */
   text-align: left;
   opacity: 0.9;
 }
@@ -187,7 +297,8 @@ label {
   max-height: 1000px;
   opacity: 1;
   transition: max-height 0.4s ease, opacity 0.3s ease;
-  overflow-x: hidden; /* pour les containers d'accordéon, éviter overflow-x */
+  overflow-x: hidden;
+  /* pour les containers d'accordéon, éviter overflow-x */
 }
 
 .accordion-section.closed .accordion-content {
@@ -207,6 +318,7 @@ label {
   font-weight: 600;
   transition: background 0.3s, transform 0.2s;
 }
+
 .export-btn:hover {
   background: #00c49f;
   transform: translateY(-2px);
@@ -268,6 +380,7 @@ label {
 .popup-confirm:hover {
   background: #00ccff;
 }
+
 .popup-cancel:hover {
   background: #aaa;
 }
@@ -294,6 +407,7 @@ label {
 .main-preview-container {
   transition: flex 0.3s ease;
 }
+
 #preview3DContainer {
   transition: all 0.3s ease;
 }
@@ -302,9 +416,11 @@ label {
 .export-popup {
   display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
   justify-content: center;
   align-items: center;
   z-index: 1000;
@@ -316,7 +432,7 @@ label {
   border-radius: 12px;
   padding: 25px 30px;
   width: 320px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -408,70 +524,339 @@ label {
 
 /* Compact layout for Sobel/edge sliders (stacked, small spacing) */
 .edge-options-compact {
-	gap: 6px;
-	font-size: 0.95em;
+  gap: 6px;
+  font-size: 0.95em;
 }
+
 .edge-options-compact .compact-row {
-	display: flex;
-	flex-direction: row;
-	gap: 4px;
-	margin-bottom: 4px;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  margin-bottom: 4px;
 }
+
 .edge-options-compact label {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	font-weight: 600;
-	margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin: 0;
 }
+
 .edge-options-compact input[type="range"] {
-	/* keep usable but visually compact */
-	height: 28px;
-	margin: 0;
-	padding: 0;
+  /* keep usable but visually compact */
+  height: 28px;
+  margin: 0;
+  padding: 0;
 }
+
 .edge-options-compact .value-display {
-	font-size: 0.85em;
-	color: #cfcfcf;
-	margin-left: 8px;
+  font-size: 0.85em;
+  color: #cfcfcf;
+  margin-left: 8px;
 }
 
 /* Slightly reduce vertical spacing for checkboxes in this block */
 .edge-options-compact input[type="checkbox"] {
-	transform: scale(0.95);
-	margin-right: 6px;
+  transform: scale(0.95);
+  margin-right: 6px;
 }
 
 /* bouton custom full width (utilisé pour Direction / Mode) */
 .custom-file-btn.fullwidth {
-	box-sizing: border-box;
-	width: 100%;
-	justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  justify-content: center;
 }
 
 /* petites cases pour invert R/G/B : s'adaptent et wrapent proprement */
 .custom-file-btn.small-check {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	/* permet 3 éléments côte-à-côte puis wrap si espace insuffisant */
-	flex: 1 1 1;
-	min-width: 20px; /* prévient boutons trop étroits */
-	max-width: 100%;
-	box-sizing: border-box;
-	white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* permet 3 éléments côte-à-côte puis wrap si espace insuffisant */
+  flex: 1 1 1;
+  min-width: 20px;
+  /* prévient boutons trop étroits */
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  width: max-content;
+  justify-content: center;
+}
+
+/* s'assurer que les inputs à l'intérieur peuvent se réduire sans causer overflow */
+
+#preview3DContainer {
+  transition: all 0.3s ease;
+}
+
+/* === POPUP EXPORT MODERNE === */
+.export-popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.popup-content {
+  background: #3f3f3f;
+  border-radius: 12px;
+  padding: 25px 30px;
+  width: 320px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.popup-content h3 {
+  color: #00aaff;
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-item label {
+  font-size: 0.9em;
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+.file-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.file-row input {
+  flex: 1;
+  padding: 8px 10px;
+  background: #555;
+  border: 1px solid #666;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9em;
+  outline: none;
+  transition: border 0.2s, background 0.2s;
+}
+
+.file-row input:focus {
+  border-color: #00aaff;
+  background: #4a4a4a;
+}
+
+.save-icon {
+  background: linear-gradient(135deg, #00aaff, #025a86);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.25s, transform 0.15s;
+}
+
+.save-icon:hover {
+  background: #31b2f2;
+  transform: translateY(-2px);
+}
+
+.save-icon:active {
+  transform: translateY(2px);
+}
+
+.popup-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.popup-cancel {
+  background: #888;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.15s;
+}
+
+.popup-cancel:hover {
+  background: #00aaff;
+  transform: translateY(-2px);
+}
+
+/* Compact layout for Sobel/edge sliders (stacked, small spacing) */
+.edge-options-compact {
+  gap: 6px;
+  font-size: 0.95em;
+}
+
+.edge-options-compact .compact-row {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.edge-options-compact label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin: 0;
+}
+
+.edge-options-compact input[type="range"] {
+  /* keep usable but visually compact */
+  height: 28px;
+  margin: 0;
+  padding: 0;
+}
+
+.edge-options-compact .value-display {
+  font-size: 0.85em;
+  color: #cfcfcf;
+  margin-left: 8px;
+}
+
+/* Slightly reduce vertical spacing for checkboxes in this block */
+.edge-options-compact input[type="checkbox"] {
+  transform: scale(0.95);
+  margin-right: 6px;
+}
+
+/* bouton custom full width (utilisé pour Direction / Mode) */
+.custom-file-btn.fullwidth {
+  box-sizing: border-box;
+  width: 100%;
+  justify-content: center;
+}
+
+/* petites cases pour invert R/G/B : s'adaptent et wrapent proprement */
+.custom-file-btn.small-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* permet 3 éléments côte-à-côte puis wrap si espace insuffisant */
+  flex: 1 1 1;
+  min-width: 20px;
+  /* prévient boutons trop étroits */
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
   width: max-content;
   justify-content: center;
 }
 
 /* s'assurer que les inputs à l'intérieur peuvent se réduire sans causer overflow */
 .custom-file-btn.small-check input[type="checkbox"] {
-	margin-right: 6px;
-	flex: 0 0 auto;
+  margin-right: 6px;
+  flex: 0 0 auto;
 }
 
 /* bouton fichier principal (haut) peut rester inline, mais supporte aussi fullwidth */
-.custom-file-btn { /* ...existing styles... */ box-sizing: border-box; }
+.custom-file-btn {
+  /* ...existing styles... */
+  box-sizing: border-box;
+}
 
+/* === Custom Blue Sliders === */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  margin: 6px 0;
 
+  /* Webkit progress fill trick: background gradient on the input itself */
+  background-color: #444;
+  background-image: linear-gradient(#00aaff, #00aaff);
+  background-size: 0% 100%;
+  /* Updated by JS */
+  background-repeat: no-repeat;
+  height: 6px;
+  border-radius: 3px;
+  border: 1px solid #555;
+}
 
+input[type=range]:focus {
+  outline: none;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 100%;
+  /* Match input height */
+  cursor: pointer;
+  background: transparent;
+  /* Transparent so input background shows */
+  border: none;
+  border-radius: 3px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: #00aaff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -7px;
+  /* (6px height - 18px height) / 2 - 1px border correction */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  border: 2px solid #333;
+  transition: background 0.2s, transform 0.2s;
+}
+
+input[type=range]:focus::-webkit-slider-thumb {
+  background: #33bbff;
+  transform: scale(1.1);
+}
+
+/* Firefox */
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: #444;
+  border-radius: 3px;
+  border: 1px solid #555;
+}
+
+input[type=range]::-moz-range-progress {
+  background-color: #00aaff;
+  height: 6px;
+  border-radius: 3px;
+}
+
+input[type=range]::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border: 2px solid #333;
+  border-radius: 50%;
+  background: #00aaff;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  transition: background 0.2s, transform 0.2s;
+}
+
+input[type=range]:focus::-moz-range-thumb {
+  background: #33bbff;
+  transform: scale(1.1);
+}

@@ -101,7 +101,7 @@
     const apiBtn    = document.getElementById('apiModeBtn');
 
     // état API global : 'OpenGL' | 'DirectX'
-    window.apiMode = window.apiMode || 'OpenGL';
+    window.apiMode = window.apiMode || 'DirectX';
     function updateApiButton() {
       if (!apiBtn) return;
       apiBtn.textContent = `Mode: ${window.apiMode}`;

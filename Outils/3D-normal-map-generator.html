@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,430 +13,469 @@
   <!-- Ton CSS principal -->
   <link rel="stylesheet" href="./3d-normal-map-generator/3D-normal-map-generator.css">
 </head>
+
 <body>
 
-<div class="container">
-  <!-- === PANNEAU CONTRÔLES === -->
-  <div class="panel controls-panel">
-    <h1>Paramètres</h1>
-    
-    <!-- SECTION 1 : Import -->
-    <div class="accordion-section">
-      <h2 class="accordion-header"><span class="arrow">▾</span> 1. Importer un fichier source</h2>
-      <div class="accordion-content">
-        <div class="file-input-row">
-          <input type="file" id="imageLoader" accept="image/*" hidden>
-          <label for="imageLoader" class="custom-file-btn">📁 Choisir un fichier</label>
-          <span id="fileName" class="file-name"></span>
-        </div>
-      </div>
-    </div> 
+  <div class="container">
+    <!-- === PANNEAU CONTRÔLES === -->
+    <div class="panel controls-panel">
+      <h1>Paramètres</h1>
 
-    <!-- SECTION 2 : Heightmap -->
-    <div class="accordion-section">
-      <h2 class="accordion-header"><span class="arrow">▾</span> 2. Génération de la Heightmap</h2>
-      <div class="accordion-content">
-        <label style="display:flex;align-items:center;gap:8px;">
-          <span style="min-width:150px;display:inline-block;">Mode Heightmap :</span>
-          <select id="heightmapMode">
-            <option value="auto" selected>Générer depuis l'image (comportement actuel)</option>
-            <option value="edges">Détection de contours (Sobel)</option>
-          </select>
-        </label>
-        <div id="heightmapEdgeOptions" class="edge-options-compact" style="margin-top:8px; display:none;">
-          <!-- compact stacked sliders for Sobel mode (ids preserved) -->
-          <div class="compact-row" style="display:flex;align-items:center;gap:8px;"">
-          <label for="edgeThreshold">Seuil contours <span id="edgeThresholdValue" class="value-display">40</span></label>
-          <input id="edgeThreshold" type="range" min="0" max="255" value="40" step="1">
-          
-            <input type="checkbox" id="invertEdges">
-            <label for="invertEdges" class="checkbox-label" style="margin:0;">Inverser contours</label>
-
-            <label for="edgeLevelsBlack">Niveau noir <span id="edgeLevelsBlackValue" class="value-display">0</span></label>
-            <input id="edgeLevelsBlack" type="range" min="0" max="255" value="0" step="1">
-
-            <label for="edgeLevelsGamma">Gamma <span id="edgeLevelsGammaValue" class="value-display">1.00</span></label>
-            <input id="edgeLevelsGamma" type="range" min="0.1" max="3" value="1" step="0.01">
-
-            <label for="edgeLevelsWhite">Niveau blanc <span id="edgeLevelsWhiteValue" class="value-display">255</span></label>
-            <input id="edgeLevelsWhite" type="range" min="0" max="255" value="255" step="1">
-            
-            <label for="edgeBlur">Flou (px) <span id="edgeBlurValue" class="value-display">0</span></label>
-            <input id="edgeBlur" type="range" min="0" max="20" value="0" step="1">
+      <!-- SECTION 1 : Import -->
+      <div class="accordion-section">
+        <h2 class="accordion-header"><span class="arrow">▾</span> 1. Importer un fichier source</h2>
+        <div class="accordion-content">
+          <div class="file-input-row">
+            <input type="file" id="imageLoader" accept="image/*" hidden>
+            <label for="imageLoader" class="custom-file-btn">📁 Choisir un fichier</label>
+            <span id="fileName" class="file-name"></span>
           </div>
         </div>
-        <div id="heightmap-options" style="margin-top:10px;">
-          <label for="hmLargeShapes">Formes Larges <span id="hmLargeShapesValue" class="value-display">0.60</span></label>
-          <input type="range" id="hmLargeShapes" min="0" max="1" value="0.6" step="0.01">
-          <label for="hmMediumDetails">Détails Moyens <span id="hmMediumDetailsValue" class="value-display">0.60</span></label>
-          <input type="range" id="hmMediumDetails" min="0" max="3" value="0.6" step="0.01">
-          <label for="hmFineDetails">Détails Fins <span id="hmFineDetailsValue" class="value-display">0.60</span></label>
-          <input type="range" id="hmFineDetails" min="0" max="3" value="0.6" step="0.01">
-          <label for="hmIntensity">Intensité Globale <span id="hmIntensityValue" class="value-display">2.00</span></label>
-          <input type="range" id="hmIntensity" min="0" max="3" value="2.0" step="0.01">
-          <label for="hmSmoothing">Lissage Final <span id="hmSmoothingValue" class="value-display">2.0</span></label>
-          <input type="range" id="hmSmoothing" min="0" max="5" value="2.0" step="0.1">
+      </div>
+
+      <!-- SECTION 2 : Heightmap -->
+      <div class="accordion-section">
+        <h2 class="accordion-header"><span class="arrow">▾</span> 2. Génération de la Heightmap</h2>
+        <div class="accordion-content">
+          <label style="display:flex;align-items:center;gap:8px;">
+            <span style="min-width:150px;display:inline-block;">Mode Heightmap :</span>
+            <select id="heightmapMode">
+              <option value="auto" selected>Générer depuis l'image (comportement actuel)</option>
+              <option value="edges">Détection de contours (Sobel)</option>
+            </select>
+          </label>
+          <div id="heightmapEdgeOptions" class="edge-options-compact" style="margin-top:8px; display:none;">
+            <!-- compact stacked sliders for Sobel mode (ids preserved) -->
+            <div class="compact-row" style="display:flex;align-items:center;gap:8px;"">
+          <label for=" edgeThreshold">Seuil contours <span id="edgeThresholdValue"
+                class="value-display">40</span></label>
+              <input id="edgeThreshold" type="range" min="0" max="255" value="40" step="1">
+
+              <input type="checkbox" id="invertEdges">
+              <label for="invertEdges" class="checkbox-label" style="margin:0;">Inverser contours</label>
+
+              <label for="edgeLevelsBlack">Niveau noir <span id="edgeLevelsBlackValue"
+                  class="value-display">0</span></label>
+              <input id="edgeLevelsBlack" type="range" min="0" max="255" value="0" step="1">
+
+              <label for="edgeLevelsGamma">Gamma <span id="edgeLevelsGammaValue"
+                  class="value-display">1.00</span></label>
+              <input id="edgeLevelsGamma" type="range" min="0.1" max="3" value="1" step="0.01">
+
+              <label for="edgeLevelsWhite">Niveau blanc <span id="edgeLevelsWhiteValue"
+                  class="value-display">255</span></label>
+              <input id="edgeLevelsWhite" type="range" min="0" max="255" value="255" step="1">
+
+              <label for="edgeBlur">Flou (px) <span id="edgeBlurValue" class="value-display">0</span></label>
+              <input id="edgeBlur" type="range" min="0" max="20" value="0" step="1">
+            </div>
+          </div>
+          <div id="heightmap-options" style="margin-top:10px;">
+            <label for="hmLargeShapes">Formes Larges <span id="hmLargeShapesValue"
+                class="value-display">0.60</span></label>
+            <input type="range" id="hmLargeShapes" min="0" max="1" value="0.6" step="0.01">
+            <label for="hmMediumDetails">Détails Moyens <span id="hmMediumDetailsValue"
+                class="value-display">0.60</span></label>
+            <input type="range" id="hmMediumDetails" min="0" max="3" value="0.6" step="0.01">
+            <label for="hmFineDetails">Détails Fins <span id="hmFineDetailsValue"
+                class="value-display">0.60</span></label>
+            <input type="range" id="hmFineDetails" min="0" max="3" value="0.6" step="0.01">
+            <label for="hmIntensity">Intensité Globale <span id="hmIntensityValue"
+                class="value-display">2.00</span></label>
+            <input type="range" id="hmIntensity" min="0" max="3" value="2.0" step="0.01">
+            <label for="hmSmoothing">Lissage Final <span id="hmSmoothingValue" class="value-display">2.0</span></label>
+            <input type="range" id="hmSmoothing" min="0" max="5" value="2.0" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3 : Normal Map -->
+      <div class="accordion-section">
+        <h2 class="accordion-header"><span class="arrow">▾</span> 3. Réglages de la Normal Map</h2>
+        <div class="accordion-content">
+          <label for="intensity">Intensité <span id="intensityValue" class="value-display">1.00</span></label>
+          <input type="range" id="intensity" min="0" max="100" value="63" step="1">
+          <label for="smallDetails">Petits Détails (Lissage) <span id="smallDetailsValue"
+              class="value-display">0.10</span></label>
+          <input type="range" id="smallDetails" min="0" max="1" value="0.1" step="0.01">
+          <label for="mediumDetails">Moyens Détails <span id="mediumDetailsValue"
+              class="value-display">0.10</span></label>
+          <input type="range" id="mediumDetails" min="0" max="1" value="0.1" step="0.01">
+          <label for="largeDetails">Grands Détails <span id="largeDetailsValue"
+              class="value-display">0.10</span></label>
+          <input type="range" id="largeDetails" min="0" max="1" value="0.1" step="0.01">
+          <!-- Nouveau slider : Flou appliqué à la normal map finale -->
+          <label for="normalBlur">Flou Normal <span id="normalBlurValue" class="value-display">0.0</span></label>
+          <input type="range" id="normalBlur" min="0" max="8" step="0.1" value="0">
+        </div>
+        <!-- Bouton raccourci pour inverser simultanément les canaux R et G -->
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px; align-items:stretch;">
+          <!-- boutons en pleine largeur de la colonne -->
+          <button id="invertNormalBtn" class="custom-file-btn fullwidth" type="button">Direction: Bump</button>
+          <!-- la couleur "apiModeBtn" est gérée dynamiquement via JS (style inline côté script si besoin) -->
+          <button id="apiModeBtn" class="custom-file-btn fullwidth" type="button">Mode: DirectX</button>
+        </div>
+        <!-- container responsive : wrap pour éviter scroll horizontal -->
+        <div style="margin-top:10px;  display:inside; gap:12px; align-items:stretch; flex-wrap:wrap;">
+          <label class="custom-file-btn small-check" style="padding:2px 12px;">
+            <input type="checkbox" id="invertR">
+            <span class="checkbox-label">Inv. R</span>
+          </label>
+          <label class="custom-file-btn small-check" style="padding:2px 12px;">
+            <input type="checkbox" id="invertG">
+            <span class="checkbox-label">Inv. G</span>
+          </label>
+          <label class="custom-file-btn small-check" style="padding:2px 12px;">
+            <input type="checkbox" id="invertB">
+            <span class="checkbox-label">Inv. B</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- SECTION 4 : Roughness -->
+      <div class="accordion-section">
+        <h2 class="accordion-header"><span class="arrow">▾</span> 4. Roughness Map (nouveau)</h2>
+        <div class="accordion-content">
+          <label for="levelsBlack">Niveau noir <span id="levelsBlackValue" class="value-display">0</span></label>
+          <input type="range" id="levelsBlack" min="0" max="255" value="0" step="1">
+
+          <label for="levelsGamma">Gamma <span id="levelsGammaValue" class="value-display">1.00</span></label>
+          <input type="range" id="levelsGamma" min="0.1" max="3" value="1" step="0.01">
+
+          <label for="levelsWhite">Niveau blanc <span id="levelsWhiteValue" class="value-display">255</span></label>
+          <input type="range" id="levelsWhite" min="0" max="255" value="255" step="1">
+
+          <div style="margin-top:10px;">
+            <input type="checkbox" id="invertRough">
+            <label for="invertRough" class="checkbox-label">Inverser les noirs et blancs</label>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 3 : Normal Map -->
-    <div class="accordion-section">
-      <h2 class="accordion-header"><span class="arrow">▾</span> 3. Réglages de la Normal Map</h2>
-      <div class="accordion-content">
-        <label for="intensity">Intensité <span id="intensityValue" class="value-display">1.00</span></label>
-        <input type="range" id="intensity" min="0" max="100" value="63" step="1">
-        <label for="smallDetails">Petits Détails (Lissage) <span id="smallDetailsValue" class="value-display">0.10</span></label>
-        <input type="range" id="smallDetails" min="0" max="1" value="0.1" step="0.01">
-        <label for="mediumDetails">Moyens Détails <span id="mediumDetailsValue" class="value-display">0.10</span></label>
-        <input type="range" id="mediumDetails" min="0" max="1" value="0.1" step="0.01">
-        <label for="largeDetails">Grands Détails <span id="largeDetailsValue" class="value-display">0.10</span></label>
-        <input type="range" id="largeDetails" min="0" max="1" value="0.1" step="0.01">
-        <!-- Nouveau slider : Flou appliqué à la normal map finale -->
-        <label for="normalBlur">Flou Normal <span id="normalBlurValue" class="value-display">0.0</span></label>
-        <input type="range" id="normalBlur" min="0" max="8" step="0.1" value="0">
+    <!-- === PANEL APERÇU === -->
+    <div class="panel preview-panel">
+      <div class="preview-header">
+        <h2>Aperçu</h2>
+        <button id="exportTexturesBtn" class="export-btn">💾 Exporter</button>
       </div>
-      <!-- Bouton raccourci pour inverser simultanément les canaux R et G -->
-      <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px; align-items:stretch;">
-        <!-- boutons en pleine largeur de la colonne -->
-        <button id="invertNormalBtn" class="custom-file-btn fullwidth" type="button">Direction: Bump</button>
-        <!-- la couleur "apiModeBtn" est gérée dynamiquement via JS (style inline côté script si besoin) -->
-        <button id="apiModeBtn" class="custom-file-btn fullwidth" type="button">Mode: OpenGL</button>
+
+      <div class="view-switcher">
+        <button id="viewSourceBtn" class="active">Source</button>
+        <button id="viewHeightmapBtn">Heightmap</button>
+        <button id="viewNormalBtn">Normal Map</button>
+        <button id="viewRoughBtn">Roughness</button>
       </div>
-      <!-- container responsive : wrap pour éviter scroll horizontal -->
-      <div style="margin-top:10px;  display:inside; gap:12px; align-items:stretch; flex-wrap:wrap;">
-         <label class="custom-file-btn small-check" style="padding:2px 12px;">
-           <input type="checkbox" id="invertR">
-           <span class="checkbox-label">Inv. R</span>
-         </label>
-         <label class="custom-file-btn small-check" style="padding:2px 12px;">
-           <input type="checkbox" id="invertG">
-           <span class="checkbox-label">Inv. G</span>
-         </label>
-         <label class="custom-file-btn small-check" style="padding:2px 12px;">
-           <input type="checkbox" id="invertB">
-           <span class="checkbox-label">Inv. B</span>
-         </label>
-       </div>
-    </div>
 
-    <!-- SECTION 4 : Roughness -->
-    <div class="accordion-section">
-      <h2 class="accordion-header"><span class="arrow">▾</span> 4. Roughness Map (nouveau)</h2>
-      <div class="accordion-content">
-        <label for="levelsBlack">Niveau noir <span id="levelsBlackValue" class="value-display">0</span></label>
-        <input type="range" id="levelsBlack" min="0" max="255" value="0" step="1">
+      <div class="main-preview-container">
+        <canvas id="normalMapCanvas" width="1024" height="1024"></canvas>
+        <img id="mainPreviewImage" src="" alt="Aperçu principal" style="display:none;">
+      </div>
 
-        <label for="levelsGamma">Gamma <span id="levelsGammaValue" class="value-display">1.00</span></label>
-        <input type="range" id="levelsGamma" min="0.1" max="3" value="1" step="0.01">
-
-        <label for="levelsWhite">Niveau blanc <span id="levelsWhiteValue" class="value-display">255</span></label>
-        <input type="range" id="levelsWhite" min="0" max="255" value="255" step="1">
-
-        <div style="margin-top:10px;">
-          <input type="checkbox" id="invertRough">
-          <label for="invertRough" class="checkbox-label">Inverser les noirs et blancs</label>
+      <!-- Visionneuse 3D -->
+      <div class="control-group" style="margin-top:20px;width:100%;max-width:512px;">
+        <h2 style="font-size:1.1em;margin-bottom:5px;">Aperçu 3D</h2>
+        <canvas id="threeCanvas"></canvas>
+        <div class="mesh-switcher" style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+          <button id="btnCube">Cube</button>
+          <button id="btnSphere">Sphere</button>
+          <button id="btnSwitchEnv">Switch Env</button>
         </div>
+
+
+        <!-- Nouveau slider Roughness globale -->
+        <div class="slider-label-container" style="margin-top:10px;">
+          <label for="roughnessSlider">Roughness globale <span id="roughnessValue"
+              class="value-display">0.5</span></label>
+          <input type="range" id="roughnessSlider" min="0" max="1" value="0.5" step="0.01">
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- === POPUP EXPORT === -->
+  <div id="exportPopup" class="export-popup">
+    <div class="popup-content">
+      <h3>💾 Exporter les textures</h3>
+      <div class="file-list">
+        <div class="file-item">
+          <label>Base</label>
+          <div class="file-row">
+            <input id="nameBase" placeholder="nom_base.png">
+            <button class="save-icon" data-type="base" title="Exporter la texture source">💾</button>
+          </div>
+        </div>
+        <div class="file-item">
+          <label>Roughness</label>
+          <div class="file-row">
+            <input id="nameRough" placeholder="nom_rough.png">
+            <button class="save-icon" data-type="rough" title="Exporter la roughness map">💾</button>
+          </div>
+        </div>
+        <div class="file-item">
+          <label>Heightmap</label>
+          <div class="file-row">
+            <input id="nameHigh" placeholder="nom_height.png">
+            <button class="save-icon" data-type="high" title="Exporter la heightmap">💾</button>
+          </div>
+        </div>
+        <div class="file-item">
+          <label>Normal Map</label>
+          <div class="file-row">
+            <input id="nameNM" placeholder="nom_normal.png">
+            <button class="save-icon" data-type="nm" title="Exporter la normal map">💾</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-buttons">
+        <button id="cancelExport" class="popup-cancel">Fermer</button>
       </div>
     </div>
   </div>
 
-  <!-- === PANEL APERÇU === -->
-  <div class="panel preview-panel">
-    <div class="preview-header">
-      <h2>Aperçu</h2>
-      <button id="exportTexturesBtn" class="export-btn">💾 Exporter</button>
-    </div>
 
-    <div class="view-switcher">
-      <button id="viewSourceBtn" class="active">Source</button>
-      <button id="viewHeightmapBtn">Heightmap</button>
-      <button id="viewNormalBtn" >Normal Map</button>
-      <button id="viewRoughBtn">Roughness</button>
-    </div>
+  <!-- === Scripts === -->
+  <script src="./3d-normal-map-generator/3D-normal-map-generator.heightmap.js"></script>
+  <script src="./3d-normal-map-generator/3D-normal-map-generator.normalmap.js"></script>
+  <script src="./3d-normal-map-generator/3D-normal-map-generator.main.js"></script>
+  <script src="./3d-normal-map-generator/3D-normal-map-generator.roughness.js"></script>
 
-    <div class="main-preview-container">
-      <canvas id="normalMapCanvas" width="1024" height="1024"></canvas>
-      <img id="mainPreviewImage" src="" alt="Aperçu principal" style="display:none;">
-    </div>
+  <script>
+    // Gestion de l’affichage des valeurs sliders
+    const sliders = [
+      { id: "hmLargeShapes", default: 0.6 },
+      { id: "hmMediumDetails", default: 0.6 },
+      { id: "hmFineDetails", default: 0.6 },
+      { id: "hmIntensity", default: 2.0 },
+      { id: "hmSmoothing", default: 2.0 },
+      { id: "intensity", default: 63 },
+      { id: "smallDetails", default: 0.1 },
+      { id: "mediumDetails", default: 0.1 },
+      { id: "largeDetails", default: 0.1 },
+      { id: "levelsBlack", default: 0 },
+      { id: "levelsGamma", default: 1.0 },
+      { id: "levelsWhite", default: 255 }
+    ];
 
-    <!-- Visionneuse 3D -->
-    <div class="control-group" style="margin-top:20px;width:100%;max-width:512px;">
-      <h2 style="font-size:1.1em;margin-bottom:5px;">Aperçu 3D</h2>
-      <canvas id="threeCanvas"></canvas>
-      <div class="mesh-switcher" style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-    <button id="btnCube">Cube</button>
-    <button id="btnSphere">Sphere</button>
-    <button id="btnSwitchEnv">Switch Env</button>
-  </div>
-
-
-  <!-- Nouveau slider Roughness globale -->
-  <div class="slider-label-container" style="margin-top:10px;">
-    <label for="roughnessSlider">Roughness globale <span id="roughnessValue" class="value-display">0.5</span></label>
-    <input type="range" id="roughnessSlider" min="0" max="1" value="0.5" step="0.01">
-  </div>
-</div>
-
-    
-  </div>
-</div>
-
-<!-- === POPUP EXPORT === -->
-<div id="exportPopup" class="export-popup">
-  <div class="popup-content">
-    <h3>💾 Exporter les textures</h3>
-    <div class="file-list">
-      <div class="file-item">
-        <label>Base</label>
-        <div class="file-row">
-          <input id="nameBase" placeholder="nom_base.png">
-          <button class="save-icon" data-type="base" title="Exporter la texture source">💾</button>
-        </div>
-      </div>
-      <div class="file-item">
-        <label>Roughness</label>
-        <div class="file-row">
-          <input id="nameRough" placeholder="nom_rough.png">
-          <button class="save-icon" data-type="rough" title="Exporter la roughness map">💾</button>
-        </div>
-      </div>
-      <div class="file-item">
-        <label>Heightmap</label>
-        <div class="file-row">
-          <input id="nameHigh" placeholder="nom_height.png">
-          <button class="save-icon" data-type="high" title="Exporter la heightmap">💾</button>
-        </div>
-      </div>
-      <div class="file-item">
-        <label>Normal Map</label>
-        <div class="file-row">
-          <input id="nameNM" placeholder="nom_normal.png">
-          <button class="save-icon" data-type="nm" title="Exporter la normal map">💾</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="popup-buttons">
-      <button id="cancelExport" class="popup-cancel">Fermer</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- === Scripts === -->
-<script src="./3d-normal-map-generator/3D-normal-map-generator.heightmap.js"></script>
-<script src="./3d-normal-map-generator/3D-normal-map-generator.normalmap.js"></script>
-<script src="./3d-normal-map-generator/3D-normal-map-generator.main.js"></script>
-<script src="./3d-normal-map-generator/3D-normal-map-generator.roughness.js"></script>
-
-<script>
-// Gestion de l’affichage des valeurs sliders
-const sliders = [
-  { id: "hmLargeShapes", default: 0.6 },
-  { id: "hmMediumDetails", default: 0.6 },
-  { id: "hmFineDetails", default: 0.6 },
-  { id: "hmIntensity", default: 2.0 },
-  { id: "hmSmoothing", default: 2.0 },
-  { id: "intensity", default: 63 },
-  { id: "smallDetails", default: 0.1 },
-  { id: "mediumDetails", default: 0.1 },
-  { id: "largeDetails", default: 0.1 },
-  { id: "levelsBlack", default: 0 },
-  { id: "levelsGamma", default: 1.0 },
-  { id: "levelsWhite", default: 255 }
-];
-
-function enhanceSlider(cfg) {
-  const slider = document.getElementById(cfg.id);
-  if (!slider) return;
-  const label = slider.previousElementSibling;
-  const valueSpan = label.querySelector(".value-display");
-  slider.addEventListener("input", () => valueSpan.textContent = slider.value);
-}
-sliders.forEach(enhanceSlider);
-
-// Génération automatique de la roughness
-["levelsBlack", "levelsGamma", "levelsWhite", "invertRough"].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener("input", () => {
-    if (window.generateRoughnessMap) window.generateRoughnessMap();
-  });
-});
-</script>
-
-<script>
-  // applique la roughness canvas (si disponible) au matériau PBR de la scène
-  (function(){
-    function findRoughnessCanvas(){
-      // tentatives habituelles pour retrouver la roughness render target/canvas
-      return document.getElementById('roughnessCanvas')
-        || document.getElementById('roughnessMapCanvas')
-        || document.getElementById('roughness')
-        || document.getElementById('roughnessCanvasOut')
-        || document.querySelector('canvas.roughness')
-        || (window.roughnessMapCanvas && window.roughnessMapCanvas instanceof HTMLCanvasElement && window.roughnessMapCanvas)
-        || document.getElementById('normalMapCanvas'); // fallback si la roughness est peinte dans le même canvas (rare)
+    function updateSliderProgress(slider) {
+      if (!slider) return;
+      const min = parseFloat(slider.min) || 0;
+      const max = parseFloat(slider.max) || 100;
+      const val = parseFloat(slider.value) || 0;
+      let percent = 0;
+      if (max > min) {
+        percent = ((val - min) / (max - min)) * 100;
+      }
+      slider.style.backgroundSize = percent + '% 100%';
     }
 
-    function createTextureFromCanvas(canvas, scene){
-      try {
-        const dataURL = canvas.toDataURL('image/png');
-        const tex = new BABYLON.Texture(dataURL, scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE, () => {}, null, undefined, false);
-        // ensure correct sampling
-        tex.wrapU = tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-        return tex;
-      } catch (e) {
-        console.warn('createTextureFromCanvas failed', e);
-        return null;
-      }
+    function enhanceSlider(cfg) {
+      const slider = document.getElementById(cfg.id);
+      if (!slider) return;
+      const label = slider.previousElementSibling;
+      const valueSpan = label.querySelector(".value-display");
+
+      const update = () => {
+        if (valueSpan) valueSpan.textContent = slider.value;
+        updateSliderProgress(slider);
+      };
+
+      slider.addEventListener("input", update);
+      update();
     }
+    sliders.forEach(enhanceSlider);
 
-    function applyRoughnessToPBR(){
-      if (!window.scene) return;
-      const scene = window.scene;
-      const canvas = findRoughnessCanvas();
-      if (!canvas) {
-        console.debug('No roughness canvas found yet');
-        return;
+    // Initialize all other sliders
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+      slider.addEventListener('input', () => updateSliderProgress(slider));
+      updateSliderProgress(slider);
+    });
+
+    // Génération automatique de la roughness
+    ["levelsBlack", "levelsGamma", "levelsWhite", "invertRough"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", () => {
+        if (window.generateRoughnessMap) window.generateRoughnessMap();
+      });
+    });
+  </script>
+
+  <script>
+    // applique la roughness canvas (si disponible) au matériau PBR de la scène
+    (function () {
+      function findRoughnessCanvas() {
+        // tentatives habituelles pour retrouver la roughness render target/canvas
+        return document.getElementById('roughnessCanvas')
+          || document.getElementById('roughnessMapCanvas')
+          || document.getElementById('roughness')
+          || document.getElementById('roughnessCanvasOut')
+          || document.querySelector('canvas.roughness')
+          || (window.roughnessMapCanvas && window.roughnessMapCanvas instanceof HTMLCanvasElement && window.roughnessMapCanvas)
+          || document.getElementById('normalMapCanvas'); // fallback si la roughness est peinte dans le même canvas (rare)
       }
 
-      // create a Babylon texture from the canvas (keep grayscale as-is)
-      let tex = null;
-      try {
-        // prefer DynamicTexture for live canvas to avoid re-creating dataURLs repeatedly
+      function createTextureFromCanvas(canvas, scene) {
         try {
-          tex = new BABYLON.DynamicTexture("roughnessDyn", canvas, scene, false);
-        } catch(e) {
-          // fallback to standard Texture using dataURL
           const dataURL = canvas.toDataURL('image/png');
-          tex = new BABYLON.Texture(dataURL, scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
-        }
-        tex.wrapU = tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-      } catch (e) {
-        console.warn('createTextureFromCanvas failed', e);
-        return;
-      }
-
-      // find a PBR material to apply to
-      const mats = scene.materials || [];
-      let pbr = mats.find(m => m && (m.getClassName && m.getClassName() === 'PBRMaterial' || m instanceof BABYLON.PBRMaterial));
-      if (!pbr) {
-        for (const mesh of scene.meshes) {
-          if (mesh.material && (mesh.material.getClassName && mesh.material.getClassName() === 'PBRMaterial' || mesh.material instanceof BABYLON.PBRMaterial)) { pbr = mesh.material; break; }
+          const tex = new BABYLON.Texture(dataURL, scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE, () => { }, null, undefined, false);
+          // ensure correct sampling
+          tex.wrapU = tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+          return tex;
+        } catch (e) {
+          console.warn('createTextureFromCanvas failed', e);
+          return null;
         }
       }
-      if (!pbr) {
-        console.warn('No PBR material found to apply roughness.');
-        return;
-      }
 
-      let applied = false;
-      try {
-        // 1) preferred: assign to dedicated roughnessTexture if available
-        if ('roughnessTexture' in pbr) {
-          try { if (pbr.roughnessTexture) { try { pbr.roughnessTexture.dispose(); } catch(_){} } } catch(_) {}
-          pbr.roughnessTexture = tex;
-          // Ensure material uses texture values rather than scalar override
-          if ('useRoughnessFromMetallicTextureGreen' in pbr) pbr.useRoughnessFromMetallicTextureGreen = false;
-          applied = true;
-        } else if ('metallicTexture' in pbr) {
-          // 2) fallback: place grayscale roughness into metallicTexture and instruct PBR to read roughness from alpha channel if supported
-          try { if (pbr.metallicTexture) { try { pbr.metallicTexture.dispose(); } catch(_){} } } catch(_) {}
-          pbr.metallicTexture = tex;
-          // Configure which channel contains roughness: prefer alpha, else green
-          if ('useRoughnessFromMetallicTextureAlpha' in pbr) {
-            pbr.useRoughnessFromMetallicTextureAlpha = true;
-            // disable other channel-reads to avoid conflicts
-            if ('useRoughnessFromMetallicTextureGreen' in pbr) pbr.useRoughnessFromMetallicTextureGreen = false;
-            applied = true;
-          } else if ('useRoughnessFromMetallicTextureGreen' in pbr) {
-            pbr.useRoughnessFromMetallicTextureGreen = true;
-            applied = true;
-          } else {
-            // last resort: set roughness scalar from average
-            try {
-              const ctx = canvas.getContext('2d');
-              const w = Math.min(64, canvas.width), h = Math.min(64, canvas.height);
-              const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
-              tmp.getContext('2d').drawImage(canvas, 0, 0, w, h);
-              const d = tmp.getContext('2d').getImageData(0,0,w,h).data;
-              let sum = 0;
-              for(let i=0;i<d.length;i+=4) sum += d[i]; // grayscale
-              const avg = sum / (w*h) / 255;
-              pbr.roughness = avg;
-              applied = true;
-            } catch(e){}
+      function applyRoughnessToPBR() {
+        if (!window.scene) return;
+        const scene = window.scene;
+        const canvas = findRoughnessCanvas();
+        if (!canvas) {
+          console.debug('No roughness canvas found yet');
+          return;
+        }
+
+        // create a Babylon texture from the canvas (keep grayscale as-is)
+        let tex = null;
+        try {
+          // prefer DynamicTexture for live canvas to avoid re-creating dataURLs repeatedly
+          try {
+            tex = new BABYLON.DynamicTexture("roughnessDyn", canvas, scene, false);
+          } catch (e) {
+            // fallback to standard Texture using dataURL
+            const dataURL = canvas.toDataURL('image/png');
+            tex = new BABYLON.Texture(dataURL, scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+          }
+          tex.wrapU = tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+        } catch (e) {
+          console.warn('createTextureFromCanvas failed', e);
+          return;
+        }
+
+        // find a PBR material to apply to
+        const mats = scene.materials || [];
+        let pbr = mats.find(m => m && (m.getClassName && m.getClassName() === 'PBRMaterial' || m instanceof BABYLON.PBRMaterial));
+        if (!pbr) {
+          for (const mesh of scene.meshes) {
+            if (mesh.material && (mesh.material.getClassName && mesh.material.getClassName() === 'PBRMaterial' || mesh.material instanceof BABYLON.PBRMaterial)) { pbr = mesh.material; break; }
           }
         }
-      } catch(e){
-        console.warn('Error while assigning roughness texture to PBR material', e);
-      }
+        if (!pbr) {
+          console.warn('No PBR material found to apply roughness.');
+          return;
+        }
 
-      if (applied) {
+        let applied = false;
         try {
-          if (typeof window.updateBabylonTextures === 'function') window.updateBabylonTextures();
-          // mark material dirty so renderer recompiles/shaders update
-          if (scene && scene.markAllMaterialsAsDirty) scene.markAllMaterialsAsDirty(BABYLON.Constants.MATERIAL_TextureDirtyFlag || 1);
-        } catch(e){/* ignore */ }
-        console.info('Roughness map applied to PBR material.');
-      } else {
-        console.warn('Could not apply roughness map to PBR material (no compatible property found).');
-      }
-    }
-
-    // If generator exposes generateRoughnessMap, wrap it to apply result automatically
-    if (typeof window.generateRoughnessMap === 'function') {
-      const orig = window.generateRoughnessMap;
-      window.generateRoughnessMap = function(...args){
-        const res = orig.apply(this, args);
-        setTimeout(() => applyRoughnessToPBR(), 120); // small delay for DOM/canvas updates
-        return res;
-      };
-    } else {
-      // fallback: try to apply periodically until scene + roughness available
-      const tryInterval = setInterval(() => {
-        if (window.scene && findRoughnessCanvas()) {
-          applyRoughnessToPBR();
-          clearInterval(tryInterval);
+          // 1) preferred: assign to dedicated roughnessTexture if available
+          if ('roughnessTexture' in pbr) {
+            try { if (pbr.roughnessTexture) { try { pbr.roughnessTexture.dispose(); } catch (_) { } } } catch (_) { }
+            pbr.roughnessTexture = tex;
+            // Ensure material uses texture values rather than scalar override
+            if ('useRoughnessFromMetallicTextureGreen' in pbr) pbr.useRoughnessFromMetallicTextureGreen = false;
+            applied = true;
+          } else if ('metallicTexture' in pbr) {
+            // 2) fallback: place grayscale roughness into metallicTexture and instruct PBR to read roughness from alpha channel if supported
+            try { if (pbr.metallicTexture) { try { pbr.metallicTexture.dispose(); } catch (_) { } } } catch (_) { }
+            pbr.metallicTexture = tex;
+            // Configure which channel contains roughness: prefer alpha, else green
+            if ('useRoughnessFromMetallicTextureAlpha' in pbr) {
+              pbr.useRoughnessFromMetallicTextureAlpha = true;
+              // disable other channel-reads to avoid conflicts
+              if ('useRoughnessFromMetallicTextureGreen' in pbr) pbr.useRoughnessFromMetallicTextureGreen = false;
+              applied = true;
+            } else if ('useRoughnessFromMetallicTextureGreen' in pbr) {
+              pbr.useRoughnessFromMetallicTextureGreen = true;
+              applied = true;
+            } else {
+              // last resort: set roughness scalar from average
+              try {
+                const ctx = canvas.getContext('2d');
+                const w = Math.min(64, canvas.width), h = Math.min(64, canvas.height);
+                const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+                tmp.getContext('2d').drawImage(canvas, 0, 0, w, h);
+                const d = tmp.getContext('2d').getImageData(0, 0, w, h).data;
+                let sum = 0;
+                for (let i = 0; i < d.length; i += 4) sum += d[i]; // grayscale
+                const avg = sum / (w * h) / 255;
+                pbr.roughness = avg;
+                applied = true;
+              } catch (e) { }
+            }
+          }
+        } catch (e) {
+          console.warn('Error while assigning roughness texture to PBR material', e);
         }
-      }, 500);
-    }
 
-    // also expose manual function
-    window.applyRoughnessToPBR = applyRoughnessToPBR;
-  })();
-</script>
-<script>
-  // Fallback UI update: assurer l'affichage du nom du fichier sélectionné
-  (function(){
-    try {
-      const fileInput = document.getElementById('imageLoader');
-      const fileNameSpan = document.getElementById('fileName');
-      if (!fileInput || !fileNameSpan) return;
-      fileInput.addEventListener('change', (e) => {
-        const f = e.target.files && e.target.files[0];
-        if (f && f.name) {
-          fileNameSpan.textContent = f.name;
+        if (applied) {
+          try {
+            if (typeof window.updateBabylonTextures === 'function') window.updateBabylonTextures();
+            // mark material dirty so renderer recompiles/shaders update
+            if (scene && scene.markAllMaterialsAsDirty) scene.markAllMaterialsAsDirty(BABYLON.Constants.MATERIAL_TextureDirtyFlag || 1);
+          } catch (e) {/* ignore */ }
+          console.info('Roughness map applied to PBR material.');
         } else {
-          // si aucun fichier sélectionné, vider
-          fileNameSpan.textContent = window.sourceFileName;
+          console.warn('Could not apply roughness map to PBR material (no compatible property found).');
         }
-      });
-      
-      // si main.js met window.sourceFileName plus tard, s'abonner à un petit intervalle pour synchroniser (sécurise tous les cas)
-      const syncInterval = setInterval(() => {
-        if (window.sourceFileName && fileNameSpan.textContent !== window.sourceFileName) {
-          fileNameSpan.textContent = window.sourceFileName;
-        }
-        // arrêter si un nom est affiché ou si l'input contient déjà un fichier
-        if (fileNameSpan.textContent || (fileInput.files && fileInput.files.length)) clearInterval(syncInterval);
-      }, 200);
-    } catch (e) {
-      // silent
-      console.warn('fileName sync init failed', e);
-    }
-  })();
-</script>
+      }
+
+      // If generator exposes generateRoughnessMap, wrap it to apply result automatically
+      if (typeof window.generateRoughnessMap === 'function') {
+        const orig = window.generateRoughnessMap;
+        window.generateRoughnessMap = function (...args) {
+          const res = orig.apply(this, args);
+          setTimeout(() => applyRoughnessToPBR(), 120); // small delay for DOM/canvas updates
+          return res;
+        };
+      } else {
+        // fallback: try to apply periodically until scene + roughness available
+        const tryInterval = setInterval(() => {
+          if (window.scene && findRoughnessCanvas()) {
+            applyRoughnessToPBR();
+            clearInterval(tryInterval);
+          }
+        }, 500);
+      }
+
+      // also expose manual function
+      window.applyRoughnessToPBR = applyRoughnessToPBR;
+    })();
+  </script>
+  <script>
+    // Fallback UI update: assurer l'affichage du nom du fichier sélectionné
+    (function () {
+      try {
+        const fileInput = document.getElementById('imageLoader');
+        const fileNameSpan = document.getElementById('fileName');
+        if (!fileInput || !fileNameSpan) return;
+        fileInput.addEventListener('change', (e) => {
+          const f = e.target.files && e.target.files[0];
+          if (f && f.name) {
+            fileNameSpan.textContent = f.name;
+          } else {
+            // si aucun fichier sélectionné, vider
+            fileNameSpan.textContent = window.sourceFileName;
+          }
+        });
+
+        // si main.js met window.sourceFileName plus tard, s'abonner à un petit intervalle pour synchroniser (sécurise tous les cas)
+        const syncInterval = setInterval(() => {
+          if (window.sourceFileName && fileNameSpan.textContent !== window.sourceFileName) {
+            fileNameSpan.textContent = window.sourceFileName;
+          }
+          // arrêter si un nom est affiché ou si l'input contient déjà un fichier
+          if (fileNameSpan.textContent || (fileInput.files && fileInput.files.length)) clearInterval(syncInterval);
+        }, 200);
+      } catch (e) {
+        // silent
+        console.warn('fileName sync init failed', e);
+      }
+    })();
+  </script>
 </body>
+
 </html>
