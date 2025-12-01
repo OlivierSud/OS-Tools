@@ -46,13 +46,15 @@
           </label>
           <div id="heightmapEdgeOptions" class="edge-options-compact" style="margin-top:8px; display:none;">
             <!-- compact stacked sliders for Sobel mode (ids preserved) -->
-            <div class="compact-row" style="display:flex;align-items:center;gap:8px;"">
-          <label for=" edgeThreshold">Seuil contours <span id="edgeThresholdValue"
-                class="value-display">40</span></label>
+            <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+              <label for="edgeThreshold">Seuil contours <span id="edgeThresholdValue"
+                  class="value-display">40</span></label>
               <input id="edgeThreshold" type="range" min="0" max="255" value="40" step="1">
 
-              <input type="checkbox" id="invertEdges">
-              <label for="invertEdges" class="checkbox-label" style="margin:0;">Inverser contours</label>
+              <div style="display:flex; align-items:center;">
+                <input type="checkbox" id="invertEdges">
+                <label for="invertEdges" class="checkbox-label" style="margin:0;">Inverser contours</label>
+              </div>
 
               <label for="edgeLevelsBlack">Niveau noir <span id="edgeLevelsBlackValue"
                   class="value-display">0</span></label>
