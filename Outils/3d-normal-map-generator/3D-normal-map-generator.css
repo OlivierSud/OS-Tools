@@ -517,36 +517,6 @@ label {
   transition: background 0.25s, transform 0.15s;
 }
 
-.popup-cancel:hover {
-  background: #00aaff;
-  transform: translateY(-2px);
-}
-
-/* Compact layout for Sobel/edge sliders (stacked, small spacing) */
-.edge-options-compact {
-  gap: 6px;
-  font-size: 0.95em;
-}
-
-.edge-options-compact .compact-row {
-  display: flex;
-  flex-direction: row;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.edge-options-compact label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  margin: 0;
-}
-
-.edge-options-compact .value-display {
-  font-size: 0.85em;
-  color: #cfcfcf;
-  margin-left: 8px;
 }
 
 /* Slightly reduce vertical spacing for checkboxes in this block */

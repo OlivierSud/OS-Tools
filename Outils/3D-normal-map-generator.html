@@ -46,7 +46,7 @@
           </label>
           <div id="heightmapEdgeOptions" class="edge-options-compact" style="margin-top:8px; display:none;">
             <!-- compact stacked sliders for Sobel mode (ids preserved) -->
-            <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+            <div class="compact-row" style=" flex-direction:column; width: 100%">
               <label for="edgeThreshold">Seuil contours <span id="edgeThresholdValue"
                   class="value-display">40</span></label>
               <input id="edgeThreshold" type="range" min="0" max="255" value="40" step="1">
@@ -109,28 +109,28 @@
           <!-- Nouveau slider : Flou appliqué à la normal map finale -->
           <label for="normalBlur">Flou Normal <span id="normalBlurValue" class="value-display">0.0</span></label>
           <input type="range" id="normalBlur" min="0" max="8" step="0.1" value="0">
-        </div>
-        <!-- Bouton raccourci pour inverser simultanément les canaux R et G -->
-        <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px; align-items:stretch;">
-          <!-- boutons en pleine largeur de la colonne -->
-          <button id="invertNormalBtn" class="custom-file-btn fullwidth" type="button">Direction: Bump</button>
-          <!-- la couleur "apiModeBtn" est gérée dynamiquement via JS (style inline côté script si besoin) -->
-          <button id="apiModeBtn" class="custom-file-btn fullwidth" type="button">Mode: DirectX</button>
-        </div>
-        <!-- container responsive : wrap pour éviter scroll horizontal -->
-        <div style="margin-top:10px;  display:inside; gap:12px; align-items:stretch; flex-wrap:wrap;">
-          <label class="custom-file-btn small-check" style="padding:2px 12px;">
-            <input type="checkbox" id="invertR">
-            <span class="checkbox-label">Inv. R</span>
-          </label>
-          <label class="custom-file-btn small-check" style="padding:2px 12px;">
-            <input type="checkbox" id="invertG">
-            <span class="checkbox-label">Inv. G</span>
-          </label>
-          <label class="custom-file-btn small-check" style="padding:2px 12px;">
-            <input type="checkbox" id="invertB">
-            <span class="checkbox-label">Inv. B</span>
-          </label>
+          <!-- Bouton raccourci pour inverser simultanément les canaux R et G -->
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px; align-items:stretch;">
+            <!-- boutons en pleine largeur de la colonne -->
+            <button id="invertNormalBtn" class="custom-file-btn fullwidth" type="button">Direction: Bump</button>
+            <!-- la couleur "apiModeBtn" est gérée dynamiquement via JS (style inline côté script si besoin) -->
+            <button id="apiModeBtn" class="custom-file-btn fullwidth" type="button">Mode: DirectX</button>
+          </div>
+          <!-- container responsive : wrap pour éviter scroll horizontal -->
+          <div style="margin-top:10px;  display:inside; gap:12px; align-items:stretch; flex-wrap:wrap;">
+            <label class="custom-file-btn small-check" style="padding:2px 12px;">
+              <input type="checkbox" id="invertR">
+              <span class="checkbox-label">Inv. R</span>
+            </label>
+            <label class="custom-file-btn small-check" style="padding:2px 12px;">
+              <input type="checkbox" id="invertG">
+              <span class="checkbox-label">Inv. G</span>
+            </label>
+            <label class="custom-file-btn small-check" style="padding:2px 12px;">
+              <input type="checkbox" id="invertB">
+              <span class="checkbox-label">Inv. B</span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -476,6 +476,49 @@
         // silent
         console.warn('fileName sync init failed', e);
       }
+    })();
+  </script>
+
+  <script>
+    // Gestion de l'accordéon
+    (function () {
+      const accordionSections = document.querySelectorAll('.accordion-section');
+
+      // Fonction pour fermer une section
+      function closeSection(section) {
+        section.classList.add('closed');
+      }
+
+      // Fonction pour ouvrir une section
+      function openSection(section) {
+        section.classList.remove('closed');
+      }
+
+      // Fonction pour basculer l'état d'une section
+      function toggleSection(section) {
+        if (section.classList.contains('closed')) {
+          openSection(section);
+        } else {
+          closeSection(section);
+        }
+      }
+
+      // Initialisation : fermer toutes les sections sauf la première
+      accordionSections.forEach((section, index) => {
+        if (index !== 0) {
+          closeSection(section);
+        }
+      });
+
+      // Ajouter les événements de clic sur les headers
+      accordionSections.forEach(section => {
+        const header = section.querySelector('.accordion-header');
+        if (header) {
+          header.addEventListener('click', () => {
+            toggleSection(section);
+          });
+        }
+      });
     })();
   </script>
 </body>

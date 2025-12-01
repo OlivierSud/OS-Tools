@@ -1,4 +1,4 @@
-(function(){
+(function () {
   "use strict";
 
   // === global canvases / images used by other modules ===
@@ -76,12 +76,12 @@
   window.viewRoughBtn = $('viewRoughBtn');
 
   // debounce helper
-  function debounce(fn, delay){ let t; return function(...a){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,a), delay); }; }
+  function debounce(fn, delay) { let t; return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), delay); }; }
 
   // create debounced wrappers that other modules expect (tolerant if functions missing)
-  window.debouncedGenerateNormalMap = debounce(()=>{ if (window.generateNormalMap) try { window.generateNormalMap(); } catch(e){ console.warn("generateNormalMap error", e); } }, 50);
-  window.debouncedGenerateHeightmap = debounce(()=>{ if (window.generateHeightmap) try { window.generateHeightmap(); } catch(e){ console.warn("generateHeightmap error", e); } }, 50);
-  window.debouncedGenerateRoughness = debounce(()=>{ if (window.generateRoughnessMap) try { window.generateRoughnessMap(); } catch(e){ console.warn("generateRoughnessMap error", e); } }, 80);
+  window.debouncedGenerateNormalMap = debounce(() => { if (window.generateNormalMap) try { window.generateNormalMap(); } catch (e) { console.warn("generateNormalMap error", e); } }, 50);
+  window.debouncedGenerateHeightmap = debounce(() => { if (window.generateHeightmap) try { window.generateHeightmap(); } catch (e) { console.warn("generateHeightmap error", e); } }, 50);
+  window.debouncedGenerateRoughness = debounce(() => { if (window.generateRoughnessMap) try { window.generateRoughnessMap(); } catch (e) { console.warn("generateRoughnessMap error", e); } }, 80);
 
   // wire UI events to debounced functions (safe checks)
   [window.intensity, window.smallDetails, window.mediumDetails, window.largeDetails, window.normalBlur].forEach(s => {
@@ -96,9 +96,9 @@
     });
   }
   // Bouton "Invert normal" & bouton Mode API — gestion robuste et enforcement des contraintes R/G
-  (function(){
+  (function () {
     const invertBtn = document.getElementById('invertNormalBtn');
-    const apiBtn    = document.getElementById('apiModeBtn');
+    const apiBtn = document.getElementById('apiModeBtn');
 
     // état API global : 'OpenGL' | 'DirectX'
     window.apiMode = window.apiMode || 'DirectX';
@@ -153,8 +153,8 @@
       const r = document.getElementById('invertR');
       const g = document.getElementById('invertG');
       if (r && g) {
-        try { r.addEventListener('change', enforceFromR); } catch(e){}
-        try { g.addEventListener('change', enforceFromG); } catch(e){}
+        try { r.addEventListener('change', enforceFromR); } catch (e) { }
+        try { g.addEventListener('change', enforceFromG); } catch (e) { }
         clearInterval(attachInterval);
       }
     }, 150);
@@ -218,13 +218,13 @@
         // hide the original slider block when edges mode is active
         const hmOpts = document.getElementById('heightmap-options');
         if (hmOpts) hmOpts.style.display = (window.heightmapMode.value === 'edges') ? 'none' : 'block';
-      } catch(e){}
+      } catch (e) { }
       if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap();
     });
   }
   if (window.edgeThreshold && window.edgeThreshold.addEventListener) {
     const tv = document.getElementById('edgeThresholdValue');
-    window.edgeThreshold.addEventListener('input', () => { if(tv) tv.textContent = window.edgeThreshold.value; if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+    window.edgeThreshold.addEventListener('input', () => { if (tv) tv.textContent = window.edgeThreshold.value; if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
   }
   if (window.invertEdges && window.invertEdges.addEventListener) {
     window.invertEdges.addEventListener('change', () => { if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
@@ -232,31 +232,31 @@
   // wire new edge-levels and blur controls to heightmap generation
   if (window.edgeLevelsBlack && window.edgeLevelsBlack.addEventListener) {
     const elv = document.getElementById('edgeLevelsBlackValue');
-    window.edgeLevelsBlack.addEventListener('input', ()=>{ if(elv) elv.textContent = window.edgeLevelsBlack.value; if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+    window.edgeLevelsBlack.addEventListener('input', () => { if (elv) elv.textContent = window.edgeLevelsBlack.value; if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
   }
   if (window.edgeLevelsGamma && window.edgeLevelsGamma.addEventListener) {
     const elg = document.getElementById('edgeLevelsGammaValue');
-    window.edgeLevelsGamma.addEventListener('input', ()=>{ if(elg) elg.textContent = parseFloat(window.edgeLevelsGamma.value).toFixed(2); if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+    window.edgeLevelsGamma.addEventListener('input', () => { if (elg) elg.textContent = parseFloat(window.edgeLevelsGamma.value).toFixed(2); if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
   }
   if (window.edgeLevelsWhite && window.edgeLevelsWhite.addEventListener) {
     const elw = document.getElementById('edgeLevelsWhiteValue');
-    window.edgeLevelsWhite.addEventListener('input', ()=>{ if(elw) elw.textContent = window.edgeLevelsWhite.value; if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+    window.edgeLevelsWhite.addEventListener('input', () => { if (elw) elw.textContent = window.edgeLevelsWhite.value; if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
   }
   if (window.edgeBlur && window.edgeBlur.addEventListener) {
     const ebv = document.getElementById('edgeBlurValue');
-    window.edgeBlur.addEventListener('input', ()=>{ if(ebv) ebv.textContent = window.edgeBlur.value; if(window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
+    window.edgeBlur.addEventListener('input', () => { if (ebv) ebv.textContent = window.edgeBlur.value; if (window.debouncedGenerateHeightmap) window.debouncedGenerateHeightmap(); });
   }
   // initialize edge options visibility on load
-  try { const el = document.getElementById('heightmapEdgeOptions'); if(el) el.style.display = (window.heightmapMode && window.heightmapMode.value === 'edges') ? 'flex' : 'none'; } catch(e){}
-  try { const hmOpts = document.getElementById('heightmap-options'); if(hmOpts) hmOpts.style.display = (window.heightmapMode && window.heightmapMode.value === 'edges') ? 'none' : 'block'; } catch(e){}
-  
+  try { const el = document.getElementById('heightmapEdgeOptions'); if (el) el.style.display = (window.heightmapMode && window.heightmapMode.value === 'edges') ? 'flex' : 'none'; } catch (e) { }
+  try { const hmOpts = document.getElementById('heightmap-options'); if (hmOpts) hmOpts.style.display = (window.heightmapMode && window.heightmapMode.value === 'edges') ? 'none' : 'block'; } catch (e) { }
+
   // include both old rough sliders (if present) and new level sliders (if present)
   [window.roughDarkIntensity, window.roughLightIntensity, window.levelsBlack, window.levelsGamma, window.levelsWhite, window.invertRough].forEach(s => {
     if (s && s.addEventListener) s.addEventListener('input', () => { window.debouncedGenerateRoughness(); });
   });
 
   // === Ensure invertNormal checkbox triggers normal map update immediately (same behavior as sliders) ===
-  (function(){
+  (function () {
     try {
       const inv = window.invertNormal || document.getElementById('invertNormal');
       if (!inv) return;
@@ -264,10 +264,10 @@
         try {
           if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
           else if (typeof window.generateNormalMap === 'function') window.generateNormalMap();
-        } catch(e){ console.warn('invertNormal handler failed', e); }
+        } catch (e) { console.warn('invertNormal handler failed', e); }
       };
       if (inv.addEventListener) inv.addEventListener('change', handler);
-    } catch(e){
+    } catch (e) {
       /* non bloquant */
       console.warn('Could not attach invertNormal handler', e);
     }
@@ -289,25 +289,25 @@
             sourceCanvas.width = sourceImage.width; sourceCanvas.height = sourceImage.height;
             heightmapCanvas.width = sourceImage.width; heightmapCanvas.height = sourceImage.height;
             normalMapCanvas.width = sourceImage.width; normalMapCanvas.height = sourceImage.height;
-          } catch(e){ console.warn("Erreur dimension canvas :", e); }
+          } catch (e) { console.warn("Erreur dimension canvas :", e); }
 
           // update Babylon textures if material ready
           try {
             if (window.pbrMaterial && window.scene) {
               // albedo
-              if (window.pbrMaterial.albedoTexture) { try { window.pbrMaterial.albedoTexture.dispose(); } catch(_){} }
+              if (window.pbrMaterial.albedoTexture) { try { window.pbrMaterial.albedoTexture.dispose(); } catch (_) { } }
               window.pbrMaterial.albedoTexture = new BABYLON.Texture(sourceImage.src, window.scene);
 
               // bump/normal dynamic texture
-              if (window.pbrMaterial.bumpTexture) { try { window.pbrMaterial.bumpTexture.dispose(); } catch(_){} }
+              if (window.pbrMaterial.bumpTexture) { try { window.pbrMaterial.bumpTexture.dispose(); } catch (_) { } }
               window.pbrMaterial.bumpTexture = new BABYLON.DynamicTexture("normalMap", normalMapCanvas, window.scene, false);
 
               // Si une roughnessCanvas existe déjà, appliquer via la même méthode (DynamicTexture)
               if (window.roughnessCanvas) {
-                try { if (typeof window.applyRoughnessFromCanvas === 'function') window.applyRoughnessFromCanvas(window.roughnessCanvas); } catch(e){ console.warn("applyRoughnessFromCanvas failed", e); }
+                try { if (typeof window.applyRoughnessFromCanvas === 'function') window.applyRoughnessFromCanvas(window.roughnessCanvas); } catch (e) { console.warn("applyRoughnessFromCanvas failed", e); }
               }
             }
-          } catch(e){ console.warn("Erreur update Babylon textures après chargement image :", e); }
+          } catch (e) { console.warn("Erreur update Babylon textures après chargement image :", e); }
 
           // generate cascade
           if (window.generateHeightmap) window.generateHeightmap();
@@ -343,21 +343,21 @@
           if (window.mainPreviewImage) window.mainPreviewImage.src = window.sourceImage?.src || '';
         } else if (btn === window.viewRoughBtn) {
           if (window.mainPreviewImage) {
-            try { window.mainPreviewImage.src = window.roughnessCanvas.toDataURL(); } catch(e){ console.warn("roughness canvas toDataURL failed", e); }
+            try { window.mainPreviewImage.src = window.roughnessCanvas.toDataURL(); } catch (e) { console.warn("roughness canvas toDataURL failed", e); }
           }
         }
         if (window.mainPreviewImage) window.mainPreviewImage.style.display = 'block';
         if (window.normalMapCanvas) window.normalMapCanvas.style.display = 'none';
       }
-    } catch(e){ console.warn("Erreur changement view :", e); }
+    } catch (e) { console.warn("Erreur changement view :", e); }
   }
-  if (window.viewNormalBtn) window.viewNormalBtn.addEventListener('click', ()=>setActiveView(window.viewNormalBtn));
-  if (window.viewHeightmapBtn) window.viewHeightmapBtn.addEventListener('click', ()=>setActiveView(window.viewHeightmapBtn));
-  if (window.viewSourceBtn) window.viewSourceBtn.addEventListener('click', ()=>setActiveView(window.viewSourceBtn));
-  if (window.viewRoughBtn) window.viewRoughBtn.addEventListener('click', ()=>setActiveView(window.viewRoughBtn));
+  if (window.viewNormalBtn) window.viewNormalBtn.addEventListener('click', () => setActiveView(window.viewNormalBtn));
+  if (window.viewHeightmapBtn) window.viewHeightmapBtn.addEventListener('click', () => setActiveView(window.viewHeightmapBtn));
+  if (window.viewSourceBtn) window.viewSourceBtn.addEventListener('click', () => setActiveView(window.viewSourceBtn));
+  if (window.viewRoughBtn) window.viewRoughBtn.addEventListener('click', () => setActiveView(window.viewRoughBtn));
 
   // === Babylon init (robuste) ===
-  window.initBabylon = function(){
+  window.initBabylon = function () {
     try {
       const babylonCanvas = document.getElementById('threeCanvas');
       if (!babylonCanvas) {
@@ -368,7 +368,7 @@
       // Si engine déjà initialisé, on ne réinitialise pas
       if (window.engine && window.scene) return;
 
-      window.engine = new BABYLON.Engine(babylonCanvas, true, { preserveDrawingBuffer:true, stencil:true });
+      window.engine = new BABYLON.Engine(babylonCanvas, true, { preserveDrawingBuffer: true, stencil: true });
       window.scene = new BABYLON.Scene(window.engine);
 
       const camera = new BABYLON.ArcRotateCamera(
@@ -405,7 +405,7 @@
         window.hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("https://assets.babylonjs.com/environments/environmentSpecular.env", window.scene);
         window.scene.environmentTexture = window.hdrTexture;
         window.scene.createDefaultSkybox(window.hdrTexture, true, 1000, 0.0);
-      } catch(e){ console.warn("Chargement environment HDR échoué :", e); }
+      } catch (e) { console.warn("Chargement environment HDR échoué :", e); }
 
       // create material
       window.pbrMaterial = new BABYLON.PBRMaterial("pbr", window.scene);
@@ -417,20 +417,20 @@
         window.pbrMaterial.useRoughnessFromMetallicTextureGreen = true;
         window.pbrMaterial.useAmbientOcclusionFromMetallicTextureRed = false;
         window.pbrMaterial.useMetallicityFromMetallicTextureBlue = false;
-      } catch(e){ /* ignore if properties not present */ }
+      } catch (e) { /* ignore if properties not present */ }
 
       // if a roughness canvas already exists, apply it now
       if (window.roughnessCanvas && typeof window.generateRoughnessMap === 'function') {
-        try { window.generateRoughnessMap(); } catch(e){ /* ignore */ }
+        try { window.generateRoughnessMap(); } catch (e) { /* ignore */ }
       }
 
       // create geometry previews
-      window.cube = BABYLON.MeshBuilder.CreateBox("cube", {size:1}, window.scene);
+      window.cube = BABYLON.MeshBuilder.CreateBox("cube", { size: 1 }, window.scene);
       window.cube.material = window.pbrMaterial;
 
-      window.sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:1.4, segments:64}, window.scene);
+      window.sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 1.4, segments: 64 }, window.scene);
       window.sphere.material = window.pbrMaterial;
-      
+
       // S'assurer que le mesh par défaut est visible
       window.cube.setEnabled(true);
       window.sphere.setEnabled(false);
@@ -438,23 +438,23 @@
       window.currentMesh = window.cube;
 
       // render loop
-      window.engine.runRenderLoop(()=> { try { if (window.scene) window.scene.render(); } catch(e){ console.warn("render error", e); } });
+      window.engine.runRenderLoop(() => { try { if (window.scene) window.scene.render(); } catch (e) { console.warn("render error", e); } });
 
-      window.addEventListener('resize', ()=> { try { if (window.engine) window.engine.resize(); } catch(e){} });
+      window.addEventListener('resize', () => { try { if (window.engine) window.engine.resize(); } catch (e) { } });
 
-    } catch(err) {
+    } catch (err) {
       console.warn("Impossible d'initialiser Babylon (initBabylon) :", err);
-      try { window.engine = null; window.scene = null; } catch(_) {}
+      try { window.engine = null; window.scene = null; } catch (_) { }
     }
   };
 
   // ensure update function is available globally
-  window.updateBabylonTextures = function(){
+  window.updateBabylonTextures = function () {
     try {
       if (window.pbrMaterial && window.pbrMaterial.bumpTexture && window.pbrMaterial.bumpTexture.update) {
         window.pbrMaterial.bumpTexture.update();
       }
-    } catch(e){ console.warn("bumpTexture.update failed", e); }
+    } catch (e) { console.warn("bumpTexture.update failed", e); }
 
     try {
       // La texture de roughness est dans le canal `metallicTexture`
@@ -462,19 +462,19 @@
         // some dynamic textures have update(), others don't; try to replace with a new DynamicTexture if needed
         try {
           if (window.pbrMaterial.metallicTexture.update) window.pbrMaterial.metallicTexture.update();
-        } catch(e) { console.warn("metallicTexture.update failed", e); }
+        } catch (e) { console.warn("metallicTexture.update failed", e); }
       }
-    } catch(e){ console.warn("metallicTexture (for roughness) update failed", e); }
+    } catch (e) { console.warn("metallicTexture (for roughness) update failed", e); }
 
-    try { if (window.engine) window.engine.resize(); } catch(e){}
+    try { if (window.engine) window.engine.resize(); } catch (e) { }
   };
 
   // Applique la roughness canvas au matériau PBR en utilisant DynamicTexture (comme la normal map)
-  window.applyRoughnessFromCanvas = function(canvas){
+  window.applyRoughnessFromCanvas = function (canvas) {
     if (!canvas || !window.scene || !window.pbrMaterial) return;
     try {
       // Dispose ancienne texture si présente
-      try { if (window.pbrMaterial.metallicTexture) { window.pbrMaterial.metallicTexture.dispose(); } } catch(e){/*ignore*/ }
+      try { if (window.pbrMaterial.metallicTexture) { window.pbrMaterial.metallicTexture.dispose(); } } catch (e) {/*ignore*/ }
 
       // Créer DynamicTexture directement depuis le canvas (méthode identique à la normal map)
       // on force la DynamicTexture (live) pour que les mises à jour de canvas soient prises en compte
@@ -516,10 +516,10 @@
 
   // === start (init Babylon after DOM ready to be safe) ===
   function startOnceReady() {
-    try { 
-      window.initBabylon(); 
-    } catch(e){ 
-      console.warn("initBabylon error on start", e); 
+    try {
+      window.initBabylon();
+    } catch (e) {
+      console.warn("initBabylon error on start", e);
     }
 
     // =====================================================================
@@ -534,7 +534,7 @@
         // Met à jour la valeur numérique affichée
         const val = parseFloat(roughnessSlider.value);
         roughnessValue.textContent = val.toFixed(2);
-        
+
         // Applique la nouvelle valeur au matériau PBR
         if (window.pbrMaterial) {
           window.pbrMaterial.roughness = val;
@@ -552,7 +552,7 @@
           window.sphere.setEnabled(false);
         }
       });
-      
+
       btnSphere.addEventListener('click', () => {
         if (window.cube && window.sphere) {
           window.cube.setEnabled(false);
@@ -561,149 +561,149 @@
       });
     }
 
-// 3. Bouton pour faire défiler les environnements HDR
-const btnSwitchEnv = $('btnSwitchEnv');
-if (btnSwitchEnv) {
-  // === Liste des environnements disponibles ===
-  const envList = [
-    { name: "🏢 Street", url: "https://assets.babylonjs.com/environments/environmentSpecular.env" },
-    { name: "⛰️ Country", url: "https://playground.babylonjs.com/textures/country.env" },
-    { name: "📸 Studio", url: "https://playground.babylonjs.com/textures/Studio_Softbox_2Umbrellas_cube_specular.dds" },
-    { name: "🏰 Ruin", url: "https://playground.babylonjs.com/textures/SpecularHDR.dds" },
-    { name: "🌛 Night", url: "https://playground.babylonjs.com/textures/night.env" },
-    { name: "🌳 Forest", url: "https://playground.babylonjs.com/textures/forest.env" },
-    { name: "🏯 Temple", url: "https://playground.babylonjs.com/textures/room.env" }
-  ];
+    // 3. Bouton pour faire défiler les environnements HDR
+    const btnSwitchEnv = $('btnSwitchEnv');
+    if (btnSwitchEnv) {
+      // === Liste des environnements disponibles ===
+      const envList = [
+        { name: "🏢 Street", url: "https://assets.babylonjs.com/environments/environmentSpecular.env" },
+        { name: "⛰️ Country", url: "https://playground.babylonjs.com/textures/country.env" },
+        { name: "📸 Studio", url: "https://playground.babylonjs.com/textures/Studio_Softbox_2Umbrellas_cube_specular.dds" },
+        { name: "🏰 Ruin", url: "https://playground.babylonjs.com/textures/SpecularHDR.dds" },
+        { name: "🌛 Night", url: "https://playground.babylonjs.com/textures/night.env" },
+        { name: "🌳 Forest", url: "https://playground.babylonjs.com/textures/forest.env" },
+        { name: "🏯 Temple", url: "https://playground.babylonjs.com/textures/room.env" }
+      ];
 
-  let currentEnvIndex = 0;
+      let currentEnvIndex = 0;
 
-  // Fonction de chargement d'environnement
-  function loadEnvironment(index) {
-    const env = envList[index % envList.length];
-    if (!env || !window.scene) return;
+      // Fonction de chargement d'environnement
+      function loadEnvironment(index) {
+        const env = envList[index % envList.length];
+        if (!env || !window.scene) return;
 
-    try {
-      // Supprime l'ancien HDR si présent
-      if (window.hdrTexture) {
-        try { window.hdrTexture.dispose(); } catch (_) {}
+        try {
+          // Supprime l'ancien HDR si présent
+          if (window.hdrTexture) {
+            try { window.hdrTexture.dispose(); } catch (_) { }
+          }
+
+          // Crée et applique le nouveau
+          window.hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(env.url, window.scene);
+          window.scene.environmentTexture = window.hdrTexture;
+          window.scene.createDefaultSkybox(window.hdrTexture, true, 1000, 0.0);
+
+          // Change le texte du bouton pour indiquer l'environnement courant
+          btnSwitchEnv.textContent = `Env: ${env.name}`;
+
+          console.log(`✅ Environnement chargé : ${env.name}`);
+        } catch (e) {
+          console.warn("Erreur lors du chargement de l'environnement :", e);
+        }
       }
 
-      // Crée et applique le nouveau
-      window.hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(env.url, window.scene);
-      window.scene.environmentTexture = window.hdrTexture;
-      window.scene.createDefaultSkybox(window.hdrTexture, true, 1000, 0.0);
+      // Clique = passe au suivant
+      btnSwitchEnv.addEventListener('click', () => {
+        currentEnvIndex = (currentEnvIndex + 1) % envList.length;
+        loadEnvironment(currentEnvIndex);
+      });
 
-      // Change le texte du bouton pour indiquer l'environnement courant
-      btnSwitchEnv.textContent = `Env: ${env.name}`;
-
-      console.log(`✅ Environnement chargé : ${env.name}`);
-    } catch (e) {
-      console.warn("Erreur lors du chargement de l'environnement :", e);
+      // Charge le premier au démarrage
+      loadEnvironment(currentEnvIndex);
     }
-  }
 
-  // Clique = passe au suivant
-  btnSwitchEnv.addEventListener('click', () => {
-    currentEnvIndex = (currentEnvIndex + 1) % envList.length;
-    loadEnvironment(currentEnvIndex);
-  });
+    // 4. Gestion du popup d’export
+    const exportBtn = $('exportTexturesBtn');
+    const exportPopup = $('exportPopup');
+    const cancelExport = $('cancelExport');
 
-  // Charge le premier au démarrage
-  loadEnvironment(currentEnvIndex);
-}
+    if (exportBtn && exportPopup) {
+      exportBtn.addEventListener('click', () => {
+        exportPopup.style.display = 'flex'; // Affiche la popup (grâce à display:flex dans ton CSS)
+      });
+    }
 
-// 4. Gestion du popup d’export
-const exportBtn = $('exportTexturesBtn');
-const exportPopup = $('exportPopup');
-const cancelExport = $('cancelExport');
+    if (cancelExport && exportPopup) {
+      cancelExport.addEventListener('click', () => {
+        exportPopup.style.display = 'none'; // Cache la popup
+      });
+    }
 
-if (exportBtn && exportPopup) {
-  exportBtn.addEventListener('click', () => {
-    exportPopup.style.display = 'flex'; // Affiche la popup (grâce à display:flex dans ton CSS)
-  });
-}
+    // Option : fermer la popup si on clique à l’extérieur
+    if (exportPopup) {
+      exportPopup.addEventListener('click', (e) => {
+        if (e.target === exportPopup) exportPopup.style.display = 'none';
+      });
+    }
 
-if (cancelExport && exportPopup) {
-  cancelExport.addEventListener('click', () => {
-    exportPopup.style.display = 'none'; // Cache la popup
-  });
-}
+    // 5. Auto-remplissage et export des textures
+    const exportInputs = {
+      base: $('nameBase'),
+      rough: $('nameRough'),
+      high: $('nameHigh'),
+      nm: $('nameNM'),
+    };
 
-// Option : fermer la popup si on clique à l’extérieur
-if (exportPopup) {
-  exportPopup.addEventListener('click', (e) => {
-    if (e.target === exportPopup) exportPopup.style.display = 'none';
-  });
-}
+    function updateExportNames() {
+      const baseName = window.sourceFileNameBase || "texture";
+      if (exportInputs.base) exportInputs.base.value = `${baseName}_base.png`;
+      if (exportInputs.rough) exportInputs.rough.value = `${baseName}_rough.png`;
+      if (exportInputs.high) exportInputs.high.value = `${baseName}_height.png`;
+      if (exportInputs.nm) exportInputs.nm.value = `${baseName}_normal.png`;
+    }
 
-// 5. Auto-remplissage et export des textures
-const exportInputs = {
-  base: $('nameBase'),
-  rough: $('nameRough'),
-  high: $('nameHigh'),
-  nm: $('nameNM'),
-};
+    // Dès qu'on ouvre la popup → on met à jour les noms
+    if (exportBtn && exportPopup) {
+      exportBtn.addEventListener('click', () => {
+        updateExportNames();
+        exportPopup.style.display = 'flex';
+      });
+    }
 
-function updateExportNames() {
-  const baseName = window.sourceFileNameBase || "texture";
-  if (exportInputs.base) exportInputs.base.value = `${baseName}_base.png`;
-  if (exportInputs.rough) exportInputs.rough.value = `${baseName}_rough.png`;
-  if (exportInputs.high) exportInputs.high.value = `${baseName}_height.png`;
-  if (exportInputs.nm) exportInputs.nm.value = `${baseName}_normal.png`;
-}
+    // Fonction utilitaire pour enregistrer un canvas sous forme d’image PNG
+    function saveCanvasAsImage(canvas, filename) {
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
 
-// Dès qu'on ouvre la popup → on met à jour les noms
-if (exportBtn && exportPopup) {
-  exportBtn.addEventListener('click', () => {
-    updateExportNames();
-    exportPopup.style.display = 'flex';
-  });
-}
+    // Gestion des boutons 💾
+    document.querySelectorAll('.save-icon').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.type;
+        const input = exportInputs[type];
+        const filename = (input?.value || `export_${type}.png`).trim();
 
-// Fonction utilitaire pour enregistrer un canvas sous forme d’image PNG
-function saveCanvasAsImage(canvas, filename) {
-  if (!canvas) return;
-  const link = document.createElement('a');
-  link.download = filename;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-}
+        switch (type) {
+          case 'base':
+            // Si une image source est chargée, on télécharge directement cette image
+            if (window.sourceImage && window.sourceImage.src) {
+              const link = document.createElement('a');
+              link.download = filename;
+              link.href = window.sourceImage.src;
+              link.click();
+            } else if (window.sourceCanvas) {
+              // fallback si jamais l'image n'existe plus
+              saveCanvasAsImage(window.sourceCanvas, filename);
+            }
+            break;
 
-// Gestion des boutons 💾
-document.querySelectorAll('.save-icon').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const type = btn.dataset.type;
-    const input = exportInputs[type];
-    const filename = (input?.value || `export_${type}.png`).trim();
-
-    switch (type) {
-      case 'base':
-        // Si une image source est chargée, on télécharge directement cette image
-        if (window.sourceImage && window.sourceImage.src) {
-          const link = document.createElement('a');
-          link.download = filename;
-          link.href = window.sourceImage.src;
-          link.click();
-        } else if (window.sourceCanvas) {
-          // fallback si jamais l'image n'existe plus
-          saveCanvasAsImage(window.sourceCanvas, filename);
+          case 'rough':
+            if (window.roughnessCanvas) saveCanvasAsImage(window.roughnessCanvas, filename);
+            break;
+          case 'high':
+            if (window.heightmapCanvas) saveCanvasAsImage(window.heightmapCanvas, filename);
+            break;
+          case 'nm':
+            if (window.normalMapCanvas) saveCanvasAsImage(window.normalMapCanvas, filename);
+            break;
+          default:
+            console.warn("Type de texture inconnu :", type);
         }
-        break;
-
-      case 'rough':
-        if (window.roughnessCanvas) saveCanvasAsImage(window.roughnessCanvas, filename);
-        break;
-      case 'high':
-        if (window.heightmapCanvas) saveCanvasAsImage(window.heightmapCanvas, filename);
-        break;
-      case 'nm':
-        if (window.normalMapCanvas) saveCanvasAsImage(window.normalMapCanvas, filename);
-        break;
-      default:
-        console.warn("Type de texture inconnu :", type);
-    }
-  });
-});
+      });
+    });
 
 
 
@@ -715,11 +715,11 @@ document.querySelectorAll('.save-icon').forEach(btn => {
     document.addEventListener('DOMContentLoaded', startOnceReady);
   }
 
-  
+
   // === Ensure invert R/G/B checkboxes update normal map preview immediately (same as sliders) ===
-  (function(){
+  (function () {
     try {
-      ['invertR','invertG','invertB'].forEach(id => {
+      ['invertR', 'invertG', 'invertB'].forEach(id => {
         const el = window[id] || document.getElementById(id);
         if (!el) return;
         el.addEventListener('change', () => {
@@ -727,14 +727,14 @@ document.querySelectorAll('.save-icon').forEach(btn => {
             // Relaunch normal map generation (debounced, like sliders)
             if (window.debouncedGenerateNormalMap) window.debouncedGenerateNormalMap();
             else if (typeof window.generateNormalMap === 'function') window.generateNormalMap();
-          } catch(e){ console.warn('invert channel change handler failed', e); }
+          } catch (e) { console.warn('invert channel change handler failed', e); }
           try {
             // Force 2D preview sync so the inversion is visible immediately
             if (typeof window.force2DPreviewUpdate === 'function') window.force2DPreviewUpdate();
-          } catch(e){ /* ignore */ }
+          } catch (e) { /* ignore */ }
         });
       });
-    } catch(e){
+    } catch (e) {
       console.warn('Could not attach invert channel handlers', e);
     }
   })();
