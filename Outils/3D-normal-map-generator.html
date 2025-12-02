@@ -35,16 +35,17 @@
 
       <!-- SECTION 2 : Heightmap -->
       <div class="accordion-section">
-        <h2 class="accordion-header"><span class="arrow">▾</span> 2. Génération de la Heightmap</h2>
+        <h2 class="accordion-header"><span class="arrow">▾</span> 2. Heightmap</h2>
         <div class="accordion-content">
           <label style="display:flex;align-items:center;gap:8px;">
             <span style="min-width:150px;display:inline-block;">Mode Heightmap :</span>
             <select id="heightmapMode">
-              <option value="auto" selected>Générer depuis l'image (comportement actuel)</option>
+              <option value="auto" selected>Générer depuis l'image (niveau de gris)</option>
               <option value="edges">Détection de contours (Sobel)</option>
             </select>
           </label>
-          <div id="heightmapEdgeOptions" class="edge-options-compact" style="margin-top:8px; display:none;">
+          <div id="heightmapEdgeOptions" class="edge-options-compact"
+            style="margin-top:10px; margin-bottom:15px; display:none;">
             <!-- compact stacked sliders for Sobel mode (ids preserved) -->
             <div class="compact-row" style=" flex-direction:column; width: 100%">
               <label for="edgeThreshold">Seuil contours <span id="edgeThresholdValue"
@@ -72,7 +73,7 @@
               <input id="edgeBlur" type="range" min="0" max="20" value="0" step="1">
             </div>
           </div>
-          <div id="heightmap-options" style="margin-top:10px;">
+          <div id="heightmap-options" style="margin-top:10px; margin-bottom:15px;">
             <label for="hmLargeShapes">Formes Larges <span id="hmLargeShapesValue"
                 class="value-display">0.60</span></label>
             <input type="range" id="hmLargeShapes" min="0" max="1" value="0.6" step="0.01">
@@ -93,7 +94,8 @@
 
       <!-- SECTION 3 : Normal Map -->
       <div class="accordion-section">
-        <h2 class="accordion-header"><span class="arrow">▾</span> 3. Réglages de la Normal Map</h2>
+        <h2 class="accordion-header"><span class="arrow">▾</span> 3. Normal Map <span class="info-icon"
+            id="normalInfoIcon" title="Voir l'orientation">❔</span></h2>
         <div class="accordion-content">
           <label for="intensity">Intensité <span id="intensityValue" class="value-display">1.00</span></label>
           <input type="range" id="intensity" min="0" max="100" value="63" step="1">
@@ -136,7 +138,7 @@
 
       <!-- SECTION 4 : Roughness -->
       <div class="accordion-section">
-        <h2 class="accordion-header"><span class="arrow">▾</span> 4. Roughness Map (nouveau)</h2>
+        <h2 class="accordion-header"><span class="arrow">▾</span> 4. Roughness Map</h2>
         <div class="accordion-content">
           <label for="levelsBlack">Niveau noir <span id="levelsBlackValue" class="value-display">0</span></label>
           <input type="range" id="levelsBlack" min="0" max="255" value="0" step="1">
@@ -234,6 +236,26 @@
 
       <div class="popup-buttons">
         <button id="cancelExport" class="popup-cancel">Fermer</button>
+      </div>
+    </div>
+
+    <!-- === POPUP INFO NORMAL MAP === -->
+    <div id="normalInfoPopup" class="export-popup">
+      <div class="popup-content large-popup">
+        <h3>Normal Map Workflow</h3>
+        <div class="info-images-container">
+          <div class="info-image-block">
+            <h4>Orientation </h4>
+            <img src="./3d-normal-map-generator/orientation.jpg" alt="Orientation">
+          </div>
+          <div class="info-image-block">
+            <h4>Map de Test</h4>
+            <img src="./3d-normal-map-generator/test_bump.jpg" alt="Test Bump">
+          </div>
+        </div>
+        <div class="popup-buttons">
+          <button id="closeNormalInfo" class="popup-cancel">Fermer</button>
+        </div>
       </div>
     </div>
   </div>
@@ -514,7 +536,11 @@
       accordionSections.forEach(section => {
         const header = section.querySelector('.accordion-header');
         if (header) {
-          header.addEventListener('click', () => {
+          header.addEventListener('click', (e) => {
+            // Ne pas toggler l'accordéon si on clique sur l'icône info
+            if (e.target.classList.contains('info-icon') || e.target.closest('.info-icon')) {
+              return;
+            }
             toggleSection(section);
           });
         }

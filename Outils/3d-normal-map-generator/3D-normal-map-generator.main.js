@@ -636,6 +636,68 @@
       });
     }
 
+    // 4b. Gestion du popup Info Normal Map
+    const normalInfoIcon = $('normalInfoIcon');
+    const normalInfoPopup = $('normalInfoPopup');
+    const closeNormalInfo = $('closeNormalInfo');
+
+    // CRITICAL FIX: Move popup to body level (same as exportPopup) if it's nested incorrectly
+    if (normalInfoPopup && normalInfoPopup.parentElement !== document.body) {
+      console.log('[DEBUG] Moving popup from', normalInfoPopup.parentElement, 'to body');
+      document.body.appendChild(normalInfoPopup);
+      console.log('[DEBUG] Popup moved to body');
+    }
+
+    if (normalInfoIcon && normalInfoPopup) {
+      normalInfoIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        normalInfoPopup.style.display = 'flex';
+        normalInfoPopup.style.position = 'fixed';
+        normalInfoPopup.style.top = '0';
+        normalInfoPopup.style.left = '0';
+        normalInfoPopup.style.width = '100vw';
+        normalInfoPopup.style.height = '100vh';
+        normalInfoPopup.style.zIndex = '99999';
+        normalInfoPopup.style.backgroundColor = 'rgba(0, 0, 0, 0.6)'; // Semi-transparent black
+        normalInfoPopup.style.justifyContent = 'center';
+        normalInfoPopup.style.alignItems = 'center';
+
+        console.log('[DEBUG] Popup innerHTML length:', normalInfoPopup.innerHTML.length);
+        console.log('[DEBUG] Popup children count:', normalInfoPopup.children.length);
+
+        // Debug: check popup dimensions and position
+        setTimeout(() => {
+          const rect = normalInfoPopup.getBoundingClientRect();
+          const computed = window.getComputedStyle(normalInfoPopup);
+          console.log('[DEBUG] Popup rect:', rect);
+          console.log('[DEBUG] Popup computed display:', computed.display);
+          console.log('[DEBUG] Popup computed position:', computed.position);
+          console.log('[DEBUG] Popup computed z-index:', computed.zIndex);
+          console.log('[DEBUG] Popup computed visibility:', computed.visibility);
+          console.log('[DEBUG] Popup computed opacity:', computed.opacity);
+        }, 100);
+
+        console.log('[DEBUG] Popup display set to flex, z-index:', normalInfoPopup.style.zIndex);
+      });
+    } else {
+      console.error('[DEBUG] Info icon or popup not found!');
+    }
+
+    if (closeNormalInfo && normalInfoPopup) {
+      closeNormalInfo.addEventListener('click', () => {
+        normalInfoPopup.style.display = 'none';
+      });
+    }
+
+    if (normalInfoPopup) {
+      normalInfoPopup.addEventListener('click', (e) => {
+        if (e.target === normalInfoPopup) {
+          normalInfoPopup.style.display = 'none';
+        }
+      });
+    }
+
     // 5. Auto-remplissage et export des textures
     const exportInputs = {
       base: $('nameBase'),
