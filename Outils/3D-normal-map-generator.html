@@ -441,7 +441,6 @@
             // mark material dirty so renderer recompiles/shaders update
             if (scene && scene.markAllMaterialsAsDirty) scene.markAllMaterialsAsDirty(BABYLON.Constants.MATERIAL_TextureDirtyFlag || 1);
           } catch (e) {/* ignore */ }
-          console.info('Roughness map applied to PBR material.');
         } else {
           console.warn('Could not apply roughness map to PBR material (no compatible property found).');
         }

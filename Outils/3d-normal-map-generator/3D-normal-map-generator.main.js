@@ -507,7 +507,6 @@
       if (window.updateBabylonTextures) window.updateBabylonTextures();
       if (window.scene && window.scene.markAllMaterialsAsDirty) window.scene.markAllMaterialsAsDirty(BABYLON.Constants.MATERIAL_TextureDirtyFlag || 1);
 
-      console.info("Roughness DynamicTexture appliquée au matériau PBR (metallicTexture, roughness->G).");
     } catch (e) {
       console.warn("Erreur applyRoughnessFromCanvas :", e);
     }
@@ -641,16 +640,15 @@
     const normalInfoPopup = $('normalInfoPopup');
     const closeNormalInfo = $('closeNormalInfo');
 
+
     // CRITICAL FIX: Move popup to body level (same as exportPopup) if it's nested incorrectly
     if (normalInfoPopup && normalInfoPopup.parentElement !== document.body) {
-      console.log('[DEBUG] Moving popup from', normalInfoPopup.parentElement, 'to body');
       document.body.appendChild(normalInfoPopup);
-      console.log('[DEBUG] Popup moved to body');
     }
 
     if (normalInfoIcon && normalInfoPopup) {
       normalInfoIcon.addEventListener('click', (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Évite de déclencher l'accordéon
         e.preventDefault();
         normalInfoPopup.style.display = 'flex';
         normalInfoPopup.style.position = 'fixed';
@@ -663,25 +661,15 @@
         normalInfoPopup.style.justifyContent = 'center';
         normalInfoPopup.style.alignItems = 'center';
 
-        console.log('[DEBUG] Popup innerHTML length:', normalInfoPopup.innerHTML.length);
-        console.log('[DEBUG] Popup children count:', normalInfoPopup.children.length);
 
         // Debug: check popup dimensions and position
         setTimeout(() => {
           const rect = normalInfoPopup.getBoundingClientRect();
           const computed = window.getComputedStyle(normalInfoPopup);
-          console.log('[DEBUG] Popup rect:', rect);
-          console.log('[DEBUG] Popup computed display:', computed.display);
-          console.log('[DEBUG] Popup computed position:', computed.position);
-          console.log('[DEBUG] Popup computed z-index:', computed.zIndex);
-          console.log('[DEBUG] Popup computed visibility:', computed.visibility);
-          console.log('[DEBUG] Popup computed opacity:', computed.opacity);
         }, 100);
 
-        console.log('[DEBUG] Popup display set to flex, z-index:', normalInfoPopup.style.zIndex);
       });
     } else {
-      console.error('[DEBUG] Info icon or popup not found!');
     }
 
     if (closeNormalInfo && normalInfoPopup) {
