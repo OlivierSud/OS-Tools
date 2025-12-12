@@ -16,6 +16,17 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtGui import QPixmap, QIcon, QFont
+import ctypes
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 class ImageThumbnail(QFrame):
@@ -152,7 +163,7 @@ class TextureCleaner(QMainWindow):
         self.folder_files = []  # Liste des fichiers du dossier avec chemins complets
         self.current_folder_path = ""  # Chemin du dossier actuel
         
-        self.setWindowIcon(QIcon('icone_final.ico'))
+        self.setWindowIcon(QIcon(resource_path('icone_final.ico')))
         self.init_ui()
     
     def init_ui(self):
@@ -1104,6 +1115,13 @@ def main():
         sys.exit(1)
 
     sys.excepthook = handle_exception
+
+    # Fix taskbar icon on Windows
+    myappid = 'olivier.texturecleaner.tool.1.0' 
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    except Exception:
+        pass
 
     try:
         app = QApplication(sys.argv)
