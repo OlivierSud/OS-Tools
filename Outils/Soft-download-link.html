@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Téléchargement Logiciels - OS-Tools</title>
+    <style>
+        :root {
+            --bg: #061c30;
+            --panel: #082137;
+            --border: #051727;
+            --text: #d7dde7;
+            --accent1: #4f8cff;
+            --accent2: #2ecc71;
+            --accent3: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 400;
+            margin-bottom: 40px;
+        }
+
+        .tools-list {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tool-item {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @media (min-width: 600px) {
+            .tool-item {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .tool-info h2 {
+            margin: 0 0 5px 0;
+            color: var(--accent1);
+            font-size: 1.3em;
+        }
+
+        .tool-info p {
+            margin: 0;
+            color: #9aa5b1;
+        }
+
+        .tool-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap;
+            align-items: center;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            transition: transform 0.2s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .btn-download {
+            background-color: var(--accent1);
+        }
+
+        .btn-github {
+            background-color: #333;
+        }
+
+        .btn-info {
+            background-color: var(--accent2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Téléchargement Logiciels</h1>
+
+    <div class="tools-list">
+        <!-- Tool Entry: OS-project-texture-cleaner -->
+        <div class="tool-item">
+            <div class="tool-info">
+                <h2>OS-project-texture-cleaner</h2>
+                <p>Outil standalone pour nettoyer vos dossiers de textures.</p>
+            </div>
+            <div class="tool-actions">
+                <a href="https://github.com/OlivierSud/OS-project-texture-cleaner/blob/main/Outils%20local/Texture-cleaner/dist/Project-texture-cleaner.exe"
+                    class="btn btn-download" target="_blank">📥 File .exe</a>
+                <a href="https://github.com/OlivierSud/OS-project-texture-cleaner" class="btn btn-github"
+                    target="_blank">🐱 Github Repo</a>
+                <a href="https://oliviersud.github.io/OS-project-texture-cleaner/" class="btn btn-info"
+                    target="_blank">ℹ️ Presentation page</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
