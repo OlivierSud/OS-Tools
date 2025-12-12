@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OS-Tools - Boîte à Outils</title>
     <style>
-        :root{ --bg:#061c30; --panel:#082137; --border:#051727; --text:#d7dde7; --accent1:#4f8cff; }
+        :root {
+            --bg: #061c30;
+            --panel: #082137;
+            --border: #051727;
+            --text: #d7dde7;
+            --accent1: #4f8cff;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background: var(--bg);
@@ -14,10 +22,12 @@
             padding: 40px;
             text-align: center;
         }
+
         h1 {
             font-weight: 400;
             margin-bottom: 40px;
         }
+
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -25,6 +35,7 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+
         .tool-card {
             background: var(--panel);
             border: 1px solid var(--border);
@@ -34,23 +45,27 @@
             color: var(--text);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .tool-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             border-color: var(--accent1);
         }
+
         .tool-card h2 {
             margin: 0 0 10px 0;
             font-size: 1.2em;
             font-weight: 600;
             color: var(--accent1);
         }
+
         .tool-card p {
             font-size: 0.9em;
             color: #9aa5b1;
         }
     </style>
 </head>
+
 <body>
     <h1>OS-Tools - All files</h1>
     <div class="tools-grid">
@@ -78,6 +93,10 @@
             <h2>✒️ Image to Vector</h2>
             <p>Convertissez des images bitmap en graphiques vectoriels (SVG).</p>
         </a>
+        <a href="Outils/Soft-Texture-listing.html" class="tool-card">
+            <h2>🖼️ Texture Cleaner</h2>
+            <p>Outil standalone pour nettoyer vos dossiers de textures (Windows).</p>
+        </a>
         <a href="Outils/3D-normal-map-generator.html" class="tool-card">
             <h2>🧊 Normal Map Generator</h2>
             <p>Générez des normal maps à partir d'images de hauteur.</p>
@@ -100,6 +119,5 @@
         </a>
     </div>
 </body>
+
 </html>
-
-
