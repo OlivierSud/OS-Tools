@@ -1,164 +1,302 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Créateur de vidéo : images → MP4 (H.265 si disponible)</title>
+  <link rel="stylesheet" href="../style-os.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#061c30; --panel:#082137; --panel-2:#051727; --border:#051727; --text:#d7dde7; --muted:#9aa5b1; --accent1:#4f8cff; --accent2:#7a5cff; --accent3:#4fff95; --accent4:#5cff85; --good:#20c997; --warn:#ffcc66; --bad:#ff6b6b; }
-    body{margin:0;background:linear-gradient(180deg,#051727,#0c1c30);color:var(--text);font:15px/1.4 system-ui}
-    .wrap{max-width:1000px;margin:32px auto;padding:0 16px}
-    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    header{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-bottom:16px}
-    header h1{font-size:20px;margin:0;font-weight:700}
-    header .hint{color:var(--muted);font-size:13px}
-    .controls{display:grid;gap:12px;padding:16px}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    label{font-weight:600}
-    input[type="file"],input[type="number"],input[type="text"]{padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:#0f162b;color:var(--text)}
-    input[type="range"]{width:260px}
-    button{background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff;border:0;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer}
-    button:hover{background:linear-gradient(135deg,var(--accent3),var(--accent4));color:#011b0a}
-    button:disabled{opacity:0.5;cursor:not-allowed}
-    button.secondary{background:#1a233d}
-    .preview{display:grid;gap:10px;padding:16px}
-    canvas{width:100%;background:#000;border-radius:12px;border:1px solid rgba(255,255,255,.1)}
-    .playerbar{display:flex;align-items:center;gap:10px}
-    .pill{font-size:12px;color:var(--muted)}
-    .timeline{flex:1}
-    .log{white-space:pre-wrap;font-family:monospace;background:#0e1426;border-top:1px solid rgba(255,255,255,.08);border-radius:0 0 16px 16px;padding:12px;color:#cfe0ff;max-height:140px;overflow:auto}
-    .ok{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-    .footer{color:var(--muted);font-size:12px;margin-top:8px}
+    body {
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      gap: 20px;
+      background: var(--bg-main);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header-section {
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .header-section h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+      letter-spacing: -0.05em;
+    }
+
+    .header-section p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    .tool-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 0;
+    }
+
+    .scroll-content {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .os-panel {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 800px) {
+      .os-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-row label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent-cyan);
+      background: rgba(15, 23, 42, 0.8);
+      outline: none;
+    }
+
+    .output-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--panel-border);
+      object-fit: contain;
+    }
+
+    .player-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .player-controls .os-button {
+      padding: 8px 16px;
+      font-size: 0.9rem;
+    }
+
+    .timeline-container {
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    .log-panel {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      max-height: 150px;
+      overflow-y: auto;
+      color: var(--text-secondary);
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .status-badge {
+      font-size: 0.85rem;
+      color: var(--accent-purple);
+      font-weight: 700;
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Créateur de vidéo (images → MP4 H.265 si pris en charge)</h1>
-      <div class="hint">Sélectionnez un dossier d'images, ajustez la vitesse et la taille, prévisualisez puis exportez.</div>
-    </header>
+  <div class="tool-container">
+    <div class="header-section">
+      <h1>Timelapse en MP4</h1>
+      <p>Transformez un dossier d'images en vidéo haute résolution.</p>
+    </div>
 
-    <section class="card">
-      <div class="controls">
-        <div class="row">
-          <label>Source d'images :</label>
-          <input id="picker" type="file" webkitdirectory multiple accept="image/*" />
-          <span class="pill" id="count">0 image</span>
-        </div>
-        <div class="row">
-          <label for="fps">Vitesse (images/seconde) :</label>
-          <input id="fps" type="range" min="1" max="60" value="24">
-          <input id="fpsText" type="number" min="1" max="60" value="24">
-          <span class="pill">Durée estimée : <span id="est"></span></span>
-        </div>
-        <div class="row">
-          <label>Largeur :</label>
-          <input id="widthInput" type="number" min="16" max="3840">
-          <label>Hauteur :</label>
-          <input id="heightInput" type="number" min="16" max="2160">
-        </div>
-        <div class="row">
-          <label>Nom du fichier exporté :</label>
-          <input id="filename" type="text" value="export_video">
-        </div>
-      </div>
-      <div class="preview">
-        <canvas id="canvas"></canvas>
-        <div class="playerbar">
-          <button id="play">▶️ Lire</button>
-          <button id="stop">⏹️ Stop</button>
-          <button id="restart">⏮️ Recommencer</button>
-          <input id="timeline" class="timeline" type="range" min="0" max="100" value="0">
-          <div class="pill" id="codecInfo">Codec demandé : H.265 / MP4</div>
-          <span class="pill" id="status"></span>
-          <button id="export">💾 Exporter</button>
-        </div>
-      </div>
-      <div class="log" id="log"></div>
-    </section>
-
-    <div class="footer">⚠️ Remarque : l'encodage H.265/MP4 dans le navigateur n'est <b>pas</b> disponible partout. Si non pris en charge, fallback en H.264/VP9/VP8.</div>
+    <button id="export" class="os-button" style="margin-top: 12px;">💾 Exporter la vidéo</button>
   </div>
 
-<script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const picker = $('picker'), fpsRange=$('fps'), fpsText=$('fpsText'),
-        est=$('est'), count=$('count'), canvas=$('canvas'),
-        playBtn=$('play'), stopBtn=$('stop'), restartBtn=$('restart'),
-        exportBtn=$('export'), timeline=$('timeline'),
-        logEl=$('log'), statusEl=$('status'), codecInfo=$('codecInfo'),
-        widthInput=$('widthInput'), heightInput=$('heightInput'),
-        filenameInput=$('filename');
-  const ctx = canvas.getContext('2d');
+  <div class="preview-section">
+    <canvas id="canvas"></canvas>
+    <div class="timeline-container">
+      <input id="timeline" type="range" min="0" max="100" value="0" style="width: 100%;">
+    </div>
+    <div class="player-controls">
+      <button id="play" class="os-button secondary">▶️ Lire</button>
+      <button id="stop" class="os-button secondary">⏹️ Stop</button>
+      <button id="restart" class="os-button secondary">⏮️</button>
+      <div id="status" class="status-badge" style="margin-left: auto;"></div>
+    </div>
+    <div id="codecInfo" class="pill" style="text-align: center;">Codec auto-détecté : H.265 / MP4</div>
+  </div>
+  </div>
 
-  let frames=[], playing=false, previewTimer=null, frameIndex=0;
+  <div class="log-panel" id="log"></div>
+  </div>
 
-  function log(msg, cls=''){ let d=document.createElement('div'); if(cls) d.className=cls; d.textContent=msg; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
-  function fmtDur(t){ return `${Math.floor(t/60)}:${String(Math.round(t%60)).padStart(2,'0')}`; }
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const picker = $('picker'), fpsRange = $('fps'),
+        est = $('est'), count = $('count'), canvas = $('canvas'),
+        playBtn = $('play'), stopBtn = $('stop'), restartBtn = $('restart'),
+        exportBtn = $('export'), timeline = $('timeline'),
+        logEl = $('log'), statusEl = $('status'), codecInfo = $('codecInfo'),
+        widthInput = $('widthInput'), heightInput = $('heightInput'),
+        filenameInput = $('filename'), fpsVal = $('fpsVal');
+      const ctx = canvas.getContext('2d');
 
-  async function loadImages(fileList){
-    frames=[]; frameIndex=0;
-    const files=Array.from(fileList).filter(f=>f.type.startsWith('image/'))
-      .sort((a,b)=>a.webkitRelativePath.localeCompare(b.webkitRelativePath)||a.name.localeCompare(b.name));
-    count.textContent=`${files.length} image${files.length>1?'s':''}`;
-    if(!files.length){ log('Aucune image détectée.','warn'); return; }
-    log(`Chargement de ${files.length} image(s)...`);
-    for(const f of files){ try{ let bmp=await createImageBitmap(f); frames.push({bmp,w:bmp.width,h:bmp.height,name:f.name}); }catch(e){ log(`Échec ${f.name}`,'bad'); } }
-    if(frames.length){
-      const {w,h,name}=frames[0];
-      widthInput.value=w; heightInput.value=h;
-      canvas.width=w; canvas.height=h;
-      filenameInput.value=name.replace(/\.[^.]+$/,''); // nom par défaut
-      drawFrame(0); updateEst();
-      timeline.max=frames.length-1; timeline.value=0;
-      log('Images prêtes ✔','ok');
-    }
-  }
+      let frames = [], playing = false, previewTimer = null, frameIndex = 0;
 
-  function drawFrame(i){ if(!frames.length) return;
-    frameIndex=i%frames.length; const {bmp}=frames[frameIndex];
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(bmp,0,0,canvas.width,canvas.height);
-    timeline.value=frameIndex;
-  }
+      function log(msg, cls = '') {
+        let d = document.createElement('div');
+        if (cls) d.style.color = cls === 'ok' ? 'var(--accent-cyan)' : cls === 'bad' ? '#ef4444' : '#f59e0b';
+        d.textContent = `> ${msg}`;
+        logEl.appendChild(d);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      function fmtDur(t) { return `${Math.floor(t / 60)}:${String(Math.round(t % 60)).padStart(2, '0')}`; }
 
-  function updateCanvasSize(){ canvas.width=parseInt(widthInput.value)||canvas.width; canvas.height=parseInt(heightInput.value)||canvas.height; drawFrame(frameIndex); }
-  function updateEst(){ let fps=+fpsRange.value,total=frames.length/(fps||1); est.textContent=frames.length?`${fmtDur(total)} pour ${frames.length} img`:'—'; }
-  function syncFpsInputs(v){ fpsRange.value=v; fpsText.value=v; updateEst(); }
+      async function loadImages(fileList) {
+        frames = []; frameIndex = 0;
+        const files = Array.from(fileList).filter(f => f.type.startsWith('image/'))
+          .sort((a, b) => a.webkitRelativePath.localeCompare(b.webkitRelativePath) || a.name.localeCompare(b.name));
+        count.textContent = `${files.length} image${files.length > 1 ? 's' : ''}`;
+        if (!files.length) { log('Aucune image détectée.', 'warn'); return; }
+        log(`Chargement de ${files.length} image(s)...`);
+        for (const f of files) { try { let bmp = await createImageBitmap(f); frames.push({ bmp, w: bmp.width, h: bmp.height, name: f.name }); } catch (e) { log(`Échec ${f.name}`, 'bad'); } }
+        if (frames.length) {
+          const { w, h, name } = frames[0];
+          widthInput.value = w; heightInput.value = h;
+          canvas.width = w; canvas.height = h;
+          filenameInput.value = name.replace(/\.[^.]+$/, '');
+          drawFrame(0); updateEst();
+          timeline.max = frames.length - 1; timeline.value = 0;
+          log('Images prêtes ✔', 'ok');
+        }
+      }
 
-  async function exportVideo(){
-    if(!frames.length) return log('Aucune image à exporter.','warn');
-    stopPreview();
-    exportBtn.disabled=true; // désactiver bouton
-    const fps=+fpsRange.value, stream=canvas.captureStream(fps), mime=pickBestMime();
-    if(!mime){ log('Export vidéo non supporté','bad'); exportBtn.disabled=false; return; }
-    codecInfo.textContent=`Codec choisi : ${mime}`;
-    const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6000000});
-    const chunks=[]; rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
-    let i=0, drawInterval=setInterval(()=>{ drawFrame(i++); if(i>=frames.length){ clearInterval(drawInterval); rec.stop(); } },1000/fps);
-    rec.onstop=()=>{
-      let blob=new Blob(chunks,{type:mime}), url=URL.createObjectURL(blob),
-          ext=mime.includes('mp4')?'mp4':'webm', a=document.createElement('a');
-      a.href=url; a.download=(filenameInput.value||'export')+'.'+ext; a.click();
-      URL.revokeObjectURL(url); log('Export terminé ✔','ok'); statusEl.textContent=''; exportBtn.disabled=false;
-    };
-    rec.start(); statusEl.textContent='Export en cours...';
-  }
+      function drawFrame(i) {
+        if (!frames.length) return;
+        frameIndex = i % frames.length;
+        const { bmp } = frames[frameIndex];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+        timeline.value = frameIndex;
+      }
 
-  function pickBestMime(){ return ['video/mp4;codecs=hvc1','video/mp4;codecs=hev1','video/mp4;codecs=avc1.42E01E','video/webm;codecs=vp9','video/webm;codecs=vp8'].find(m=>MediaRecorder.isTypeSupported(m))||''; }
-  function startPreview(){ if(!frames.length||playing) return; playing=true; statusEl.textContent='Prévisualisation...'; previewTimer=setInterval(()=>drawFrame(frameIndex+1),1000/(+fpsRange.value||24)); playBtn.textContent='⏸️ Pause'; }
-  function stopPreview(){ playing=false; clearInterval(previewTimer); previewTimer=null; playBtn.textContent='▶️ Lire'; statusEl.textContent=''; }
-  function togglePreview(){ playing?stopPreview():startPreview(); }
-  function restartPreview(){ frameIndex=0; drawFrame(0); if(!playing) statusEl.textContent=''; }
+      function updateCanvasSize() {
+        canvas.width = parseInt(widthInput.value) || canvas.width;
+        canvas.height = parseInt(heightInput.value) || canvas.height;
+        drawFrame(frameIndex);
+      }
+      function updateEst() {
+        let fps = +fpsRange.value;
+        fpsVal.textContent = fps;
+        let total = frames.length / (fps || 1);
+        est.textContent = frames.length ? `${fmtDur(total)} (${frames.length} img)` : '—';
+      }
 
-  picker.addEventListener('change',e=>loadImages(e.target.files));
-  fpsRange.addEventListener('input',e=>syncFpsInputs(e.target.value));
-  fpsText.addEventListener('input',e=>syncFpsInputs(Math.min(60,Math.max(1,+e.target.value||24))));
-  widthInput.addEventListener('input',updateCanvasSize); heightInput.addEventListener('input',updateCanvasSize);
-  playBtn.addEventListener('click',togglePreview); stopBtn.addEventListener('click',stopPreview); restartBtn.addEventListener('click',restartPreview);
-  exportBtn.addEventListener('click',exportVideo); timeline.addEventListener('input',e=>drawFrame(+e.target.value));
-})();
-</script>
+      async function exportVideo() {
+        if (!frames.length) return log('Aucune image à exporter.', 'warn');
+        stopPreview();
+        exportBtn.disabled = true;
+        const fps = +fpsRange.value, stream = canvas.captureStream(fps), mime = pickBestMime();
+        if (!mime) { log('Export vidéo non supporté', 'bad'); exportBtn.disabled = false; return; }
+        codecInfo.textContent = `Codec : ${mime}`;
+        const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8000000 });
+        const chunks = []; rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+        let i = 0, drawInterval = setInterval(() => { drawFrame(i++); if (i >= frames.length) { clearInterval(drawInterval); rec.stop(); } }, 1000 / fps);
+        rec.onstop = () => {
+          let blob = new Blob(chunks, { type: mime }), url = URL.createObjectURL(blob),
+            ext = mime.includes('mp4') ? 'mp4' : 'webm', a = document.createElement('a');
+          a.href = url; a.download = (filenameInput.value || 'export') + '.' + ext; a.click();
+          URL.revokeObjectURL(url); log('Export terminé ✔', 'ok'); statusEl.textContent = ''; exportBtn.disabled = false;
+        };
+        rec.start(); statusEl.textContent = 'ENCODAGE...';
+      }
+
+      function pickBestMime() { return ['video/mp4;codecs=hvc1', 'video/mp4;codecs=hev1', 'video/mp4;codecs=avc1.42E01E', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8'].find(m => MediaRecorder.isTypeSupported(m)) || ''; }
+      function startPreview() { if (!frames.length || playing) return; playing = true; statusEl.textContent = 'LECTURE'; previewTimer = setInterval(() => drawFrame(frameIndex + 1), 1000 / (+fpsRange.value || 24)); playBtn.textContent = '⏸️ Pause'; }
+      function stopPreview() { playing = false; clearInterval(previewTimer); previewTimer = null; playBtn.textContent = '▶️ Lire'; statusEl.textContent = ''; }
+      function togglePreview() { playing ? stopPreview() : startPreview(); }
+      function restartPreview() { frameIndex = 0; drawFrame(0); if (!playing) statusEl.textContent = ''; }
+
+      picker.addEventListener('change', e => loadImages(e.target.files));
+      fpsRange.addEventListener('input', e => updateEst());
+      widthInput.addEventListener('input', updateCanvasSize);
+      heightInput.addEventListener('input', updateCanvasSize);
+      playBtn.addEventListener('click', togglePreview);
+      stopBtn.addEventListener('click', stopPreview);
+      restartBtn.addEventListener('click', restartPreview);
+      exportBtn.addEventListener('click', exportVideo);
+      timeline.addEventListener('input', e => drawFrame(+e.target.value));
+    })();
+  </script>
 </body>
+</body>
+
 </html>

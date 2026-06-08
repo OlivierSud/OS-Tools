@@ -5,159 +5,175 @@
   <meta charset="UTF-8" />
   <title>Convert JSON → Export GLB</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../style-os.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #061c30;
-      --panel: #082137;
-      --panel-2: #051727;
-      --border: #051727;
-      --text: #d7dde7;
-      --muted: #9aa5b1;
-      --accent1: #4f8cff;
-      --accent2: #7a5cff;
-      --accent3: #4fff95;
-      --accent4: #5cff85;
-    }
-
-    html,
     body {
-      height: 100%;
-    }
-
-    body {
-      margin: 0;
-      display: flex;
       height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
-    #left {
-      width: 320px;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
+      overflow: hidden;
       display: flex;
       flex-direction: column;
+      padding: 24px;
+      gap: 24px;
+      background: var(--bg-main);
     }
 
-    #left header {
-      padding: 14px 14px 10px;
-      border-bottom: 1px solid var(--border);
-      font-weight: 700;
+    .header-section {
+      flex-shrink: 0;
+      text-align: center;
     }
 
-    #meshList {
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+      letter-spacing: -0.05em;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    .actions-bar {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .tool-grid {
       flex: 1;
-      overflow: auto;
-      padding: 10px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      min-height: 0;
+      /* Important for flex child to be scrollable */
     }
 
-    .row {
+    .os-panel {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      background: transparent;
-      transition: background .2s, transform .08s;
+      overflow: hidden;
     }
 
-    .row:hover {
-      background: var(--panel-2);
+    .sidebar-panel h3 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      flex-shrink: 0;
     }
 
-    .row input {
-      accent-color: var(--accent1);
-    }
-
-    .row.active {
-      background: var(--accent1);
-      color: #fff;
-    }
-
-    .pivot-pos {
-      font-size: 10px;
-      opacity: 0.5;
-      margin-left: 30px;
-    }
-
-    .pivot-warning .pivot-pos {
-      color: #ff5a5a;
-      font-weight: 600;
-    }
-
-    #right {
+    .mesh-list-container {
       flex: 1;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
+      gap: 12px;
+      padding-right: 8px;
     }
 
-    #topbar {
-      display: flex;
-      gap: 10px;
-      align-items: center;
+    .mesh-item {
       padding: 12px;
-      background: linear-gradient(90deg, #242c3b, #1c1f25);
-      border-bottom: 1px solid var(--border);
-    }
-
-    #exportGLB {
-      margin-left: 40px;
-    }
-
-    .btn {
-      border: 0;
-      padding: 10px 16px;
-      border-radius: 10px;
-      color: #fff;
-      font-weight: 700;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-md);
       cursor: pointer;
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      box-shadow: 0 6px 16px rgba(79, 140, 255, .18);
-      transition: transform .12s ease, filter .15s ease;
-      display: inline-block;
+      transition: all 0.2s;
     }
 
-    .btn:hover {
-      transform: translateY(-2px);
-      background: linear-gradient(135deg, var(--accent3), var(--accent4));
-      color: #011b0a;
+    .mesh-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
-    .btn:active {
-      transform: translateY(2px);
+    .mesh-item.active {
+      border-color: var(--accent-cyan);
+      background: rgba(34, 211, 238, 0.05);
+      box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
     }
 
-    canvas {
-      flex: 1;
+    .mesh-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .mesh-info label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pivot-info {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+      margin-left: 24px;
+    }
+
+    .pivot-warning .pivot-info {
+      color: #f87171;
+    }
+
+    .preview-panel {
+      position: relative;
+      background: #000;
+      padding: 0;
+    }
+
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      outline: none;
       display: block;
-      background: #2a2c40;
     }
 
-    .muted {
-      color: var(--muted);
-      margin: 0 0 15px 0;
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 
 <body>
-  <aside id="left">
-    <header id="meshHeader">Meshes</header>
-    <div id="meshList">
-      <p class="muted">Aucun modèle chargé.</p>
-    </div>
-  </aside>
+  <div class="header-section">
+    <h1>JSON → GLB</h1>
+    <p class="subtitle">Convertisseur 3D temps réel</p>
+  </div>
 
-  <main id="right">
-    <div id="topbar">
-      <input type="file" id="fileInput" accept=".json,.babylon" hidden />
-      <label for="fileInput" class="btn">⬇️ Choisir un fichier</label>
-      <button class="btn" id="exportGLB">💾 Exporter GLB</button>
+  <div class="actions-bar">
+    <input type="file" id="fileInput" accept=".json,.babylon" hidden />
+    <label for="fileInput" class="os-button">📁 Importer JSON</label>
+    <button class="os-button secondary" id="exportGLB">💾 Exporter GLB</button>
+  </div>
+
+  <div class="tool-grid">
+    <div class="os-panel sidebar-panel">
+      <h3 id="meshHeader">Éléments (0)</h3>
+      <div id="meshList" class="mesh-list-container">
+        <div class="empty-state">Aucun modèle chargé.</div>
+      </div>
     </div>
-    <canvas id="renderCanvas"></canvas>
-  </main>
+
+    <div class="os-panel preview-panel">
+      <canvas id="renderCanvas"></canvas>
+    </div>
+  </div>
 
   <!-- BabylonJS -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -185,50 +201,52 @@
       meshList.innerHTML = "";
       const meshes = scene.meshes.filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
       if (meshes.length === 0) {
-        meshList.innerHTML = '<p class="muted">Aucun mesh exportable.</p>';
+        meshList.innerHTML = '<div class="empty-state">Aucun mesh exportable.</div>';
         return;
       }
       meshes.forEach(m => {
-        const row = document.createElement("div");
-        row.className = "row";
-        row.dataset.meshId = m.id;
+        const item = document.createElement("div");
+        item.className = "mesh-item";
+        item.dataset.meshId = m.id;
 
-        const top = document.createElement("div");
-        top.style.display = "flex";
-        top.style.alignItems = "center";
-        top.style.gap = "10px";
+        const info = document.createElement("div");
+        info.className = "mesh-info";
 
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = m.isEnabled(true);
-        cb.addEventListener("change", () => m.setEnabled(cb.checked));
+        cb.style.accentColor = "var(--accent-cyan)";
+        cb.addEventListener("change", (e) => {
+          e.stopPropagation();
+          m.setEnabled(cb.checked);
+        });
 
         const label = document.createElement("label");
         label.textContent = m.name || m.id || "(mesh)";
 
-        top.appendChild(cb);
-        top.appendChild(label);
+        info.appendChild(cb);
+        info.appendChild(label);
 
         const p = m.getPivotPoint ? m.getPivotPoint() : BABYLON.Vector3.Zero();
         const pivotLine = document.createElement("div");
-        pivotLine.className = "pivot-pos";
-        pivotLine.textContent = `pivot: ${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}`;
+        pivotLine.className = "pivot-info";
+        pivotLine.textContent = `P: ${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}`;
 
         if (Math.abs(p.x) > 1e-6 || Math.abs(p.y) > 1e-6 || Math.abs(p.z) > 1e-6) {
-          row.classList.add("pivot-warning");
+          item.classList.add("pivot-warning");
         }
 
-        row.appendChild(top);
-        row.appendChild(pivotLine);
+        item.appendChild(info);
+        item.appendChild(pivotLine);
 
-        row.addEventListener("click", () => {
+        item.addEventListener("click", () => {
           if (selectedRow) selectedRow.classList.remove("active");
-          row.classList.add("active");
-          selectedRow = row;
+          item.classList.add("active");
+          selectedRow = item;
           highlightMesh(m);
         });
 
-        meshList.appendChild(row);
+        meshList.appendChild(item);
       });
     }
 
@@ -353,9 +371,9 @@
           // Vérifier la structure de glbFile
           console.log("glbFile type:", typeof glbFile);
           console.log("glbFile keys:", Object.keys(glbFile || {}));
-          
+
           let blob = null;
-          
+
           // Cas 1: glbFile est directement un Blob
           if (glbFile instanceof Blob) {
             blob = glbFile;
@@ -375,14 +393,14 @@
           else if (glbFile && glbFile.glb && typeof glbFile.glb === 'object') {
             blob = new Blob([glbFile.glb], { type: 'model/gltf-binary' });
           }
-          
+
           if (!blob) {
             console.error("Impossible d'extraire le blob", glbFile);
             alert("Erreur export GLB : impossible d'extraire le fichier");
             baked.forEach(m => { try { m.dispose(false, true); } catch (e) { } });
             return;
           }
-          
+
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;

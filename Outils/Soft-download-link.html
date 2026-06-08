@@ -5,129 +5,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Téléchargement Logiciels - OS-Tools</title>
+    <link rel="stylesheet" href="../style-os.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #061c30;
-            --panel: #082137;
-            --border: #051727;
-            --text: #d7dde7;
-            --accent1: #4f8cff;
-            --accent2: #2ecc71;
-            --accent3: #e74c3c;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 40px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 48px 24px;
+            gap: 32px;
+            background: var(--bg-main);
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         h1 {
+            flex-shrink: 0;
             text-align: center;
-            font-weight: 400;
-            margin-bottom: 40px;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
         .tools-list {
-            max-width: 100%;
-            margin: 0 auto;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
+            overflow-y: auto;
+            padding-right: 8px;
         }
 
         .tool-item {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s;
+            flex-shrink: 0;
         }
 
-        @media (min-width: 600px) {
-            .tool-item {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-            }
+        .tool-item:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
         }
 
         .tool-info h2 {
-            margin: 0 0 5px 0;
-            color: var(--accent1);
-            font-size: 1.3em;
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
         }
 
         .tool-info p {
             margin: 0;
-            color: #9aa5b1;
+            color: var(--text-secondary);
+            line-height: 1.6;
         }
 
         .tool-actions {
             display: flex;
-            gap: 10px;
-            flex-wrap: nowrap;
-            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
-        .btn {
+        .os-button {
+            flex: 1;
+            min-width: 160px;
             text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            color: white;
-            font-weight: 500;
-            transition: transform 0.2s, opacity 0.2s;
             display: inline-flex;
+            justify-content: center;
             align-items: center;
-            gap: 5px;
-            font-size: 0.9em;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            opacity: 0.9;
-        }
+        @media (max-width: 600px) {
+            .tool-actions {
+                flex-direction: column;
+            }
 
-        .btn-download {
-            background-color: var(--accent1);
-        }
-
-        .btn-github {
-            background-color: #333;
-        }
-
-        .btn-info {
-            background-color: var(--accent2);
+            .os-button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
 <body>
-
-    <h1>Téléchargement Logiciels</h1>
+    <h1>Logiciels Standalone</h1>
 
     <div class="tools-list">
-        <!-- Tool Entry: OS-project-texture-cleaner -->
         <div class="tool-item">
             <div class="tool-info">
-                <h2>OS-project-texture-cleaner</h2>
-                <p>Outil standalone pour nettoyer vos dossiers de textures.</p>
+                <h2>OS Texture Cleaner</h2>
+                <p>Un outil puissant pour analyser et nettoyer automatiquement les textures inutilisées dans vos projets
+                    3D. Optimisez votre stockage en un clic.</p>
             </div>
             <div class="tool-actions">
                 <a href="https://github.com/OlivierSud/OS-project-texture-cleaner/blob/main/Outils%20local/Texture-cleaner/dist/Project-texture-cleaner.exe"
-                    class="btn btn-download" target="_blank">📥 File .exe</a>
-                <a href="https://github.com/OlivierSud/OS-project-texture-cleaner" class="btn btn-github"
-                    target="_blank">🐱 Github Repo</a>
-                <a href="https://oliviersud.github.io/OS-project-texture-cleaner/" class="btn btn-info"
-                    target="_blank">ℹ️ Presentation page</a>
+                    class="os-button" target="_blank">📥 Télécharger .exe</a>
+                <a href="https://github.com/OlivierSud/OS-project-texture-cleaner" class="os-button secondary"
+                    target="_blank">🐱 GitHub</a>
+                <a href="https://oliviersud.github.io/OS-project-texture-cleaner/" class="os-button secondary"
+                    target="_blank">ℹ️ Présentation</a>
             </div>
         </div>
     </div>
-
 </body>
 
 </html>

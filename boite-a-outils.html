@@ -4,117 +4,164 @@
 <head>
   <meta charset="UTF-8">
   <title>Outils - Olivier Sudermann</title>
+  <link rel="stylesheet" href="style-os.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --accent1: #4f8cff;
-      --accent2: #7a5cff;
-      --accent3: #4fff95;
-      --accent4: #5cff85;
-    }
-
     body {
-      margin: 0;
       display: flex;
       height: 100vh;
-      font-family: sans-serif;
+      overflow: hidden;
     }
 
     #sidebar {
-      width: 300px;
-      background: linear-gradient(135deg, #0b1c2c, #0e1d39);
-      ;
-      color: #eaf5fe;
-      padding: 20px;
+      width: 320px;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--panel-border);
       display: flex;
       flex-direction: column;
+      z-index: 10;
     }
 
-    #sidebar h2 {
-      margin: 0;
-      font-size: 18px;
-      text-align: center;
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--panel-border);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
+    .sidebar-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.025em;
+    }
+
     #refresh {
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      color: #ffffff;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text-primary);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      transition: transform .12s ease, background .12s ease;
-      font-weight: normal;
+      transition: all 0.2s ease;
     }
 
     #refresh:hover {
-      background: linear-gradient(135deg, var(--accent3), var(--accent4));
-      transform: translateY(-1px);
-      color: #011b0a;
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(180deg);
     }
 
     #list {
       list-style: none;
-      padding: 0;
-      margin: 10px 0 0;
+      padding: 16px;
+      margin: 0;
       flex: 1;
-      overflow: auto;
-    }
-
-    #list li {
-      margin: 6px 0;
-    }
-
-    #list a {
-      display: block;
-      padding: 6px 10px;
-      color: #ffffff;
-      text-decoration: none;
-      border-radius: 5px;
-    }
-
-    #list a:hover {
-      background: #34495e;
-    }
-
-    #list a.active {
-      background: #1abc9c;
+      overflow-y: auto;
     }
 
     .folder {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 5px;
-      margin: 6px 0;
+      margin-bottom: 8px;
     }
 
     .folder-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 8px 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: background 0.2s ease;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    .folder-name {
-      font-weight: bold;
-      color: #5ec1ff;
+    .folder-header::before {
+      content: '▹';
+      margin-right: 8px;
+      transition: transform 0.2s ease;
+    }
+
+    .folder.open .folder-header::before {
+      transform: rotate(90deg);
+    }
+
+    .folder-content {
+      padding-left: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .folder.open .folder-content {
+      display: block;
+    }
+
+    .tool-item {
+      margin: 2px 0;
+    }
+
+    .tool-link {
+      display: block;
+      padding: 10px 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .tool-link:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+    }
+
+    .tool-link.active {
+      background: var(--accent-gradient);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
     #content {
       flex: 1;
       position: relative;
+      background: #020617;
     }
 
     #placeholder {
       position: absolute;
       inset: 0;
-      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      background-image:
+        radial-gradient(circle at center, rgba(34, 211, 238, 0.03) 0%, transparent 70%);
+    }
+
+    #placeholder h3 {
+      font-size: 1.5rem;
+      color: var(--text-primary);
+      margin-bottom: 8px;
     }
 
     iframe {
-      position: absolute;
-      inset: 0;
       width: 100%;
       height: 100%;
       border: 0;
@@ -125,15 +172,22 @@
 
 <body>
   <div id="sidebar">
-    <h2>
-      Outils
-      <button id="refresh"> Actualiser ⟳</button>
-    </h2>
+    <div class="sidebar-header">
+      <h2>OS-TOOLS</h2>
+      <button id="refresh" title="Actualiser">⟳</button>
+    </div>
     <ul id="list"></ul>
   </div>
 
   <div id="content">
-    <div id="placeholder"></div>
+    <div id="placeholder">
+      <div class="os-panel" style="text-align: center; max-width: 400px;">
+        <h3
+          style="background: var(--accent-gradient-purple); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          Bienvenue</h3>
+        <p>Sélectionnez un outil dans le menu latéral pour commencer.</p>
+      </div>
+    </div>
     <iframe id="viewer"></iframe>
   </div>
 
@@ -209,6 +263,7 @@
             { name: '2D-Sprite-sheet-cutter.html', path: './Outils/2D-Sprite-sheet-cutter.html' },
             { name: '2D-Remove-color-as-alpha.html', path: './Outils/2D-Remove-color-as-alpha.html' },
             { name: '2D-color-replacement.html', path: './Outils/2D-color-replacement.html' },
+            { name: '2D-Color-format-convert.html', path: './Outils/2D-Color-format-convert.html' },
             { name: '2D-Image-to-vector.html', path: './Outils/2D-Image-to-vector.html' },
             { name: 'Soft-download-link.html', path: './Outils/Soft-download-link.html' },
             { name: '3D-normal-map-generator.html', path: './Outils/3D-normal-map-generator.html' },
@@ -230,6 +285,7 @@
           { name: '2D-Sprite-sheet-cutter.html', path: './Outils/2D-Sprite-sheet-cutter.html' },
           { name: '2D-Remove-color-as-alpha.html', path: './Outils/2D-Remove-color-as-alpha.html' },
           { name: '2D-color-replacement.html', path: './Outils/2D-color-replacement.html' },
+          { name: '2D-Color-format-convert.html', path: './Outils/2D-Color-format-convert.html' },
           { name: '2D-Image-to-vector.html', path: './Outils/2D-Image-to-vector.html' },
           { name: 'Soft-download-link.html', path: './Outils/Soft-download-link.html' },
           { name: '3D-normal-map-generator.html', path: './Outils/3D-normal-map-generator.html' },
@@ -252,7 +308,7 @@
       Object.keys(folders).forEach(folderId => {
         const folder = folders[folderId];
         const li = document.createElement('li');
-        li.className = 'folder';
+        li.className = 'folder open'; // Open by default
 
         const folderHeader = document.createElement('div');
         folderHeader.className = 'folder-header';
@@ -262,10 +318,10 @@
         folderName.textContent = folder.name;
 
         folderHeader.appendChild(folderName);
+        folderHeader.onclick = () => li.classList.toggle('open');
 
         const folderContent = document.createElement('div');
         folderContent.className = 'folder-content';
-        folderContent.style.paddingLeft = '15px';
 
         // Ajouter les outils du dossier
         folder.tools.forEach(toolName => {
@@ -290,21 +346,29 @@
 
       if (unassignedTools.length > 0) {
         const unassignedHeader = document.createElement('li');
-        unassignedHeader.innerHTML = '<div style="padding:8px 10px; color:#ccc; font-style:italic;">Outils non classés</div>';
-        list.appendChild(unassignedHeader);
+        unassignedHeader.innerHTML = '<div class="folder-header">Autres Outils</div>';
+        const unassignedContent = document.createElement('div');
+        unassignedContent.className = 'folder-content';
+        unassignedContent.style.display = 'block';
 
         unassignedTools.forEach(tool => {
           const toolLi = createToolElement(tool);
-          list.appendChild(toolLi);
+          unassignedContent.appendChild(toolLi);
         });
+
+        unassignedHeader.appendChild(unassignedContent);
+        list.appendChild(unassignedHeader);
       }
     }
 
     // Fonction pour créer un élément outil
     function createToolElement(tool) {
       const li = document.createElement('li');
+      li.className = 'tool-item';
+
       const a = document.createElement('a');
-      a.textContent = tool.name.replace(/\.html?$/i, '');
+      a.className = 'tool-link';
+      a.textContent = tool.name.replace(/\.html?$/i, '').replace(/^[^-]+-/, '');
 
       if (tool.path) {
         a.href = tool.path;
@@ -314,7 +378,7 @@
 
       a.addEventListener('click', e => {
         e.preventDefault();
-        list.querySelectorAll('a').forEach(l => l.classList.remove('active'));
+        list.querySelectorAll('.tool-link').forEach(l => l.classList.remove('active'));
         a.classList.add('active');
         viewer.src = a.href;
         viewer.style.display = 'block';

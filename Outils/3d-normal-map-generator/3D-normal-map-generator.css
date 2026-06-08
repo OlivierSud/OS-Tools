@@ -1,707 +1,304 @@
-/* ...extracted styles from the HTML <style> block... */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #333;
-  color: #f0f0f0;
-  margin: 0;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   height: 100vh;
-  box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 24px;
+  background: var(--bg-main);
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 .container {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 30px;
-  width: 100%;
-  max-width: 1200px;
-  height: 100%;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+  min-height: 0;
 }
 
 .panel {
-  background-color: #444;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, .3);
-  overflow-y: auto;
-  height: 100%;
-  box-sizing: border-box;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(20px);
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .controls-panel {
-  flex: 1;
-  min-width: 300px;
-  max-height: 95vh;
-  /* empêche le scroll vertical */
-  overflow-y: auto;
-  /* au cas où */
-  overflow-x: hidden;
-  /* empêche le panneau de contrôles d'avoir un scroll horizontal si contenu wrappe */
-  box-sizing: border-box;
+  height: 100%;
 }
 
 .preview-panel {
-  flex: 2;
-  min-width: 400px;
+  height: 100%;
+  overflow-y: auto;
+  gap: 24px;
+  padding-right: 12px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 16px 0;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.accordion-section {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.accordion-header {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border: none;
+  width: 100%;
+  margin: 0;
+  transition: background 0.2s;
+}
+
+.accordion-header:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.accordion-content {
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  max-height: 95vh;
-  /* empêche le scroll vertical */
-  overflow-y: auto;
-  /* au cas où */
+  gap: 16px;
 }
 
-h1,
-h2 {
-  font-size: 20px;
-  border-bottom: 2px solid #555;
-  padding-bottom: 2px;
-  margin-top: 0;
-  color: #00aaff;
-}
-
-.control-group {
-  margin-bottom: 5px;
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
 }
 
-.checkbox-label {
-  display: inline-block;
-  margin-left: 5px;
-  font-weight: normal;
-}
-
-input[type="file"] {
-  padding: 8px;
-  background: #555;
-  border-radius: 4px;
-  cursor: pointer;
+.value-display {
+  color: var(--accent-cyan);
+  font-family: monospace;
 }
 
 input[type="range"] {
   width: 100%;
+}
+
+.custom-file-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  justify-content: center;
 }
 
-.main-preview-container {
-  position: relative;
+.custom-file-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-file-btn.fullwidth {
   width: 100%;
-  max-width: 512px;
-}
-
-#normalMapCanvas,
-#mainPreviewImage {
-  width: 100%;
-  max-height: 350px;
-  /* au lieu de 512px plein écran */
-  height: 35vh;
-  border-radius: 4px;
-  background: #3a3a3a;
-  object-fit: contain;
-}
-
-#mainPreviewImage {
-  display: none;
 }
 
 .view-switcher {
-  margin-bottom: 15px;
   display: flex;
-  gap: 10px;
-  background: #333;
-  padding: 5px;
-  border-radius: 8px;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  width: fit-content;
 }
 
 .view-switcher button {
-  padding: 5px 15px;
-  border: 1px solid #555;
-  background: #444;
-  color: #eee;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
-  border-radius: 5px;
-  font-weight: normal;
+  transition: all 0.2s;
 }
 
 .view-switcher button.active {
-  background: #00aaff;
-  color: #fff;
-  border-color: #00aaff;
+  background: var(--accent-cyan);
+  color: #000;
+}
+
+.main-preview-container {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #000;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--panel-border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #threeCanvas {
   width: 100%;
-  height: 30vh;
-  border-radius: 4px;
-  margin-top: 10px;
+  height: 400px;
+  background: #000;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--panel-border);
 }
 
-#shape-switcher button {
-  flex: 1;
-}
-
-.value-display {
-  display: inline-block;
-  margin-left: 10px;
-  font-weight: normal;
-  color: #ccc;
-}
-
-.options-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.reset-btn:hover {
-  background: #00aaff;
-  color: white;
-}
-
-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
-}
-
-.value-display {
-  margin-left: auto;
-  margin-right: 8px;
-  color: #ccc;
-}
-
-/* Bouton reset à droite */
-.reset-btn {
-  background: #555;
-  border: none;
-  color: #ccc;
-  padding: 2px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: background 0.2s, color 0.2s;
-}
-
-.reset-btn:hover {
-  background: #f23328;
-  color: white;
-}
-
-/* Conteneur du bouton et du nom de fichier */
-.file-input-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Bouton "Choisir un fichier" */
-.custom-file-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  color: #fff;
-  text-decoration: none;
-  cursor: pointer;
-  user-select: none;
-  transition: transform .12s ease, filter .15s ease, background .12s ease;
-  background: linear-gradient(135deg, #00aaff, #025a86);
-  /* même visuel de base que le bouton fichier */
-  box-shadow: 0 6px 16px rgba(79, 140, 255, .18);
-}
-
-.custom-file-btn:hover {
-  background: #31b2f2;
-  transform: translateY(-2px);
-  color: #011b0a;
-}
-
-/* si on met custom-file-btn sur un <label> contenant checkbox, rendre le layout naturel */
-.custom-file-btn input[type="checkbox"] {
-  margin-right: 8px;
-  width: auto;
-  height: auto;
-  accent-color: var(--accent1);
-  transform: scale(1.05);
-}
-
-/* éviter que la règle .btn influe négativement : priorité pour custom-file-btn */
-.custom-file-btn.btn {
-  border: none;
-}
-
-/* focus visible */
-.custom-file-btn:focus {
-  outline: 2px solid rgba(255, 255, 255, 0.12);
-  outline-offset: 2px;
-}
-
-/* Nom du fichier */
-.file-name {
-  font-size: 0.9em;
-  color: #ccc;
-  word-break: break-all;
-  flex: 1;
-  /* occupe tout l’espace restant */
-  text-align: left;
-  opacity: 0.9;
-}
-
-/* === Accordéon === */
-.accordion-section {
-  border-bottom: 2px solid #555;
-  margin-bottom: 15px;
-  padding-bottom: 5px;
-}
-
-.accordion-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  cursor: pointer;
-  color: #00aaff;
-  user-select: none;
-  transition: color 0.2s ease;
-}
-
-.accordion-header:hover {
-  color: #33bbff;
-}
-
-.arrow {
-  display: inline-block;
-  transition: transform 0.3s ease;
-  font-size: 1.2em;
-}
-
-.accordion-section.closed .arrow {
-  transform: rotate(-90deg);
-}
-
-.accordion-content {
-  overflow: hidden;
-  max-height: 1000px;
-  opacity: 1;
-  transition: max-height 0.4s ease, opacity 0.3s ease;
-  overflow-x: hidden;
-  /* pour les containers d'accordéon, éviter overflow-x */
-}
-
-.accordion-section.closed .accordion-content {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* === Export Button === */
 .export-btn {
-  background: linear-gradient(135deg, #00aa88, #007755);
-  color: white;
-  padding: 10px 18px;
-  border-radius: 8px;
+  background: var(--accent-gradient);
+  color: #000;
   border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+  font-size: 1rem;
   cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s, transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 10px 20px rgba(34, 211, 238, 0.2);
 }
 
 .export-btn:hover {
-  background: #00c49f;
   transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(34, 211, 238, 0.4);
 }
 
-/* === Popup === */
-.export-popup {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.popup-content {
-  background: #444;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-  width: 300px;
-}
-
-.popup-content input {
-  width: 90%;
-  padding: 8px;
-  border: none;
-  border-radius: 6px;
-  margin-top: 10px;
-  font-size: 1em;
-}
-
-.popup-buttons {
-  margin-top: 15px;
+.mesh-switcher {
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
 }
 
-.popup-confirm,
-.popup-cancel {
-  background: #00aaff;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  padding: 8px 12px;
-  cursor: pointer;
+.mesh-switcher button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.popup-cancel {
-  background: #888;
+.mesh-switcher button:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.popup-confirm:hover {
-  background: #00ccff;
-}
-
-.popup-cancel:hover {
-  background: #aaa;
-}
-
-.file-list label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 6px 0;
-  font-size: 0.95em;
-  color: #ddd;
-}
-
-.file-list input {
-  flex: 1;
-  margin-left: 10px;
-  padding: 5px;
-  border: none;
-  border-radius: 6px;
-  background: #555;
-  color: #fff;
-}
-
-.main-preview-container {
-  transition: flex 0.3s ease;
-}
-
-#preview3DContainer {
-  transition: all 0.3s ease;
-}
-
-/* === POPUP EXPORT MODERNE === */
 .export-popup {
-  display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  justify-content: center;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: none;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(3px);
+  padding: 20px;
 }
 
 .popup-content {
-  background: #3f3f3f;
-  border-radius: 12px;
-  padding: 25px 30px;
-  width: 320px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.popup-content h3 {
-  color: #00aaff;
-  margin-top: 0;
-  margin-bottom: 15px;
-  text-align: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
 .file-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.file-item label {
-  font-size: 0.9em;
-  color: #ccc;
-  margin-bottom: 4px;
+  gap: 16px;
+  margin: 24px 0;
 }
 
 .file-row {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  gap: 12px;
 }
 
 .file-row input {
   flex: 1;
-  padding: 8px 10px;
-  background: #555;
-  border: 1px solid #666;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--panel-border);
+  padding: 10px;
   border-radius: 8px;
   color: white;
-  font-size: 0.9em;
-  outline: none;
-  transition: border 0.2s, background 0.2s;
-}
-
-.file-row input:focus {
-  border-color: #00aaff;
-  background: #4a4a4a;
 }
 
 .save-icon {
-  background: linear-gradient(135deg, #00aaff, #025a86);
-  color: white;
+  background: var(--accent-cyan);
   border: none;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
-  padding: 8px 10px;
   cursor: pointer;
-  font-size: 1em;
-  transition: background 0.25s, transform 0.15s;
-}
-
-.save-icon:hover {
-  background: #31b2f2;
-  transform: translateY(-2px);
-}
-
-.save-icon:active {
-  transform: translateY(2px);
-}
-
-.popup-buttons {
-  margin-top: 20px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  font-size: 1.2rem;
 }
 
 .popup-cancel {
-  background: #888;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
   color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.25s, transform 0.15s;
-}
-
-
-
-/* Slightly reduce vertical spacing for checkboxes in this block */
-.edge-options-compact input[type="checkbox"] {
-  transform: scale(0.95);
-  margin-right: 6px;
-}
-
-/* bouton custom full width (utilisé pour Direction / Mode) */
-.custom-file-btn.fullwidth {
-  box-sizing: border-box;
-  width: 100%;
-  justify-content: center;
-}
-
-/* petites cases pour invert R/G/B : s'adaptent et wrapent proprement */
-.custom-file-btn.small-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  /* permet 3 éléments côte-à-côte puis wrap si espace insuffisant */
-  flex: 1 1 1;
-  min-width: 20px;
-  /* prévient boutons trop étroits */
-  max-width: 100%;
-  box-sizing: border-box;
-  white-space: nowrap;
-  width: max-content;
-  justify-content: center;
-}
-
-/* s'assurer que les inputs à l'intérieur peuvent se réduire sans causer overflow */
-.custom-file-btn.small-check input[type="checkbox"] {
-  margin-right: 6px;
-  flex: 0 0 auto;
-}
-
-/* bouton fichier principal (haut) peut rester inline, mais supporte aussi fullwidth */
-.custom-file-btn {
-  /* ...existing styles... */
-  box-sizing: border-box;
-}
-
-/* === Custom Blue Sliders === */
-input[type=range] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  margin: 6px 0;
-
-  /* Webkit progress fill trick: background gradient on the input itself */
-  background-color: #444;
-  background-image: linear-gradient(#00aaff, #00aaff);
-  background-size: 0% 100%;
-  /* Updated by JS */
-  background-repeat: no-repeat;
-  height: 6px;
-  border-radius: 3px;
-  border: 1px solid #555;
-}
-
-input[type=range]:focus {
-  outline: none;
-}
-
-/* Webkit (Chrome, Safari, Edge) */
-input[type=range]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 100%;
-  /* Match input height */
-  cursor: pointer;
-  background: transparent;
-  /* Transparent so input background shows */
-  border: none;
-  border-radius: 3px;
-}
-
-input[type=range]::-webkit-slider-thumb {
-  height: 18px;
-  width: 18px;
-  border-radius: 50%;
-  background: #00aaff;
-  cursor: pointer;
-  -webkit-appearance: none;
-  margin-top: -7px;
-  /* (6px height - 18px height) / 2 - 1px border correction */
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-  border: 2px solid #333;
-  transition: background 0.2s, transform 0.2s;
-}
-
-input[type=range]:focus::-webkit-slider-thumb {
-  background: #33bbff;
-  transform: scale(1.1);
-}
-
-/* Firefox */
-input[type=range]::-moz-range-track {
-  width: 100%;
-  height: 6px;
-  cursor: pointer;
-  background: #444;
-  border-radius: 3px;
-  border: 1px solid #555;
-}
-
-input[type=range]::-moz-range-progress {
-  background-color: #00aaff;
-  height: 6px;
-  border-radius: 3px;
-}
-
-input[type=range]::-moz-range-thumb {
-  height: 18px;
-  width: 18px;
-  border: 2px solid #333;
-  border-radius: 50%;
-  background: #00aaff;
-  cursor: pointer;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-  transition: background 0.2s, transform 0.2s;
-}
-
-input[type=range]:focus::-moz-range-thumb {
-  background: #33bbff;
-  transform: scale(1.1);
-}
-
-/* === Info Icon === */
-.info-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: #555;
-  color: #fff;
-  font-size: 12px;
-  margin-left: 10px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
-  user-select: none;
-}
-
-.info-icon:hover {
-  background-color: #00aaff;
-  transform: scale(1.1);
-}
-
-/* === Large Popup for Info === */
-.large-popup {
-  width: 800px;
-  max-width: 90vw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.info-images-container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.info-image-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  min-width: 300px;
-}
-
-.info-image-block h4 {
-  color: #ddd;
-  margin-bottom: 10px;
-}
-
-.info-image-block img {
-  width: 100%;
-  height: auto;
+  padding: 10px 20px;
   border-radius: 8px;
-  border: 2px solid #555;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.info-icon {
+  background: rgba(255, 255, 255, 0.1);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  cursor: help;
 }

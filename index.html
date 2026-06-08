@@ -5,117 +5,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OS-Tools - Boîte à Outils</title>
+    <link rel="stylesheet" href="style-os.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #061c30;
-            --panel: #082137;
-            --border: #051727;
-            --text: #d7dde7;
-            --accent1: #4f8cff;
+        body {
+            padding: 60px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 40px;
+        header {
             text-align: center;
+            margin-bottom: 60px;
+            max-width: 800px;
         }
 
         h1 {
-            font-weight: 400;
-            margin-bottom: 40px;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 0 0 16px 0;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.05em;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin: 0;
         }
 
         .tools-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
             max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
         }
 
         .tool-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
             text-decoration: none;
-            color: var(--text);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            border-color: var(--accent1);
+            transform: translateY(-8px);
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(34, 211, 238, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+
+        .tool-card .icon {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            display: inline-block;
         }
 
         .tool-card h2 {
-            margin: 0 0 10px 0;
-            font-size: 1.2em;
-            font-weight: 600;
-            color: var(--accent1);
+            margin: 0 0 12px 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
 
         .tool-card p {
-            font-size: 0.9em;
-            color: #9aa5b1;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin: 0;
+            flex: 1;
+        }
+
+        .tool-card .arrow {
+            margin-top: 24px;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.8;
+            transition: gap 0.2s ease;
+        }
+
+        .tool-card:hover .arrow {
+            gap: 12px;
+            opacity: 1;
         }
     </style>
 </head>
 
 <body>
-    <h1>OS-Tools - All files</h1>
+    <header>
+        <h1>OS-TOOLS</h1>
+        <p>Une collection d'outils puissants pour les créateurs.</p>
+    </header>
     <div class="tools-grid">
         <a href="boite-a-outils.html" class="tool-card">
-            <h2>🧰 Boite à outils</h2>
-            <p>Créez des animations GIF à partir d'images.</p>
+            <span class="icon">🧰</span>
+            <h2>Boite à outils</h2>
+            <p>L'interface complète pour accéder à tous les outils OS-Tools au même endroit.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/2D-GIF-creator.html" class="tool-card">
-            <h2>🎞️ GIF Creator</h2>
-            <p>Créez des animations GIF à partir d'images.</p>
+            <span class="icon">🎞️</span>
+            <h2>GIF Creator</h2>
+            <p>Créez des animations GIF fluides à partir de vos séquences d'images.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/2D-video-to-GIF.html" class="tool-card">
-            <h2>🎞️ Video to GIF</h2>
-            <p>Créez des animations GIF à partir d'une vidéo.</p>
+            <span class="icon">🎞️</span>
+            <h2>Video to GIF</h2>
+            <p>Convertissez vos vidéos en animations GIF optimisées pour le web.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/2D-color-replacement.html" class="tool-card">
-            <h2>🎨 Color Replacement</h2>
-            <p>Remplacez des couleurs spécifiques dans une image.</p>
+            <span class="icon">🎨</span>
+            <h2>Color Replacement</h2>
+            <p>Remplacez intelligemment des couleurs spécifiques dans vos images.</p>
+            <div class="arrow">Explorer <span>→</span></div>
+        </a>
+        <a href="Outils/2D-Color-format-convert.html" class="tool-card">
+            <span class="icon">🎨</span>
+            <h2>Color Format Convert</h2>
+            <p>Convertissez des couleurs au format x/255 en codes hexadécimaux et visualisez-les en temps réel.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/2D-Sprite-sheet-cutter.html" class="tool-card">
-            <h2>✂️ Sprite Sheet Cutter</h2>
-            <p>Découpez des sprites à partir d'une feuille de sprites.</p>
+            <span class="icon">✂️</span>
+            <h2>Sprite Sheet Cutter</h2>
+            <p>Découpez automatiquement vos feuilles de sprites en fichiers individuels.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/2D-Image-to-vector.html" class="tool-card">
-            <h2>✒️ Image to Vector</h2>
-            <p>Convertissez des images bitmap en graphiques vectoriels (SVG).</p>
+            <span class="icon">✒️</span>
+            <h2>Image to Vector</h2>
+            <p>Vectorisez vos images bitmap en fichiers SVG éditables et scalables.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/Soft-download-link.html" class="tool-card">
-            <h2>📥 Softs Download</h2>
-            <p>Téléchargement des outils standalone et liens utiles.</p>
+            <span class="icon">📥</span>
+            <h2>Softs Download</h2>
+            <p>Accédez aux versions desktop et aux ressources supplémentaires.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/3D-normal-map-generator.html" class="tool-card">
-            <h2>🧊 Normal Map Generator</h2>
-            <p>Générez des normal maps à partir d'images de hauteur.</p>
+            <span class="icon">🧊</span>
+            <h2>Normal Map Generator</h2>
+            <p>Générez des normal maps détaillées pour vos projets 3D.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/2D-Remove-color-as-alpha.html" class="tool-card">
-            <h2>🪄 Remove Color as Alpha</h2>
-            <p>Rend une couleur transparente dans une image.</p>
+            <span class="icon">🪄</span>
+            <h2>Remove Color</h2>
+            <p>Supprimez une couleur de fond pour créer de la transparence instantanée.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/3D-Json-to-OBJ-STL.html" class="tool-card">
-            <h2>🔁 JSON to GLTF</h2>
-            <p>Convertissez des modèles 3D du format JSON vers OBJ/STL.</p>
+            <span class="icon">🔁</span>
+            <h2>JSON to OBJ/STL</h2>
+            <p>Convertissez vos données JSON en formats géométriques 3D standard.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/3D-Json-to-GLB.html" class="tool-card">
-            <h2>📦 JSON to GLB</h2>
-            <p>Convertissez des modèles 3D du format JSON vers GLB (GLTF binaire compressé).</p>
+            <span class="icon">📦</span>
+            <h2>JSON to GLB</h2>
+            <p>Exportez vos modèles au format GLB optimisé pour le temps réel.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
         <a href="Outils/Video-Timelaps-to-MP4.html" class="tool-card">
-            <h2>🎞️ Timelapse to MP4</h2>
-            <p>Créez une vidéo MP4 à partir d'une séquence d'images.</p>
+            <span class="icon">🎞️</span>
+            <h2>Timelapse to MP4</h2>
+            <p>Assemblez vos séries de photos en vidéos timelapse haute définition.</p>
+            <div class="arrow">Explorer <span>→</span></div>
         </a>
     </div>
 </body>

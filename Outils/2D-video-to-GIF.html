@@ -1,189 +1,236 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <title>🎞️ Convertir une vidéo en GIF</title>
+  <link rel="stylesheet" href="../style-os.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #061c30;
-      color: #fff;
-      font-family: system-ui;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      padding: 24px;
+      gap: 20px;
+      background: var(--bg-main);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      flex-shrink: 0;
       margin: 0;
-      padding: 20px;
-    }
-
-    h2 { margin-bottom: 10px; }
-
-    video {
-      max-width: 90%;
-      border-radius: 10px;
-      margin: 10px 0;
-    }
-
-    input[type=file] {
-      display: none;
-    }
-
-    label.btn {
-      display: inline-block;
-      background: linear-gradient(135deg, #4f8cff, #7a5cff);
-      color: #fff;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.05em;
       text-align: center;
     }
 
-    label.btn:hover {
-      background: linear-gradient(135deg, #4fff95, #5cff85);
-      color: #011b0a;
+    .tool-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    .scroll-content {
+      flex: 1;
+      width: 100%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 4px 12px 24px 12px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 800px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      background: #000;
+      flex-shrink: 0;
     }
 
     .slider-container {
+      width: 100%;
+      max-width: 800px;
+      height: 32px;
       position: relative;
-      width: 600px;
-      height: 16px;
-      margin: 20px 0;
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      flex-shrink: 0;
     }
 
     .slider-range {
       position: absolute;
-      height: 6px;
-      top: 5px;
-      background: #333;
-      border-radius: 3px;
-      width: 100%;
+      left: 10px;
+      right: 10px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
     }
 
     .slider-highlight {
       position: absolute;
       height: 6px;
-      top: 5px;
-      background: linear-gradient(90deg,#4fff95,#5cff85);
+      background: var(--accent-gradient);
       border-radius: 3px;
       z-index: 1;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
     }
 
     .thumb {
-      position: absolute;
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
+      background: white;
       border-radius: 50%;
-      background: #4f8cff;
-      cursor: pointer;
-      top: 0;
+      position: absolute;
       z-index: 2;
-      transform: translateX(-50%);
+      cursor: grab;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      transition: transform 0.1s ease;
+    }
+
+    .thumb:active {
+      cursor: grabbing;
+      transform: scale(1.2);
     }
 
     .time-labels {
+      width: 100%;
+      max-width: 800px;
       display: flex;
       justify-content: space-between;
-      width: 600px;
-      font-size: 14px;
-      color: #9aa5b1;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: -10px;
     }
 
-    .options {
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 800px;
+      padding: 24px;
       margin-top: 10px;
-      width: 600px;
-      background: #082137;
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      font-size: 14px;
     }
 
-    .options label {
+    .option-group {
       display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .option-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .checkbox-label {
+      flex-direction: row !important;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
+      cursor: pointer;
+      text-transform: none !important;
+      letter-spacing: normal !important;
+      color: var(--text-primary) !important;
     }
 
-    .options input[type="number"] {
-      width: 60px;
-      padding: 2px 4px;
-      border-radius: 4px;
-      border: none;
-      background: #051727;
-      color: #fff;
+    input[type="number"],
+    select {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      padding: 10px 14px;
+      outline: none;
+    }
+
+    .actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    #gif-container {
+      width: 100%;
+      text-align: center;
+      margin-top: 40px;
     }
 
     #gif-container img {
-      margin-top: 10px;
-      border-radius: 10px;
-      max-width: 90%;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    button.btn {
-      background: linear-gradient(135deg, #4f8cff, #7a5cff);
-      color: #fff;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    button.btn:hover {
-      background: linear-gradient(135deg, #4fff95, #5cff85);
-      color: #011b0a;
-    }
-
-    #exportBtn {
-      display: none;
-    }
-
-    #gif-size {
-      margin-left: auto;
-      font-size: 13px;
-      color: #9aa5b1;
+      max-width: 100%;
+      border-radius: var(--radius-md);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--panel-border);
     }
   </style>
 </head>
+
 <body>
-  <h2>🎥 Générateur de GIF à partir d’une vidéo</h2>
+  <div class="tool-container">
+    <h2>🎞️ Vidéo vers GIF</h2>
 
-  <input type="file" id="videoInput" accept="video/*">
-  <label for="videoInput" class="btn">⬇️ Parcourir une vidéo</label>
-  <video id="video" controls></video>
-
-  <div class="slider-container" id="sliderContainer">
-    <div class="slider-range"></div>
-    <div class="slider-highlight" id="highlight"></div>
-    <div class="thumb" id="thumbStart"></div>
     <div class="thumb" id="thumbEnd"></div>
   </div>
+
   <div class="time-labels">
-    <span>Début : <span id="startTime">0.0</span> s</span>
-    <span>Fin : <span id="endTime">0.0</span> s</span>
+    <span><span id="startTime">0.0</span> s</span>
+    <span><span id="endTime">0.0</span> s</span>
   </div>
 
-  <div class="options">
-    <label><input type="checkbox" id="loop" checked> Lire en boucle</label>
-    <label><input type="checkbox" id="reverse"> Inverser l'ordre</label>
-    <label><input type="checkbox" id="useOriginal" checked> Taille originale</label>
-    <label>Largeur: <input type="number" id="width" value="320"></label>
-    <label>Hauteur: <input type="number" id="height" value="180"></label>
-    <label>Couleurs: <input type="number" id="colors" value="256" min="2" max="256"></label>
-    <label>Durée par frame (ms): <input type="number" id="frameDuration" value="100" min="10"></label>
-    <span id="gif-size"></span>
+  <div class="options-grid">
+    <div class="option-group">
+      <label class="checkbox-label"><input type="checkbox" id="loop" checked> Boucle</label>
+      <label class="checkbox-label"><input type="checkbox" id="reverse"> Inverser</label>
+      <label class="checkbox-label"><input type="checkbox" id="useOriginal" checked> Original</label>
+    </div>
+    <div class="option-group">
+      <label>Largeur (px)</label>
+      <input type="number" id="width" value="320">
+    </div>
+    <div class="option-group">
+      <label>Hauteur (px)</label>
+      <input type="number" id="height" value="180">
+    </div>
+    <div class="option-group">
+      <label>Couleurs</label>
+      <input type="number" id="colors" value="256" min="2" max="256">
+    </div>
   </div>
 
-  <button class="btn" id="generateBtn">⚡ Générer le GIF</button>
-  <button class="btn" id="exportBtn">💾 Exporter le GIF</button>
+  <div class="actions">
+    <button class="os-button" id="generateBtn" style="flex: 2;">⚡ Générer le GIF</button>
+    <button class="os-button secondary" id="exportBtn" style="flex: 1;">💾 Exporter</button>
+  </div>
+
+  <div id="gif-size" style="margin-top: 16px; color: var(--text-secondary); font-size: 0.9rem;"></div>
+  </div>
 
   <div id="gif-container"></div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
 
@@ -224,7 +271,7 @@
     input.addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
-      videoFilename = file.name.split('.').slice(0,-1).join('.') || "video";
+      videoFilename = file.name.split('.').slice(0, -1).join('.') || "video";
       video.src = URL.createObjectURL(file);
       video.load();
       exportBtn.style.display = "none";
@@ -243,8 +290,8 @@
     function updateHighlight() {
       const start = parseFloat(thumbStart.dataset.time || 0);
       const end = parseFloat(thumbEnd.dataset.time || duration);
-      const startPercent = (start/duration*100);
-      const endPercent = (end/duration*100);
+      const startPercent = (start / duration * 100);
+      const endPercent = (end / duration * 100);
       highlight.style.left = startPercent + "%";
       highlight.style.width = (endPercent - startPercent) + "%";
     }
@@ -257,16 +304,16 @@
     function dragThumb(thumb) {
       const onMouseMove = (e) => {
         const rect = sliderContainer.getBoundingClientRect();
-        let percent = ((e.clientX - rect.left)/rect.width*100);
+        let percent = ((e.clientX - rect.left) / rect.width * 100);
         percent = Math.max(0, Math.min(100, percent));
-        const time = duration*percent/100;
+        const time = duration * percent / 100;
         if (thumb === thumbStart) {
           const endTime = parseFloat(thumbEnd.dataset.time || duration);
-          if(time >= endTime) return;
+          if (time >= endTime) return;
           thumb.dataset.time = time;
         } else {
           const startTime = parseFloat(thumbStart.dataset.time || 0);
-          if(time <= startTime) return;
+          if (time <= startTime) return;
           thumb.dataset.time = time;
         }
         thumb.style.left = percent + "%";
@@ -289,7 +336,7 @@
       const start = parseFloat(thumbStart.dataset.time || 0);
       const end = parseFloat(thumbEnd.dataset.time || duration);
       const frameDuration = parseInt(frameDurationInput.value) || 100;
-      const step = frameDuration/1000; // en secondes
+      const step = frameDuration / 1000; // en secondes
       const width = useOriginalCb.checked ? video.videoWidth : +widthInput.value;
       const height = useOriginalCb.checked ? video.videoHeight : +heightInput.value;
       const colors = +colorsInput.value;
@@ -336,7 +383,7 @@
         container.innerHTML = "";
         container.appendChild(img);
         exportBtn.style.display = "inline-block";
-        gifSize.textContent = `Poids : ${(blob.size/1024/1024).toFixed(2)} Mo`;
+        gifSize.textContent = `Poids : ${(blob.size / 1024 / 1024).toFixed(2)} Mo`;
       });
 
       gif.render();
@@ -351,4 +398,5 @@
     });
   </script>
 </body>
+
 </html>

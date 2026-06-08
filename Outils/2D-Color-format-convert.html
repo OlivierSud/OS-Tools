@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertisseur de Couleur - OS-Tools</title>
+    <link rel="stylesheet" href="../style-os.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #0f172a;
+            background-image: none !important;
+            overflow-y: auto;
+        }
+
+        .converter-card {
+            width: 100%;
+            max-width: 660px;
+            padding: 32px;
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            text-align: center;
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+        }
+
+        button.os-button {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            margin-bottom: 24px;
+        }
+
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .result-box {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px dashed var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .result-box span {
+            display: block;
+            font-size: 0.725rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-align: left;
+        }
+
+        .result-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .result-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+            word-break: break-all;
+        }
+
+        .result-value.hex {
+            color: var(--accent-cyan);
+            font-size: 1.5rem;
+        }
+
+        .copy-btn {
+            padding: 0 !important;
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            display: inline-flex;
+            visibility: hidden;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-top: 12px;
+            font-weight: 500;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="os-panel converter-card">
+        <h2>Convertisseur de Couleur</h2>
+        
+        <div class="input-group">
+            <label for="colorInput">Collez la couleur (ex: r, v, b / 255)</label>
+            <input type="text" id="colorInput" class="os-input" placeholder="120/255, 45/255, 200/255" onkeypress="handleEnter(event)">
+        </div>
+        
+        <button class="os-button" onclick="convertirCouleur()">Convertir & Appliquer</button>
+        
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="results-container">
+            <!-- HEX -->
+            <div class="result-box">
+                <span>Code Hexadécimal</span>
+                <div class="result-row">
+                    <div id="resultHex" class="result-value hex">#------</div>
+                    <button id="copyHex" class="copy-btn os-button secondary" onclick="copierValeur('resultHex', 'copyHex')" title="Copier HEX">
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RGB -->
+            <div class="result-box">
+                <span>Code RGB (Standard)</span>
+                <div class="result-row">
+                    <div id="resultRgb" class="result-value">rgb(-, -, -)</div>
+                    <button id="copyRgb" class="copy-btn os-button secondary" onclick="copierValeur('resultRgb', 'copyRgb')" title="Copier RGB">
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- HSL -->
+            <div class="result-box">
+                <span>Code HSL</span>
+                <div class="result-row">
+                    <div id="resultHsl" class="result-value">hsl(-, -%, -%)</div>
+                    <button id="copyHsl" class="copy-btn os-button secondary" onclick="copierValeur('resultHsl', 'copyHsl')" title="Copier HSL">
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleEnter(event) {
+            if (event.key === "Enter") {
+                convertirCouleur();
+            }
+        }
+
+        function copierValeur(elementId, btnId) {
+            const textToCopy = document.getElementById(elementId).textContent;
+            if (textToCopy && !textToCopy.includes("-")) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const btn = document.getElementById(btnId);
+                    const copyIcon = btn.querySelector('.copy-icon');
+                    const checkIcon = btn.querySelector('.check-icon');
+                    
+                    copyIcon.style.display = "none";
+                    checkIcon.style.display = "block";
+                    btn.style.borderColor = "var(--accent-cyan)";
+                    
+                    setTimeout(() => {
+                        copyIcon.style.display = "block";
+                        checkIcon.style.display = "none";
+                        btn.style.borderColor = "";
+                    }, 1500);
+                });
+            }
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+
+            return {
+                h: Math.round(h * 360),
+                s: Math.round(s * 100),
+                l: Math.round(l * 100)
+            };
+        }
+
+        function convertirCouleur() {
+            const input = document.getElementById('colorInput').value;
+            const errorDiv = document.getElementById('errorMessage');
+            
+            // Elements
+            const hexVal = document.getElementById('resultHex');
+            const rgbVal = document.getElementById('resultRgb');
+            const hslVal = document.getElementById('resultHsl');
+            
+            const copyHex = document.getElementById('copyHex');
+            const copyRgb = document.getElementById('copyRgb');
+            const copyHsl = document.getElementById('copyHsl');
+
+            // Retirer les espaces et séparer par les virgules
+            const parts = input.replace(/\s+/g, '').split(',');
+
+            if (parts.length !== 3) {
+                afficherErreur("Format invalide ! Utilisez r,v,b ou r/255,v/255,b/255");
+                return;
+            }
+
+            let r, g, b;
+
+            try {
+                // Extraire la valeur avant le "/255"
+                r = parseInt(parts[0].split('/')[0], 10);
+                g = parseInt(parts[1].split('/')[0], 10);
+                b = parseInt(parts[2].split('/')[0], 10);
+
+                // Vérification des limites
+                if (isNaN(r) || isNaN(g) || isNaN(b) || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+                    afficherErreur("Les valeurs doivent être comprises entre 0 et 255 !");
+                    return;
+                }
+
+                // Calculs
+                const hexValue = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+                const rgbValue = `rgb(${r}, ${g}, ${b})`;
+                const hsl = rgbToHsl(r, g, b);
+                const hslValue = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+
+                // Affichage
+                errorDiv.style.display = "none";
+                
+                hexVal.textContent = hexValue;
+                rgbVal.textContent = rgbValue;
+                hslVal.textContent = hslValue;
+
+                // Afficher les boutons de copie
+                copyHex.style.visibility = "visible";
+                copyRgb.style.visibility = "visible";
+                copyHsl.style.visibility = "visible";
+                
+                // Mettre à jour le fond
+                document.body.style.backgroundColor = hexValue;
+                document.body.style.backgroundImage = "none";
+
+            } catch (e) {
+                afficherErreur("Erreur de conversion !");
+            }
+        }
+
+        function componentToHex(c) {
+            const hex = c.toString(16).toUpperCase();
+            return hex.length === 1 ? "0" + hex : hex;
+        }
+
+        function afficherErreur(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            
+            const hexVal = document.getElementById('resultHex');
+            const rgbVal = document.getElementById('resultRgb');
+            const hslVal = document.getElementById('resultHsl');
+            
+            const copyHex = document.getElementById('copyHex');
+            const copyRgb = document.getElementById('copyRgb');
+            const copyHsl = document.getElementById('copyHsl');
+
+            errorDiv.textContent = message;
+            errorDiv.style.display = "block";
+            
+            hexVal.textContent = "#------";
+            rgbVal.textContent = "rgb(-, -, -)";
+            hslVal.textContent = "hsl(-, -%, -%)";
+
+            copyHex.style.visibility = "hidden";
+            copyRgb.style.visibility = "hidden";
+            copyHsl.style.visibility = "hidden";
+        }
+    </script>
+</body>
+</html>

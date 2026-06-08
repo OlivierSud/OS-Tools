@@ -1,131 +1,226 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Découpe et superposition d'images</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="../style-os.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#061c30; --panel:#082137; --panel-2:#061c30; --border:#051727; --text:#d7dde7; --muted:#9aa5b1; --accent1:#4f8cff; --accent2:#7a5cff; --accent3:#4fff95; --accent4:#5cff85; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); }
-
-    .container { display: flex; height: 100vh; }
-
-    .left, .right { flex: 1; border-right: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; background: var(--panel); }
-    .right { border-right: none; }
-
-    input, select, button { background: #0f162b; border: 1px solid rgba(255,255,255,.15); color: var(--text); padding: 8px 10px; border-radius: 10px; margin-right: 6px; }
-    input[type="number"] { width: 80px; }
-
-    button, input[type="file"]::file-selector-button {
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      transition: transform .12s ease, background .12s ease;
-      border:0;
-      color:#fff;
-      font-weight:700;
-      padding: 8px 10px;
-      border-radius: 10px;
-    }
-    button:hover, input[type="file"]::file-selector-button:hover {
-      background: linear-gradient(135deg, var(--accent3), var(--accent4));
-      transform: translateY(-1px);
-      color:#011b0a;
-    }
-    button:active, input[type="file"]::file-selector-button:active {
-      transform: translateY(0);
-      transition-duration: 0.05s;
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    #image-upload, .fixed-size-inputs { margin-bottom: 15px; }
-    .fixed-size-inputs label { margin-right: 15px; }
+    .container {
+      display: flex;
+      flex: 1;
+      gap: 1px;
+      background: var(--panel-border);
+    }
 
-    .canvas-container { position: relative; flex: 1; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: #0e1426; }
-    #main-image { max-width: 100%; height: auto; display: block; }
-    #overlay { position: absolute; top: 0; left: 0; cursor: crosshair; }
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #020617;
+      padding: 24px;
+      overflow: hidden;
+    }
 
-    .output-list { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; padding: 10px 0; max-height: 120px; }
-    .output-list img { height: 90px; object-fit: contain; flex-shrink: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; background: #0f1a31; padding: 2px; }
+    .panel-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-    .output-item { position: relative; flex-shrink: 0; }
-    .output-item:hover .delete-btn { display: block; }
-    .delete-btn {
-      display: none;
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    input[type="number"],
+    select {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      padding: 8px 12px;
+      width: 100px;
+    }
+
+    .canvas-wrapper {
+      flex: 1;
+      position: relative;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: auto;
+      border: 1px solid var(--panel-border);
+      background-image:
+        linear-gradient(45deg, #050505 25%, transparent 25%),
+        linear-gradient(-45deg, #050505 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #050505 75%),
+        linear-gradient(-45deg, transparent 75%, #050505 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+    #main-image {
+      display: block;
+    }
+
+    #overlay {
       position: absolute;
       top: 0;
-      right: 0;
-      width: 24px;
-      height: 24px;
-      background: #c0392b !important; /* Priorité pour la couleur de fond */
+      left: 0;
+      cursor: crosshair;
+    }
+
+    .output-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+      scrollbar-width: thin;
+    }
+
+    .output-item {
+      position: relative;
+      flex-shrink: 0;
+      background: #05060f;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .output-item img {
+      height: 80px;
+      display: block;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      background: #ef4444;
       color: white;
       border: none;
-      border-radius: 0 0 0 8px;
+      border-radius: 50%;
+      font-size: 12px;
       cursor: pointer;
-      font-weight: bold;
-      line-height: 24px;
-      text-align: center;
-      padding: 0; /* Réinitialiser le padding */
-      font-size: 20px; /* Ajuster la taille de la croix */
-      transform: none !important; /* Annuler la transformation au survol */
-    }
-    .delete-btn:hover {
-      background: #e74c3c !important;
-      color: white; /* S'assurer que la couleur du texte ne change pas */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
 
-    .preview-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .selectors { margin: 10px 0; flex-shrink: 0; }
+    .preview-box {
+      flex: 1;
+      position: relative;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--panel-border);
+    }
 
-    .preview-container { position: relative; flex: 1; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: #0e1426; }
-    .preview-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+    .preview-box img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .tool-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <!-- Zone de gauche -->
-    <div class="left">
-      <input type="file" id="image-upload" accept="image/*" />
-
-      <!-- Dimensions fixes -->
-      <div class="fixed-size-inputs">
-        <label>Largeur :
-          <input type="number" id="fixed-width" value="200" min="1" />
-        </label>
-        <label>Hauteur :
-          <input type="number" id="fixed-height" value="100" min="1" />
-        </label>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>✂️ Découpe</h2>
+        <input type="file" id="image-upload" accept="image/*" hidden />
+        <label for="image-upload" class="os-button">📁 Importer</label>
       </div>
 
-      <div class="canvas-container">
-        <img id="main-image" src="" alt="Image principale" />
+      <div class="controls">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="tool-label">W:</span>
+          <input type="number" id="fixed-width" value="200" min="1" />
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="tool-label">H:</span>
+          <input type="number" id="fixed-height" value="100" min="1" />
+        </div>
+        <button id="generate" class="os-button" style="margin-left: auto;">♻️ Générer</button>
+      </div>
+
+      <div class="canvas-wrapper">
+        <img id="main-image" src="" alt="" />
         <canvas id="overlay"></canvas>
       </div>
-      <button id="generate">♻️ Générer les découpes</button>
     </div>
 
-    <!-- Zone de droite -->
-    <div class="right">
-      <div class="output-list" id="output"></div>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>👁️ Aperçu & Export</h2>
+        <button id="export" class="os-button" style="background: var(--accent-gradient-purple)">💾 Tout
+          Exporter</button>
+      </div>
 
-      <div class="preview-section">
-        <div class="selectors">
-          <label>Image de base :</label>
-          <select id="base-select"></select>
+      <div class="output-strip" id="output"></div>
 
-          <label>Superposée :</label>
-          <select id="overlay-select"></select>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+        <div class="controls">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="tool-label">Base:</span>
+            <select id="base-select"></select>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="tool-label">Dessus:</span>
+            <select id="overlay-select"></select>
+          </div>
         </div>
-        <div class="preview-container">
+
+        <div class="preview-box">
           <img id="preview-base" />
           <img id="preview-overlay" style="opacity: 0.7;" />
         </div>
       </div>
-
-      <button id="export">💾 Exporter les découpes</button>
     </div>
   </div>
+
 
   <script>
     // 🔥 Code original intact (aucune fonctionnalité changée)
@@ -151,11 +246,11 @@
     let selectedRectIndex = -1;
     let offsetX = 0, offsetY = 0;
 
-    uploadInput.addEventListener('change', function(event) {
+    uploadInput.addEventListener('change', function (event) {
       const file = event.target.files[0];
       if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           mainImage.src = e.target.result;
           rectangles = [];
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -164,7 +259,7 @@
       }
     });
 
-    mainImage.onload = function() {
+    mainImage.onload = function () {
       canvas.width = mainImage.width;
       canvas.height = mainImage.height;
       canvas.style.width = mainImage.offsetWidth + 'px';
@@ -244,7 +339,7 @@
           tempCanvas.height = cropH;
           tempCtx.clearRect(0, 0, cropW, cropH);
           tempCtx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-          
+
           const croppedImg = new Image();
           croppedImg.src = tempCanvas.toDataURL();
           images.push(croppedImg.src);
@@ -252,7 +347,7 @@
           const itemContainer = document.createElement('div');
           itemContainer.className = 'output-item';
           itemContainer.dataset.index = index;
-          
+
           const deleteBtn = document.createElement('button');
           deleteBtn.className = 'delete-btn';
           deleteBtn.innerHTML = '&times;';
@@ -277,11 +372,11 @@
       img.src = mainImage.src;
     });
 
-    output.addEventListener('click', function(e) {
+    output.addEventListener('click', function (e) {
       if (e.target.classList.contains('delete-btn')) {
         const item = e.target.closest('.output-item');
         const indexToRemove = parseInt(item.dataset.index, 10);
-        
+
         // Supprimer le rectangle et régénérer
         if (!isNaN(indexToRemove) && indexToRemove < rectangles.length) {
           rectangles.splice(indexToRemove, 1);
@@ -311,4 +406,5 @@
     });
   </script>
 </body>
+
 </html>

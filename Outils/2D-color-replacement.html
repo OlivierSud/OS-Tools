@@ -1,357 +1,389 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Éditeur de couleur complet</title>
-<style>
-:root {
-    --panel-width: 320px;
-    --bg-color: #021d2f;
-    --panel-bg-color: #073347;
-    --border-color: #0b283a;
-    --text-color: #f0f0f0;
-    --label-color: #ccc;
-    --accent-color: #007acc;
-    --accent-hover-color: #0095ff;
-    --danger-color: #c0392b;
-    --danger-hover-color: #e74c3c;
-    --input-bg: #0b283a;
-}
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 16px;
-    display: flex;
-    gap: 18px;
-    align-items: flex-start;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-}
-h3 {
-    font-weight: 400;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 8px;
-    width: 100%;
-    text-align: center;
-    margin-top: 0;
-}
-.zone {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
-    background-color: var(--panel-bg-color);
-    padding: 16px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-}
-.canvas-wrap {
-    background-image: linear-gradient(45deg, #404040 25%, transparent 25%), linear-gradient(-45deg, #404040 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #404040 75%), linear-gradient(-45deg, transparent 75%, #404040 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    border: 1px solid var(--border-color);
-    padding: 8px;
-    border-radius: 4px;
-}
-canvas {
-    display: block;
-    max-width: 560px;
-    max-height: 560px;
-}
-#controls {
-    width: var(--panel-width);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--label-color);
-}
-.row { display: flex; gap: 8px; align-items: center; }
-.hint { font-size: 12px; color: #888; font-style: italic; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Éditeur de couleur complet</title>
+  <link rel="stylesheet" href="../style-os.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      gap: 24px;
+      background: var(--bg-main);
+      max-width: 1600px;
+      margin: 0 auto;
+    }
 
-/* --- Form Elements --- */
-button, input[type="file"]::file-selector-button {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s ease-out;
-    font-size: 14px;
-}
-button:hover, input[type="file"]::file-selector-button:hover {
-    background-color: var(--accent-hover-color);
-    transform: scale(1.02);
-}
-button:active, input[type="file"]::file-selector-button:active {
-    transform: scale(0.98);
-    transition-duration: 0.05s;
-}
-input[type="file"] {
-    font-size: 13px;
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 4px;
-}
-input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    background: transparent;
-}
-input[type=range]::-webkit-slider-runnable-track {
-    width: 100%; height: 6px; cursor: pointer; background: #c1c1c1; border-radius: 3px;
-}
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--accent-color); cursor: pointer; margin-top: -5px;
-    transition: transform 0.1s ease-out;
-}
-input[type=range]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-}
-input[type=color] {
-    -webkit-appearance: none;
-    border: none;
-    width: 100%;
-    height: 28px;
-    background: none;
-    cursor: pointer;
-}
-input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
-input[type=color]::-webkit-color-swatch { border: 1px solid var(--border-color); border-radius: 4px; }
+    h1 {
+      flex-shrink: 0;
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      margin: 0;
+      letter-spacing: -0.05em;
+    }
 
-/* --- Target Panel --- */
-.target-panel {
-    background-color: var(--panel-bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    overflow: hidden;
-}
-.panel-title {
-    padding: 8px 12px;
-    background-color: #062838;
-    cursor: pointer;
-}
-.panel-content {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    border-top: 1px solid var(--border-color);
-}
-.swatch-title {
-    width: 16px; height: 16px; border-radius: 50%; border: 1px solid #888; display: inline-block; margin-right: 6px; vertical-align: middle; position: relative; cursor: pointer;
-}
-.swatch-title.active {
-    border: 2px solid var(--accent-hover-color);
-    animation: pulse 1s infinite alternate;
-}
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 149, 255, 0.5); }
-    100% { box-shadow: 0 0 0 4px rgba(0, 149, 255, 0); }
-}
-.swatch-title .pipette-icon {
-    position: absolute; top: -4px; right: -4px; width: 12px; height: 12px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23FFF" viewBox="0 0 24 24"><path d="M19.7 4.3l-3-3a1 1 0 0 0-1.4 0l-1.8 1.8 4.4 4.4 1.8-1.8a1 1 0 0 0 0-1.4zM3 21v-3l10-10 3 3-10 10H3z"/></svg>') no-repeat center center;
-    background-size: contain; display: none;
-}
-.colorReplace { margin-top: 4px; }
-.colorReplace.disabled { opacity: 0.5; pointer-events: none; }
-.removeTarget { background-color: var(--danger-color); }
-.removeTarget:hover { background-color: var(--danger-hover-color); }
-.resetTarget {
-    font-size: 16px;
-    line-height: 1;
-    background: none;
-    border: none;
-    padding: 2px;
-}
-.resetTarget:hover {
-    background-color: rgba(255,255,255,0.1);
-}
-</style>
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      min-height: 0;
+    }
+
+    .controls-panel {
+      height: 100%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-right: 8px;
+    }
+
+    .previews {
+      height: 100%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      padding-right: 8px;
+    }
+
+    .canvas-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .canvas-card h3 {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .canvas-container {
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      cursor: crosshair;
+    }
+
+    .accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .target-panel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .panel-title {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .panel-content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-top: 1px solid var(--panel-border);
+    }
+
+    .swatch-title {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .swatch-title.active {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 15px var(--accent-cyan);
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-row label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .hint-box {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-cyan);
+    }
+
+    .remove-target-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .color-input-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    input[type="color"] {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
+  <h1>Remplaceur de Couleur Pro</h1>
 
-<div class="zone">
-<h3>Origine (clique pour choisir la couleur)</h3>
-<input id="fileInput" type="file" accept="image/*">
-<div class="canvas-wrap">
-<canvas id="canvasOriginal"></canvas>
-</div>
-<div class="hint">Clique sur l'image pour définir la couleur cible (pipette)</div>
-</div>
+  <div class="workspace">
+    <div class="controls-panel">
+      <div class="os-panel" style="padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+        <input id="fileInput" type="file" accept="image/*" hidden>
+        <label for="fileInput" class="os-button" style="width: 100%; text-align: center;">📁 Charger Image</label>
 
-<div id="controls">
-<div class="accordion" id="targets"></div>
-<button id="addTarget">+ Ajouter une couleur cible</button>
-</div>
+        <div id="targets" class="accordion"></div>
 
-<div class="zone">
-<h3>Prévisualisation</h3>
-<div class="canvas-wrap">
-<canvas id="canvasPreview"></canvas>
-</div>
-<div class="hint">L'export sauvegarde la prévisualisation (même nom que l'original)</div>
-<button id="export">Exporter PNG</button>
-</div>
+        <button id="addTarget" class="os-button secondary">+ Nouvelle Cible</button>
 
-<script>
-function rgbToHsv(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h,s,v=max,d=max-min;s=max===0?0:d/max;if(d===0)h=0;else{switch(max){case r:h=(g-b)/d + (g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}return [Math.round(h*360),Math.round(s*100),Math.round(v*100)];}
-function hsvToRgb(h,s,v){h=(h%360+360)%360;s/=100;v/=100;const i=Math.floor(h/60),f=h/60-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);let r,g,b;switch(i){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;default:r=v;g=p;b=q;break;}return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];}
-function toHex(r,g,b){const h=x=>x.toString(16).padStart(2,'0');return '#'+h(r)+h(g)+h(b);}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+        <button id="export" class="os-button" style="background: var(--accent-gradient-purple)">💾 Exporter
+          l'image</button>
+      </div>
 
-function hexToRgb(hex) {
-  hex = hex.replace(/^#/, '');
-  if (hex.length === 3) {
-    hex = hex.split('').map(x => x + x).join('');
-  }
-  const num = parseInt(hex, 16);
-  return {
-    r: (num >> 16) & 255,
-    g: (num >> 8) & 255,
-    b: num & 255
-  };
-}
+      <div class="hint-box">
+        💡 <strong>Méthode :</strong> Cliquez sur l'image d'origine pour pipetter une couleur, puis ajustez les
+        paramètres dans le panneau correspondant.
+      </div>
+    </div>
 
-function boxBlurMask(mask, width, height, radius) {
-  if (radius < 1) return mask;
-  const out = new Float32Array(mask.length);
-  const tmp = new Float32Array(mask.length);
-  // Horizontal blur (ignorer bords)
-  for (let y = 1; y < height-1; y++) {
-    let sum = 0;
-    for (let x = 1; x < width-1; x++) {
-      const idx = y * width + x;
-      sum = 0;
-      let count = 0;
-      for(let k = -Math.floor(radius/2); k <= Math.floor(radius/2); k++) {
-        const xx = x + k;
-        if(xx > 0 && xx < width-1) {
-          sum += mask[y*width + xx];
-          count++;
+    <div class="previews">
+      <div class="canvas-card">
+        <h3>🔍 Origine</h3>
+        <div class="canvas-container os-panel">
+          <canvas id="canvasOriginal"></canvas>
+        </div>
+      </div>
+
+      <div class="canvas-card">
+        <h3>✨ Résultat</h3>
+        <div class="canvas-container checkerboard os-panel">
+          <canvas id="canvasPreview"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function rgbToHsv(r, g, b) { r /= 255; g /= 255; b /= 255; const max = Math.max(r, g, b), min = Math.min(r, g, b); let h, s, v = max, d = max - min; s = max === 0 ? 0 : d / max; if (d === 0) h = 0; else { switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; }h /= 6; } return [Math.round(h * 360), Math.round(s * 100), Math.round(v * 100)]; }
+    function hsvToRgb(h, s, v) { h = (h % 360 + 360) % 360; s /= 100; v /= 100; const i = Math.floor(h / 60), f = h / 60 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s); let r, g, b; switch (i) { case 0: r = v; g = t; b = p; break; case 1: r = q; g = v; b = p; break; case 2: r = p; g = v; b = t; break; case 3: r = p; g = q; b = v; break; case 4: r = t; g = p; b = v; break; default: r = v; g = p; b = q; break; }return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]; }
+    function toHex(r, g, b) { const h = x => x.toString(16).padStart(2, '0'); return '#' + h(r) + h(g) + h(b); }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function hexToRgb(hex) {
+      hex = hex.replace(/^#/, '');
+      if (hex.length === 3) {
+        hex = hex.split('').map(x => x + x).join('');
+      }
+      const num = parseInt(hex, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    function boxBlurMask(mask, width, height, radius) {
+      if (radius < 1) return mask;
+      const out = new Float32Array(mask.length);
+      const tmp = new Float32Array(mask.length);
+      // Horizontal blur (ignorer bords)
+      for (let y = 1; y < height - 1; y++) {
+        let sum = 0;
+        for (let x = 1; x < width - 1; x++) {
+          const idx = y * width + x;
+          sum = 0;
+          let count = 0;
+          for (let k = -Math.floor(radius / 2); k <= Math.floor(radius / 2); k++) {
+            const xx = x + k;
+            if (xx > 0 && xx < width - 1) {
+              sum += mask[y * width + xx];
+              count++;
+            }
+          }
+          tmp[idx] = count > 0 ? sum / count : 0;
         }
       }
-      tmp[idx] = count > 0 ? sum / count : 0;
-    }
-  }
-  // Vertical blur (ignorer bords)
-  for (let x = 1; x < width-1; x++) {
-    for (let y = 1; y < height-1; y++) {
-      const idx = y * width + x;
-      let sum = 0;
-      let count = 0;
-      for(let k = -Math.floor(radius/2); k <= Math.floor(radius/2); k++) {
-        const yy = y + k;
-        if(yy > 0 && yy < height-1) {
-          sum += tmp[yy*width + x];
-          count++;
+      // Vertical blur (ignorer bords)
+      for (let x = 1; x < width - 1; x++) {
+        for (let y = 1; y < height - 1; y++) {
+          const idx = y * width + x;
+          let sum = 0;
+          let count = 0;
+          for (let k = -Math.floor(radius / 2); k <= Math.floor(radius / 2); k++) {
+            const yy = y + k;
+            if (yy > 0 && yy < height - 1) {
+              sum += tmp[yy * width + x];
+              count++;
+            }
+          }
+          out[idx] = count > 0 ? sum / count : 0;
         }
       }
-      out[idx] = count > 0 ? sum / count : 0;
-    }
-  }
-  // Bords restent à 0
-  for(let x=0; x<width; x++) {
-    out[x] = 0;
-    out[(height-1)*width + x] = 0;
-  }
-  for(let y=0; y<height; y++) {
-    out[y*width] = 0;
-    out[y*width + (width-1)] = 0;
-  }
-  return out;
-}
-
-function dilateErodeMask(mask, width, height, amount) {
-  if (amount === 0) return mask;
-  let src = mask;
-  let dst = new Float32Array(mask.length);
-  const absAmount = Math.abs(amount);
-  for(let iter=0; iter<absAmount; iter++) {
-    dst.fill(0);
-    for(let y=1; y<height-1; y++) {
-      for(let x=1; x<width-1; x++) {
-        const idx = y*width + x;
-        if(amount > 0) { // Dilate
-          dst[idx] = Math.max(
-            src[idx],
-            src[idx-1], src[idx+1],
-            src[idx-width], src[idx+width],
-            src[idx-width-1], src[idx-width+1],
-            src[idx+width-1], src[idx+width+1]
-          );
-        } else { // Erode
-          dst[idx] = Math.min(
-            src[idx],
-            src[idx-1], src[idx+1],
-            src[idx-width], src[idx+width],
-            src[idx-width-1], src[idx-width+1],
-            src[idx+width-1], src[idx+width+1]
-          );
-        }
+      // Bords restent à 0
+      for (let x = 0; x < width; x++) {
+        out[x] = 0;
+        out[(height - 1) * width + x] = 0;
       }
+      for (let y = 0; y < height; y++) {
+        out[y * width] = 0;
+        out[y * width + (width - 1)] = 0;
+      }
+      return out;
     }
-    // Protéger le bord strict
-    for(let x=0; x<width; x++) { dst[x]=0; dst[(height-1)*width+x]=0; }
-    for(let y=0; y<height; y++) { dst[y*width]=0; dst[y*width+width-1]=0; }
-    // Préparer pour itération suivante
-    let tmp = src; src = dst; dst = tmp;
-  }
-  return src;
-}
 
-const fileInput=document.getElementById('fileInput');
-const canvasOriginal=document.getElementById('canvasOriginal');
-const ctxO=canvasOriginal.getContext('2d');
-const canvasPreview=document.getElementById('canvasPreview');
-const ctxP=canvasPreview.getContext('2d');
-const targetsDiv=document.getElementById('targets');
-const addTargetBtn=document.getElementById('addTarget');
-const exportBtn=document.getElementById('export');
+    function dilateErodeMask(mask, width, height, amount) {
+      if (amount === 0) return mask;
+      let src = mask;
+      let dst = new Float32Array(mask.length);
+      const absAmount = Math.abs(amount);
+      for (let iter = 0; iter < absAmount; iter++) {
+        dst.fill(0);
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            const idx = y * width + x;
+            if (amount > 0) { // Dilate
+              dst[idx] = Math.max(
+                src[idx],
+                src[idx - 1], src[idx + 1],
+                src[idx - width], src[idx + width],
+                src[idx - width - 1], src[idx - width + 1],
+                src[idx + width - 1], src[idx + width + 1]
+              );
+            } else { // Erode
+              dst[idx] = Math.min(
+                src[idx],
+                src[idx - 1], src[idx + 1],
+                src[idx - width], src[idx + width],
+                src[idx - width - 1], src[idx - width + 1],
+                src[idx + width - 1], src[idx + width + 1]
+              );
+            }
+          }
+        }
+        // Protéger le bord strict
+        for (let x = 0; x < width; x++) { dst[x] = 0; dst[(height - 1) * width + x] = 0; }
+        for (let y = 0; y < height; y++) { dst[y * width] = 0; dst[y * width + width - 1] = 0; }
+        // Préparer pour itération suivante
+        let tmp = src; src = dst; dst = tmp;
+      }
+      return src;
+    }
 
-let image=new Image();
-let filename='image.png';
-let targetCounter=0;
-let targets=[];
-let activeTargetId=null;
-let selectionMode=false;
+    const fileInput = document.getElementById('fileInput');
+    const canvasOriginal = document.getElementById('canvasOriginal');
+    const ctxO = canvasOriginal.getContext('2d');
+    const canvasPreview = document.getElementById('canvasPreview');
+    const ctxP = canvasPreview.getContext('2d');
+    const targetsDiv = document.getElementById('targets');
+    const addTargetBtn = document.getElementById('addTarget');
+    const exportBtn = document.getElementById('export');
+
+    let image = new Image();
+    let filename = 'image.png';
+    let targetCounter = 0;
+    let targets = [];
+    let activeTargetId = null;
+    let selectionMode = false;
 
 
 
-fileInput.addEventListener('change', e => {
-    const f = e.target.files[0];
-    if(!f) return;
-    filename = f.name.replace(/\.[^/.]+$/,'')+'.png';
-    const reader = new FileReader();
-    reader.onload = ev => {
+    fileInput.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      filename = f.name.replace(/\.[^/.]+$/, '') + '.png';
+      const reader = new FileReader();
+      reader.onload = ev => {
         image.onload = () => {
-            canvasOriginal.width = image.naturalWidth;
-            canvasOriginal.height = image.naturalHeight;
-            canvasPreview.width = image.naturalWidth;
-            canvasPreview.height = image.naturalHeight;
-            ctxO.drawImage(image,0,0);
-            ctxP.drawImage(image,0,0);
-            if(targets.length>0 && !activeTargetId) activeTargetId = targets[0].id;
-            applyEdits();
+          canvasOriginal.width = image.naturalWidth;
+          canvasOriginal.height = image.naturalHeight;
+          canvasPreview.width = image.naturalWidth;
+          canvasPreview.height = image.naturalHeight;
+          ctxO.drawImage(image, 0, 0);
+          ctxP.drawImage(image, 0, 0);
+          if (targets.length > 0 && !activeTargetId) activeTargetId = targets[0].id;
+          applyEdits();
         };
         image.src = ev.target.result;
-    };
-    reader.readAsDataURL(f);
-});
+      };
+      reader.readAsDataURL(f);
+    });
 
-function addTargetPanel(){
-  targetCounter++;
-  const id=targetCounter;
-  const panel=document.createElement('div');
-  panel.classList.add('target-panel');
-  panel.dataset.id=id;
-  panel.innerHTML=`
+    function addTargetPanel() {
+      targetCounter++;
+      const id = targetCounter;
+      const panel = document.createElement('div');
+      panel.classList.add('target-panel');
+      panel.dataset.id = id;
+      panel.innerHTML = `
     <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <span style="display:flex;align-items:center;gap:6px;">
         <span class="swatch-title" style="background:#ff0000"><span class="pipette-icon"></span></span> Couleur cible ${id}
@@ -372,106 +404,106 @@ function addTargetPanel(){
       <label>Value</label><input type="range" min="-100" max="100" value="0" class="value">
       <button class="removeTarget">- Supprimer</button>
     </div>`;
-  targetsDiv.appendChild(panel);
-  targets.push({id:id,element:panel,targetColor:{r:255,g:0,b:0}});
+      targetsDiv.appendChild(panel);
+      targets.push({ id: id, element: panel, targetColor: { r: 255, g: 0, b: 0 } });
 
-  const title=panel.querySelector('.panel-title');
-  const content=panel.querySelector('.panel-content');
-  content.style.display='block';
-  const arrow=panel.querySelector('.arrow');
-  arrow.addEventListener('click',()=>{
-    if(content.style.display==='block'){
-      content.style.display='none';
-      arrow.style.transform='rotate(-90deg)';
-    }else{
-      content.style.display='block';
-      arrow.style.transform='';
+      const title = panel.querySelector('.panel-title');
+      const content = panel.querySelector('.panel-content');
+      content.style.display = 'block';
+      const arrow = panel.querySelector('.arrow');
+      arrow.addEventListener('click', () => {
+        if (content.style.display === 'block') {
+          content.style.display = 'none';
+          arrow.style.transform = 'rotate(-90deg)';
+        } else {
+          content.style.display = 'block';
+          arrow.style.transform = '';
+        }
+      });
+
+      panel.querySelector('.resetTarget').addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.querySelector('.useColorReplace').checked = false;
+        panel.querySelector('.colorReplace').classList.add('disabled');
+        panel.querySelector('.tolerance').value = 30;
+        panel.querySelector('.feather').value = 6;
+        panel.querySelector('.expand').value = 0;
+        panel.querySelector('.hue').value = 0;
+        panel.querySelector('.saturation').value = 0;
+        panel.querySelector('.value').value = 0;
+        applyEdits();
+      });
+
+      const swatch = panel.querySelector('.swatch-title');
+      swatch.addEventListener('click', () => {
+        activeTargetId = id;
+        selectionMode = true;
+        swatch.classList.add('active');
+        canvasOriginal.style.cursor = 'crosshair';
+        swatch.querySelector('.pipette-icon').style.display = 'block';
+      });
+
+      const checkbox = panel.querySelector('.useColorReplace');
+      const colorInput = panel.querySelector('.colorReplace');
+      checkbox.addEventListener('change', () => {
+        colorInput.classList.toggle('disabled', !checkbox.checked);
+        applyEdits();
+      });
+
+      panel.querySelector('.removeTarget').addEventListener('click', () => { targetsDiv.removeChild(panel); targets = targets.filter(t => t.id !== id); applyEdits(); });
+      panel.querySelectorAll('input[type=range]').forEach(inp => inp.addEventListener('input', applyEdits));
+
     }
-  });
 
-  panel.querySelector('.resetTarget').addEventListener('click', (e) => {
-    e.stopPropagation();
-    panel.querySelector('.useColorReplace').checked = false;
-    panel.querySelector('.colorReplace').classList.add('disabled');
-    panel.querySelector('.tolerance').value = 30;
-    panel.querySelector('.feather').value = 6;
-    panel.querySelector('.expand').value = 0;
-    panel.querySelector('.hue').value = 0;
-    panel.querySelector('.saturation').value = 0;
-    panel.querySelector('.value').value = 0;
-    applyEdits();
-  });
+    addTargetBtn.addEventListener('click', addTargetPanel);
+    document.addEventListener('DOMContentLoaded', () => {
+      addTargetPanel();
+      if (targets.length > 0) activeTargetId = targets[0].id;
+    });
 
-  const swatch=panel.querySelector('.swatch-title');
-  swatch.addEventListener('click',()=>{
-    activeTargetId=id;
-    selectionMode=true;
-    swatch.classList.add('active');
-    canvasOriginal.style.cursor='crosshair';
-    swatch.querySelector('.pipette-icon').style.display='block';
-  });
+    canvasOriginal.addEventListener('click', ev => {
+      if (!selectionMode || activeTargetId === null) return;
+      const rect = canvasOriginal.getBoundingClientRect();
+      const x = Math.floor((ev.clientX - rect.left) * (canvasOriginal.width / rect.width));
+      const y = Math.floor((ev.clientY - rect.top) * (canvasOriginal.height / rect.height));
+      const data = ctxO.getImageData(x, y, 1, 1).data;
+      const t = targets.find(t => t.id === activeTargetId);
+      if (!t) return;
+      t.targetColor = { r: data[0], g: data[1], b: data[2] };
+      const swatch = t.element.querySelector('.swatch-title');
+      swatch.style.background = toHex(data[0], data[1], data[2]);
+      swatch.classList.remove('active');
+      swatch.querySelector('.pipette-icon').style.display = 'none';
+      selectionMode = false;
+      canvasOriginal.style.cursor = 'default';
+      applyEdits();
+    });
 
-  const checkbox=panel.querySelector('.useColorReplace');
-  const colorInput=panel.querySelector('.colorReplace');
-  checkbox.addEventListener('change',()=>{
-    colorInput.classList.toggle('disabled',!checkbox.checked);
-    applyEdits();
-  });
+    exportBtn.addEventListener('click', () => {
+      canvasPreview.toBlob(blob => {
+        if (!blob) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename || 'export.png';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+        }, 100);
+      }, 'image/png');
+    });
 
-  panel.querySelector('.removeTarget').addEventListener('click',()=>{ targetsDiv.removeChild(panel); targets=targets.filter(t=>t.id!==id); applyEdits(); });
-  panel.querySelectorAll('input[type=range]').forEach(inp=>inp.addEventListener('input', applyEdits));
+    function applyEdits() {
+      if (!image.width) return;
+      ctxP.clearRect(0, 0, canvasPreview.width, canvasPreview.height);
+      ctxP.drawImage(image, 0, 0);
+      let imgData = ctxP.getImageData(0, 0, canvasPreview.width, canvasPreview.height);
+      let data = imgData.data;
+      const width = canvasPreview.width;
+      const height = canvasPreview.height;
 
-}
-
-addTargetBtn.addEventListener('click', addTargetPanel);
-document.addEventListener('DOMContentLoaded',()=>{
-  addTargetPanel();
-  if(targets.length>0) activeTargetId = targets[0].id;
-});
-
-canvasOriginal.addEventListener('click', ev => {
-  if(!selectionMode || activeTargetId === null) return;
-  const rect = canvasOriginal.getBoundingClientRect();
-  const x = Math.floor((ev.clientX - rect.left) * (canvasOriginal.width / rect.width));
-  const y = Math.floor((ev.clientY - rect.top) * (canvasOriginal.height / rect.height));
-  const data = ctxO.getImageData(x, y, 1, 1).data;
-  const t = targets.find(t => t.id === activeTargetId);
-  if(!t) return;
-  t.targetColor = {r: data[0], g: data[1], b: data[2]};
-  const swatch = t.element.querySelector('.swatch-title');
-  swatch.style.background = toHex(data[0], data[1], data[2]);
-  swatch.classList.remove('active');
-  swatch.querySelector('.pipette-icon').style.display = 'none';
-  selectionMode = false;
-  canvasOriginal.style.cursor = 'default';
-  applyEdits();
-});
-
-exportBtn.addEventListener('click', () => {
-  canvasPreview.toBlob(blob => {
-    if (!blob) return;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename || 'export.png';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    }, 100);
-  }, 'image/png');
-});
-
-function applyEdits(){
-    if(!image.width) return;
-    ctxP.clearRect(0,0,canvasPreview.width,canvasPreview.height);
-    ctxP.drawImage(image,0,0);
-    let imgData = ctxP.getImageData(0,0,canvasPreview.width,canvasPreview.height);
-    let data = imgData.data;
-    const width = canvasPreview.width;
-    const height = canvasPreview.height;
-
-    targets.forEach(t=>{
+      targets.forEach(t => {
         const tol = parseInt(t.element.querySelector('.tolerance').value);
         const feather = parseInt(t.element.querySelector('.feather').value);
         const expand = parseInt(t.element.querySelector('.expand').value);
@@ -483,56 +515,57 @@ function applyEdits(){
 
         // 1. Créer un masque binaire (1 = sélectionné, 0 = non), sans jamais sélectionner les pixels du bord strict (x=0, x=width-1, y=0, y=height-1)
         const mask = new Float32Array(width * height);
-        for(let y=0; y<height; y++){
-          for(let x=0; x<width; x++){
-            if(x === 0 || x === width-1 || y === 0 || y === height-1) {
-              mask[y*width + x] = 0;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+              mask[y * width + x] = 0;
               continue;
             }
-            const i = (y*width + x)*4;
-            const dr = Math.abs(data[i]-t.targetColor.r);
-            const dg = Math.abs(data[i+1]-t.targetColor.g);
-            const db = Math.abs(data[i+2]-t.targetColor.b);
-            const dist = (dr+dg+db)/3;
-            mask[y*width + x] = (dist <= tol) ? 1 : 0;
+            const i = (y * width + x) * 4;
+            const dr = Math.abs(data[i] - t.targetColor.r);
+            const dg = Math.abs(data[i + 1] - t.targetColor.g);
+            const db = Math.abs(data[i + 2] - t.targetColor.b);
+            const dist = (dr + dg + db) / 3;
+            mask[y * width + x] = (dist <= tol) ? 1 : 0;
           }
         }
         // 1b. Agrandir/Réduire la sélection (dilate/erode), sans toucher le bord
         let mask2 = mask;
-        if(expand !== 0) {
+        if (expand !== 0) {
           mask2 = dilateErodeMask(mask, width, height, expand);
         }
         // 2. Flouter le masque (bordure) si feather > 0
         let blurred = mask2;
-        if(feather > 0){
+        if (feather > 0) {
           blurred = boxBlurMask(mask2, width, height, feather);
         }
         // 3. Appliquer l'effet selon le masque flouté, mais jamais sur les bords stricts
-        for(let y=0; y<height; y++){
-          for(let x=0; x<width; x++){
-            if(x === 0 || x === width-1 || y === 0 || y === height-1) continue;
-            const i = (y*width + x)*4;
-            const alpha = blurred[y*width + x];
-            if(alpha > 0){
-                let [h,s,v] = rgbToHsv(data[i],data[i+1],data[i+2]);
-                h = (h+hue+360)%360;
-                s = clamp(s+sat,0,100);
-                v = clamp(v+val,0,100);
-                let [r,g,b] = hsvToRgb(h,s,v);
-                if(useReplace && replaceColor){
-                    r = replaceColor.r;
-                    g = replaceColor.g;
-                    b = replaceColor.b;
-                }
-                data[i]   = Math.round(data[i]*(1-alpha) + r*alpha);
-                data[i+1] = Math.round(data[i+1]*(1-alpha) + g*alpha);
-                data[i+2] = Math.round(data[i+2]*(1-alpha) + b*alpha);
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) continue;
+            const i = (y * width + x) * 4;
+            const alpha = blurred[y * width + x];
+            if (alpha > 0) {
+              let [h, s, v] = rgbToHsv(data[i], data[i + 1], data[i + 2]);
+              h = (h + hue + 360) % 360;
+              s = clamp(s + sat, 0, 100);
+              v = clamp(v + val, 0, 100);
+              let [r, g, b] = hsvToRgb(h, s, v);
+              if (useReplace && replaceColor) {
+                r = replaceColor.r;
+                g = replaceColor.g;
+                b = replaceColor.b;
+              }
+              data[i] = Math.round(data[i] * (1 - alpha) + r * alpha);
+              data[i + 1] = Math.round(data[i + 1] * (1 - alpha) + g * alpha);
+              data[i + 2] = Math.round(data[i + 2] * (1 - alpha) + b * alpha);
             }
           }
         }
-    });
-    ctxP.putImageData(imgData,0,0);
-}
-</script>
+      });
+      ctxP.putImageData(imgData, 0, 0);
+    }
+  </script>
 </body>
+
 </html>
