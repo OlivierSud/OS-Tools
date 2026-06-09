@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="pantone-data.js"></script>
     <style>
         body {
             display: flex;
@@ -18,7 +19,6 @@
             padding: 40px 20px;
             transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             background-color: #0f172a;
-            background-image: none !important;
             overflow-y: auto;
         }
 
@@ -146,8 +146,8 @@
         <h2>Convertisseur de Couleur</h2>
         
         <div class="input-group">
-            <label for="colorInput">Collez la couleur (ex: r, v, b / 255)</label>
-            <input type="text" id="colorInput" class="os-input" placeholder="120/255, 45/255, 200/255" onkeypress="handleEnter(event)">
+            <label for="colorInput">Collez la couleur (HEX, RGB, HSL ou PANTONE)</label>
+            <input type="text" id="colorInput" class="os-input" placeholder="ex: #782dc8, 120,45,200, PANTONE 108 ou hsl(269, 63%, 48%)" onkeypress="handleEnter(event)">
         </div>
         
         <button class="os-button" onclick="convertirCouleur()">Convertir & Appliquer</button>
@@ -185,6 +185,21 @@
                 <div class="result-row">
                     <div id="resultHsl" class="result-value">hsl(-, -%, -%)</div>
                     <button id="copyHsl" class="copy-btn os-button secondary" onclick="copierValeur('resultHsl', 'copyHsl')" title="Copier HSL">
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PANTONE -->
+            <div class="result-box">
+                <span>Couleur Pantone la plus proche</span>
+                <div class="result-row">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div id="resultPantone" class="result-value">PANTONE -</div>
+                        <div id="pantoneColorChip" style="width: 100px; height: 36px; border-radius: 6px; border: 1px solid var(--panel-border); background-color: transparent; display: none; flex-shrink: 0;"></div>
+                    </div>
+                    <button id="copyPantone" class="copy-btn os-button secondary" onclick="copierValeur('resultPantone', 'copyPantone')" title="Copier PANTONE">
                         <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </button>
@@ -249,66 +264,234 @@
             };
         }
 
+        function hslToRgb(h, s, l) {
+            h = (h % 360 + 360) % 360; // clamp h
+            s = Math.max(0, Math.min(100, s)) / 100;
+            l = Math.max(0, Math.min(100, l)) / 100;
+
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+
+            if (0 <= h && h < 60) {
+                r = c; g = x; b = 0;
+            } else if (60 <= h && h < 120) {
+                r = x; g = c; b = 0;
+            } else if (120 <= h && h < 180) {
+                r = 0; g = c; b = x;
+            } else if (180 <= h && h < 240) {
+                r = 0; g = x; b = c;
+            } else if (240 <= h && h < 300) {
+                r = x; g = 0; b = c;
+            } else if (300 <= h && h < 360) {
+                r = c; g = 0; b = x;
+            }
+
+            return {
+                r: Math.round((r + m) * 255),
+                g: Math.round((g + m) * 255),
+                b: Math.round((b + m) * 255)
+            };
+        }
+
+        function findNearestPantone(r, g, b) {
+            if (typeof PANTONE_COLORS === 'undefined') return null;
+            let minDistance = Infinity;
+            let nearestColor = null;
+
+            for (const color of PANTONE_COLORS) {
+                const dist = Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearestColor = color;
+                }
+            }
+
+            return nearestColor;
+        }
+
+        function parseColor(input) {
+            input = input.trim().toLowerCase();
+
+            // 1. Check if Pantone name (e.g. "PANTONE 100", "pantone 100 c", "pms 108")
+            const normalizedInput = input.toUpperCase().replace(/\s+/g, '');
+            if ((normalizedInput.includes("PANTONE") || normalizedInput.startsWith("PMS")) && typeof PANTONE_COLORS !== 'undefined') {
+                const numberMatch = normalizedInput.match(/(\d+)/);
+                if (numberMatch) {
+                    const numberStr = numberMatch[1];
+                    const targetName = "PANTONE " + numberStr;
+                    const match = PANTONE_COLORS.find(c => c.name === targetName);
+                    if (match) {
+                        return { r: match.r, g: match.g, b: match.b };
+                    }
+                }
+            }
+
+            // 2. Check HEX (e.g. #fff, #ffffff, fff, ffffff)
+            const hexMatch = input.match(/^#?([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/);
+            if (hexMatch) {
+                let hex = hexMatch[1];
+                if (hex.length === 3 || hex.length === 4) {
+                    const r = parseInt(hex[0] + hex[0], 16);
+                    const g = parseInt(hex[1] + hex[1], 16);
+                    const b = parseInt(hex[2] + hex[2], 16);
+                    return { r, g, b };
+                } else {
+                    const r = parseInt(hex.substring(0, 2), 16);
+                    const g = parseInt(hex.substring(2, 4), 16);
+                    const b = parseInt(hex.substring(4, 6), 16);
+                    return { r, g, b };
+                }
+            }
+
+            // 3. Check HSL function (e.g. hsl(269, 63%, 48%))
+            if (input.startsWith("hsl")) {
+                const m = input.match(/hsla?\(\s*(\d+)\s*,\s*(\d+)%?\s*,\s*(\d+)%?\s*(?:,\s*[\d\.]+)?\)/);
+                if (m) {
+                    return hslToRgb(parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10));
+                }
+            }
+
+            // 4. Check RGB function (e.g. rgb(120, 45, 200) or rgb(0.5, 0.5, 0.5))
+            if (input.startsWith("rgb")) {
+                const m = input.match(/rgba?\(\s*([\d\.\/]+)\s*,\s*([\d\.\/]+)\s*,\s*([\d\.\/]+)\s*(?:,\s*[\d\.]+)?\)/);
+                if (m) {
+                    const rVal = parseFloat(m[1].includes('/') ? m[1].split('/')[0] : m[1]);
+                    const gVal = parseFloat(m[2].includes('/') ? m[2].split('/')[0] : m[2]);
+                    const bVal = parseFloat(m[3].includes('/') ? m[3].split('/')[0] : m[3]);
+
+                    if (rVal <= 1.0 && gVal <= 1.0 && bVal <= 1.0 && !m[1].includes('/') && !m[2].includes('/') && !m[3].includes('/')) {
+                        return {
+                            r: Math.round(rVal * 255),
+                            g: Math.round(gVal * 255),
+                            b: Math.round(bVal * 255)
+                        };
+                    }
+
+                    return {
+                        r: parseRgbComponent(m[1]),
+                        g: parseRgbComponent(m[2]),
+                        b: parseRgbComponent(m[3])
+                    };
+                }
+            }
+
+            // 5. Check lists of 3 parameters (e.g. "120,45,200", "0.5, 0.5, 0.5", "269, 63%, 48%")
+            const parts = input.split(',');
+            if (parts.length >= 3) {
+                const p1 = parts[0].trim();
+                const p2 = parts[1].trim();
+                const p3 = parts[2].trim();
+
+                // If it contains percentage, parse as HSL
+                if (p2.endsWith('%') || p3.endsWith('%')) {
+                    const h = parseInt(p1, 10);
+                    const s = parseInt(p2, 10);
+                    const l = parseInt(p3, 10);
+                    return hslToRgb(h, s, l);
+                }
+
+                // Default to RGB (check standard or normalized)
+                const rVal = parseFloat(p1);
+                const gVal = parseFloat(p2);
+                const bVal = parseFloat(p3);
+
+                if (!isNaN(rVal) && !isNaN(gVal) && !isNaN(bVal)) {
+                    if (rVal <= 1.0 && gVal <= 1.0 && bVal <= 1.0) {
+                        return {
+                            r: Math.round(rVal * 255),
+                            g: Math.round(gVal * 255),
+                            b: Math.round(bVal * 255)
+                        };
+                    } else {
+                        return {
+                            r: Math.round(rVal),
+                            g: Math.round(gVal),
+                            b: Math.round(bVal)
+                        };
+                    }
+                }
+
+                return {
+                    r: parseRgbComponent(p1),
+                    g: parseRgbComponent(p2),
+                    b: parseRgbComponent(p3)
+                };
+            }
+
+            throw new Error("Format de couleur non reconnu. Formats supportés: HEX, RGB, HSL, PANTONE.");
+        }
+
+        function parseRgbComponent(str) {
+            if (str.includes('/')) {
+                return parseInt(str.split('/')[0], 10);
+            }
+            return parseInt(str, 10);
+        }
+
         function convertirCouleur() {
             const input = document.getElementById('colorInput').value;
             const errorDiv = document.getElementById('errorMessage');
             
-            // Elements
-            const hexVal = document.getElementById('resultHex');
-            const rgbVal = document.getElementById('resultRgb');
-            const hslVal = document.getElementById('resultHsl');
-            
-            const copyHex = document.getElementById('copyHex');
-            const copyRgb = document.getElementById('copyRgb');
-            const copyHsl = document.getElementById('copyHsl');
+                // Elements
+                const hexVal = document.getElementById('resultHex');
+                const rgbVal = document.getElementById('resultRgb');
+                const hslVal = document.getElementById('resultHsl');
+                const pantoneVal = document.getElementById('resultPantone');
+                const pantoneColorChip = document.getElementById('pantoneColorChip');
+                
+                const copyHex = document.getElementById('copyHex');
+                const copyRgb = document.getElementById('copyRgb');
+                const copyHsl = document.getElementById('copyHsl');
+                const copyPantone = document.getElementById('copyPantone');
 
-            // Retirer les espaces et séparer par les virgules
-            const parts = input.replace(/\s+/g, '').split(',');
+                try {
+                    const rgb = parseColor(input);
 
-            if (parts.length !== 3) {
-                afficherErreur("Format invalide ! Utilisez r,v,b ou r/255,v/255,b/255");
-                return;
-            }
+                    if (isNaN(rgb.r) || isNaN(rgb.g) || isNaN(rgb.b) || rgb.r < 0 || rgb.r > 255 || rgb.g < 0 || rgb.g > 255 || rgb.b < 0 || rgb.b > 255) {
+                        afficherErreur("Les valeurs de couleur générées sont hors limites (0-255).");
+                        return;
+                    }
 
-            let r, g, b;
+                    // Calculs
+                    const hexValue = "#" + componentToHex(rgb.r) + componentToHex(rgb.g) + componentToHex(rgb.b);
+                    const rgbValue = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+                    const hslValue = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+                    
+                    // Recherche Pantone
+                    const nearestPantone = findNearestPantone(rgb.r, rgb.g, rgb.b);
 
-            try {
-                // Extraire la valeur avant le "/255"
-                r = parseInt(parts[0].split('/')[0], 10);
-                g = parseInt(parts[1].split('/')[0], 10);
-                b = parseInt(parts[2].split('/')[0], 10);
+                    // Affichage
+                    errorDiv.style.display = "none";
+                    
+                    hexVal.textContent = hexValue;
+                    rgbVal.textContent = rgbValue;
+                    hslVal.textContent = hslValue;
 
-                // Vérification des limites
-                if (isNaN(r) || isNaN(g) || isNaN(b) || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
-                    afficherErreur("Les valeurs doivent être comprises entre 0 et 255 !");
-                    return;
+                    if (nearestPantone) {
+                        pantoneVal.textContent = nearestPantone.name;
+                        pantoneColorChip.style.backgroundColor = nearestPantone.hex;
+                        pantoneColorChip.style.display = "block";
+                    } else {
+                        pantoneVal.textContent = "PANTONE non trouvé";
+                        pantoneColorChip.style.display = "none";
+                    }
+
+                    // Afficher les boutons de copie
+                    copyHex.style.visibility = "visible";
+                    copyRgb.style.visibility = "visible";
+                    copyHsl.style.visibility = "visible";
+                    copyPantone.style.visibility = nearestPantone ? "visible" : "hidden";
+                    
+                    // Mettre à jour le fond
+                    document.body.style.backgroundColor = hexValue;
+                    document.body.style.backgroundImage = "none";
+
+                } catch (e) {
+                    afficherErreur(e.message || "Erreur de conversion !");
                 }
-
-                // Calculs
-                const hexValue = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-                const rgbValue = `rgb(${r}, ${g}, ${b})`;
-                const hsl = rgbToHsl(r, g, b);
-                const hslValue = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
-
-                // Affichage
-                errorDiv.style.display = "none";
-                
-                hexVal.textContent = hexValue;
-                rgbVal.textContent = rgbValue;
-                hslVal.textContent = hslValue;
-
-                // Afficher les boutons de copie
-                copyHex.style.visibility = "visible";
-                copyRgb.style.visibility = "visible";
-                copyHsl.style.visibility = "visible";
-                
-                // Mettre à jour le fond
-                document.body.style.backgroundColor = hexValue;
-                document.body.style.backgroundImage = "none";
-
-            } catch (e) {
-                afficherErreur("Erreur de conversion !");
-            }
         }
 
         function componentToHex(c) {
@@ -322,10 +505,13 @@
             const hexVal = document.getElementById('resultHex');
             const rgbVal = document.getElementById('resultRgb');
             const hslVal = document.getElementById('resultHsl');
+            const pantoneVal = document.getElementById('resultPantone');
+            const pantoneColorChip = document.getElementById('pantoneColorChip');
             
             const copyHex = document.getElementById('copyHex');
             const copyRgb = document.getElementById('copyRgb');
             const copyHsl = document.getElementById('copyHsl');
+            const copyPantone = document.getElementById('copyPantone');
 
             errorDiv.textContent = message;
             errorDiv.style.display = "block";
@@ -333,10 +519,13 @@
             hexVal.textContent = "#------";
             rgbVal.textContent = "rgb(-, -, -)";
             hslVal.textContent = "hsl(-, -%, -%)";
+            pantoneVal.textContent = "PANTONE -";
+            pantoneColorChip.style.display = "none";
 
             copyHex.style.visibility = "hidden";
             copyRgb.style.visibility = "hidden";
             copyHsl.style.visibility = "hidden";
+            copyPantone.style.visibility = "hidden";
         }
     </script>
 </body>
